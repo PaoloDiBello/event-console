@@ -13,8 +13,22 @@ npm run dev        # http://localhost:5173
 ```
 
 - `/grid` — 100,000-row registry with client-side filtering, sorting, pagination
-- `/timeline` — 10,401 events in the default 45-day window, grouped by day
+- `/timeline` — 10,400 events in the default 45-day window, grouped by day
 - “New event” writes to both views through the same Zustand store
+
+## Screenshots
+
+![Data grid with 100,000 rows](docs/screenshots/grid.png)
+
+*The 100,000-row registry: full-set counts, per-column filters, and a page of 50 virtualized rows.*
+
+![Timeline grouped by day](docs/screenshots/timeline.png)
+
+*The agenda: 10,400 events over 45 days, grouped into virtualized day sections.*
+
+![New event dialog](docs/screenshots/form.png)
+
+*The editor: controlled fields, a native date picker, and required-field validation.*
 
 ## Stack
 
