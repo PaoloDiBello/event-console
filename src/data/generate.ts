@@ -216,8 +216,9 @@ function makeEvent(rng: Rng, id: string, date: string, isFuture: boolean): Event
     id,
     title,
     date,
-    // Round to 5 minutes so times read like a real calendar.
-    startMinute: Math.floor((rng() * 1440) / 5) * 5,
+    // Between 06:00 and 21:00 — an international on-call rota, not a coin flip
+    // across the whole clock.
+    startMinute: 6 * 60 + Math.floor((rng() * 15 * 60) / 5) * 5,
     durationMin: pick(rng, DURATIONS),
     category,
     status,

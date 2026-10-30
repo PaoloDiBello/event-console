@@ -69,6 +69,15 @@
     font-variant-numeric: tabular-nums;
   }
 
+  /* Radix drives these with data-state, so the keyframes live here. */
+  .dialog-overlay[data-state='open'] {
+    animation: overlay-in 150ms ease-out;
+  }
+
+  .dialog-content[data-state='open'] {
+    animation: content-in 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
   /* Thin, dark scrollbars so long virtual lists do not break the surface. */
   .scrollbar-thin {
     scrollbar-width: thin;
@@ -85,5 +94,18 @@
     border-radius: 999px;
     border: 3px solid transparent;
     background-clip: content-box;
+  }
+}
+
+@keyframes overlay-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes content-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
   }
 }
