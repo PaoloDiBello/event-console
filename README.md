@@ -7,6 +7,8 @@ The demo is deliberately boring infrastructure: one shared event store, two
 views over it, and a modal editor. The interesting part is what happens when the
 data set is large enough that a naive table stops being usable.
 
+**Live demo:** [event-console-ruddy.vercel.app](https://event-console-ruddy.vercel.app) · [Grid](https://event-console-ruddy.vercel.app/grid) · [Timeline](https://event-console-ruddy.vercel.app/timeline)
+
 ```bash
 npm install
 npm run dev        # http://localhost:5173
