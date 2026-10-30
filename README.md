@@ -102,6 +102,17 @@ or an ISO timestamp key, so the same sort is a plain comparison. Formatting
 - Loads include a small artificial latency (and a “Simulate error” action) so
   the loading/error/retry states are demonstrable.
 
+### One data set, two views
+
+The header switcher is deliberately a segmented control rather than two
+independent page links: **Grid** and **Timeline** are lenses on the same event
+store, not separate destinations. A shared control makes that relationship
+visible, gives the active mode a single, consistent surface, and keeps both
+targets reachable at 320 px without a navigation drawer. The page headings carry
+the content names (“Event registry” / “Agenda”), while the switcher names the
+representation. `G` and `T` switch modes from anywhere that is not already
+capturing text input.
+
 ### Timeline
 
 `timelineData.ts` windows the store by calendar day, groups by day, and flattens
@@ -171,8 +182,10 @@ mutations only pay for the sort/filter pass.
   Radix Dialog provides the focus trap, Escape handling, and focus restoration.
 - **Reduced motion:** the global stylesheet collapses animations/transitions
   under `prefers-reduced-motion: reduce`.
-- **Keyboard shortcuts:** `/` focuses grid search, `n` opens the new-event dialog
-  (ignored while typing in a field), and all dialogs close with Escape.
+- **Keyboard shortcuts:** `/` focuses grid search, `n` opens the new-event dialog,
+  `g` and `t` switch between the grid and timeline views, and all dialogs close
+  with Escape. Shortcuts are ignored while typing in a field or when a dialog or
+  menu owns the keyboard.
 
 ## Tests and quality checks
 
