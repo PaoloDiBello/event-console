@@ -119,6 +119,8 @@ describe('DataGrid', () => {
     )
     expect(screen.getByText('Row 07')).toBeInTheDocument()
     expect(screen.queryByText('Row 06')).not.toBeInTheDocument()
+    // A global search is a query, not an active filter chip.
+    expect(screen.queryByRole('button', { name: /^Clear \d+ filters?$/ })).not.toBeInTheDocument()
   })
 
   it('treats a leading slash as the search shortcut, not a query', async () => {
@@ -169,16 +171,68 @@ describe('DataGrid', () => {
     expect(screen.queryByRole('columnheader', { name: 'Status' })).not.toBeInTheDocument()
   })
 
-  it('shows the no-match state and recovers by clearing filters', async () => {
+  it('shows the no-match state and recovers by clearing the search', async () => {
     const user = userEvent.setup()
     renderGrid()
 
     await user.type(screen.getByRole('searchbox', { name: 'Search all columns' }), 'nothing-matches')
 
-    await screen.findByText('No rows match these filters')
-    await user.click(screen.getByRole('button', { name: 'Clear filters' }))
+    await screen.findByText('No rows match your search')
+    await user.click(screen.getByRole('button', { name: 'Clear search' }))
 
     await screen.findByText('Row 00')
+  })
+
+  it('clears column filters without discarding the search', async () => {
+    const user = userEvent.setup()
+    renderGrid()
+
+    const search = screen.getByRole('searchbox', { name: 'Search all columns' })
+    await user.type(search, 'Row')
+    await user.selectOptions(screen.getByLabelText('Filter by Status'), 'on')
+    await waitFor(() =>
+      expect(screen.getByRole('status')).toHaveTextContent('12 rows match. Showing 1 to 10.'),
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Clear 1 filter' }))
+
+    expect(search).toHaveValue('Row')
+    await waitFor(() =>
+      expect(screen.getByRole('status')).toHaveTextContent('23 rows match. Showing 1 to 10.'),
+    )
+  })
+
+  it('clears search without discarding column filters', async () => {
+    const user = userEvent.setup()
+    renderGrid()
+
+    await user.selectOptions(screen.getByLabelText('Filter by Status'), 'on')
+    const search = screen.getByRole('searchbox', { name: 'Search all columns' })
+    await user.type(search, 'Row 0')
+    await waitFor(() =>
+      expect(screen.getByRole('status')).toHaveTextContent('5 rows match. Showing 1 to 5.'),
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Clear search field' }))
+    expect(screen.getByLabelText('Filter by Status')).toHaveValue('on')
+    await waitFor(() =>
+      expect(screen.getByRole('status')).toHaveTextContent('12 rows match. Showing 1 to 10.'),
+    )
+  })
+
+  it('resets both search and filters from the combined no-match state', async () => {
+    const user = userEvent.setup()
+    renderGrid()
+
+    await user.selectOptions(screen.getByLabelText('Filter by Status'), 'on')
+    await user.type(screen.getByRole('searchbox', { name: 'Search all columns' }), 'nothing-matches')
+
+    await screen.findByText('No rows match your search and filters')
+    await user.click(screen.getByRole('button', { name: 'Clear search and filters' }))
+
+    await screen.findByText('Row 00')
+    expect(screen.getByLabelText('Filter by Status')).toHaveValue('')
+    expect(screen.getByRole('status')).toHaveTextContent('23 rows match. Showing 1 to 10.')
   })
 
   it('moves to the next page', async () => {

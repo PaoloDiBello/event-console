@@ -16,6 +16,7 @@ import {
   Inbox,
   RotateCcw,
   SearchX,
+  SlidersHorizontal,
 } from 'lucide-react'
 import {
   useDeferredValue,
@@ -140,8 +141,10 @@ export function DataGrid<TData>({
 
   const rows = table.getRowModel().rows
   const visibleColumns = table.getVisibleLeafColumns()
-  const filterCount = activeFilterCount(columnFilters, globalFilter)
-  const hasQuery = filterCount > 0
+  const filterCount = activeFilterCount(columnFilters)
+  const hasSearch = globalFilter.length > 0
+  const hasFilters = filterCount > 0
+  const hasQuery = hasSearch || hasFilters
   const showFilterRow = useMemo(
     () => visibleColumns.some((column) => column.columnDef.meta?.filter),
     [visibleColumns],
@@ -204,12 +207,44 @@ export function DataGrid<TData>({
       ? rowVirtualizer.getTotalSize() - virtualRows[virtualRows.length - 1]!.end
       : 0
 
-  const clearFilters = () => {
+  const clearColumnFilters = () => {
+    setColumnFilters([])
+    setPagination((current) => ({ ...current, pageIndex: 0 }))
+  }
+
+  const clearSearch = () => {
+    setSearch('')
+    setGlobalFilter('')
+    setPagination((current) => ({ ...current, pageIndex: 0 }))
+  }
+
+  // Only the empty state resets both: the toolbar keeps search and filters
+  // independent so one never silently discards the other.
+  const clearAll = () => {
     setSearch('')
     setGlobalFilter('')
     setColumnFilters([])
     setPagination((current) => ({ ...current, pageIndex: 0 }))
   }
+
+  const emptyQueryTitle =
+    hasSearch && hasFilters
+      ? 'No rows match your search and filters'
+      : hasSearch
+        ? 'No rows match your search'
+        : 'No rows match these filters'
+  const emptyQueryHint =
+    hasSearch && hasFilters
+      ? `0 of ${formatCount(data.length)} ${pluralize(data.length, 'row')} matched. Try a broader search or remove a filter.`
+      : hasSearch
+        ? `0 of ${formatCount(data.length)} ${pluralize(data.length, 'row')} matched. Try a broader search.`
+        : `0 of ${formatCount(data.length)} ${pluralize(data.length, 'row')} matched. Clear a filter to see more rows.`
+  const emptyQueryAction =
+    hasSearch && hasFilters
+      ? { label: 'Clear search and filters', onClick: clearAll }
+      : hasSearch
+        ? { label: 'Clear search', onClick: clearSearch }
+        : { label: 'Clear filters', onClick: clearColumnFilters }
 
   // A fresh page/filter/sort should start at the top of the list, not halfway
   // down a scroll container that is now showing different rows.
@@ -251,7 +286,7 @@ export function DataGrid<TData>({
         table={table}
         search={search}
         onSearchChange={setSearch}
-        onClearFilters={clearFilters}
+        onClearColumnFilters={clearColumnFilters}
         activeFilterCount={filterCount}
         isPending={isPending}
         searchPlaceholder={searchPlaceholder}
@@ -433,26 +468,26 @@ export function DataGrid<TData>({
                   <tr>
                     <td colSpan={columnCount} className="p-0">
                       <div className="flex flex-col items-center justify-center px-6 py-24 text-center">
-                        {hasQuery ? (
+                        {hasSearch ? (
                           <SearchX aria-hidden="true" className="size-7 text-faint" />
+                        ) : hasFilters ? (
+                          <SlidersHorizontal aria-hidden="true" className="size-7 text-faint" />
                         ) : (
                           <Inbox aria-hidden="true" className="size-7 text-faint" />
                         )}
                         <p className="mt-3 text-sm font-medium text-ink">
-                          {hasQuery ? 'No rows match these filters' : emptyTitle}
+                          {hasQuery ? emptyQueryTitle : emptyTitle}
                         </p>
                         <p className="mt-1 max-w-sm text-xs leading-relaxed text-muted">
-                          {hasQuery
-                            ? `0 of ${formatCount(data.length)} ${pluralize(data.length, 'row')} matched. Try a broader search or clear the filters.`
-                            : emptyHint}
+                          {hasQuery ? emptyQueryHint : emptyHint}
                         </p>
                         {hasQuery ? (
                           <button
                             type="button"
-                            onClick={clearFilters}
+                            onClick={emptyQueryAction.onClick}
                             className="mt-4 inline-flex h-8 items-center gap-1.5 rounded-sm border border-line-strong bg-raised px-3 text-xs font-medium text-ink transition-colors hover:border-accent/40 hover:text-accent"
                           >
-                            Clear filters
+                            {emptyQueryAction.label}
                           </button>
                         ) : null}
                       </div>

@@ -187,11 +187,14 @@ mutations only pay for the sort/filter pass.
   search, `n` opens the new-event dialog, `g` and `t` switch between the Registry
   and Agenda views, and all dialogs close with Escape. Shortcuts are ignored while
   typing in a field or when a dialog or menu owns the keyboard.
+- **Search vs filters:** global search and column filters are independent. The
+  search field clears itself with its X or Escape; the “Clear N filters” chip
+  clears only column filters, so a query is never silently discarded.
 
 ## Tests and quality checks
 
 ```bash
-npm test          # 36 tests, 7 files
+npm test          # 39 tests, 7 files
 npm run build     # tsc -b (strict) + vite build
 npm run lint      # oxlint
 ```

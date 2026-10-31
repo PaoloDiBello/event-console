@@ -16,7 +16,7 @@ interface DataGridToolbarProps<TData> {
   table: Table<TData>
   search: string
   onSearchChange: (value: string) => void
-  onClearFilters: () => void
+  onClearColumnFilters: () => void
   activeFilterCount: number
   isPending: boolean
   searchPlaceholder?: string
@@ -35,7 +35,7 @@ export function DataGridToolbar<TData>({
   table,
   search,
   onSearchChange,
-  onClearFilters,
+  onClearColumnFilters,
   activeFilterCount,
   isPending,
   searchPlaceholder = 'Search rows…',
@@ -88,7 +88,8 @@ export function DataGridToolbar<TData>({
           <button
             type="button"
             onClick={() => onSearchChange('')}
-            aria-label="Clear search"
+            aria-label="Clear search field"
+            title="Clear search"
             className="absolute top-1/2 right-2.5 -translate-y-1/2 rounded-xs p-1 text-faint transition-colors hover:text-ink"
           >
             <X aria-hidden="true" className="size-3.5" />
@@ -108,8 +109,8 @@ export function DataGridToolbar<TData>({
         {activeFilterCount > 0 ? (
           <button
             type="button"
-            onClick={onClearFilters}
-            title="Clear the search and all column filters"
+            onClick={onClearColumnFilters}
+            title="Clear all column filters"
             className="inline-flex h-9 items-center gap-1.5 rounded-sm border border-accent/30 bg-accent/10 px-2.5 text-xs font-medium text-accent transition-colors hover:bg-accent/15"
           >
             <SlidersHorizontal aria-hidden="true" className="size-3.5" />
