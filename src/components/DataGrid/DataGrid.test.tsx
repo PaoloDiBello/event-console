@@ -121,6 +121,32 @@ describe('DataGrid', () => {
     expect(screen.queryByText('Row 06')).not.toBeInTheDocument()
   })
 
+  it('treats a leading slash as the search shortcut, not a query', async () => {
+    const user = userEvent.setup()
+    renderGrid()
+
+    const search = screen.getByRole('searchbox', { name: 'Search all columns' })
+    await user.click(search)
+    await user.type(search, '/Row 07')
+
+    expect(search).toHaveValue('Row 07')
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('1 row match.'))
+  })
+
+  it('clears an active search with Escape', async () => {
+    const user = userEvent.setup()
+    renderGrid()
+
+    const search = screen.getByRole('searchbox', { name: 'Search all columns' })
+    await user.type(search, 'Row 07')
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('1 row match.'))
+
+    await user.keyboard('{Escape}')
+
+    expect(search).toHaveValue('')
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('23 rows match.'))
+  })
+
   it('filters a column with a select', async () => {
     const user = userEvent.setup()
     renderGrid()

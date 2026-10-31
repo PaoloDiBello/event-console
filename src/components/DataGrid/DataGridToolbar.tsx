@@ -49,7 +49,7 @@ export function DataGridToolbar<TData>({
 
   return (
     <div className="flex flex-wrap items-center gap-2 border-b border-line bg-surface/80 px-3 py-2.5">
-      <div className="relative min-w-56 flex-1 sm:max-w-sm">
+      <div className="group relative min-w-56 flex-1 sm:max-w-sm">
         <Search
           aria-hidden="true"
           className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-faint"
@@ -60,9 +60,29 @@ export function DataGridToolbar<TData>({
           value={search}
           disabled={disabled}
           onChange={(event) => onSearchChange(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') {
+              event.preventDefault()
+              if (search) onSearchChange('')
+              else event.currentTarget.blur()
+              return
+            }
+            // "/" focuses this field. If it was already focused and empty,
+            // pressing it again is the shortcut, not a request to find a slash.
+            if (
+              event.key === '/' &&
+              search === '' &&
+              !event.metaKey &&
+              !event.ctrlKey &&
+              !event.altKey
+            ) {
+              event.preventDefault()
+            }
+          }}
           placeholder={searchPlaceholder}
           aria-label="Search all columns"
-          className="h-9 w-full rounded-sm border border-line bg-canvas pr-16 pl-9 text-sm text-ink placeholder:text-faint focus:border-accent/60 focus:outline-none disabled:opacity-50 [&::-webkit-search-cancel-button]:hidden"
+          aria-keyshortcuts="/"
+          className="h-9 w-full rounded-sm border border-line bg-canvas pr-16 pl-9 text-sm text-ink placeholder:text-faint focus:border-accent/60 focus:ring-2 focus:ring-accent/20 focus:outline-none disabled:opacity-50 [&::-webkit-search-cancel-button]:hidden"
         />
         {search ? (
           <button
@@ -76,7 +96,8 @@ export function DataGridToolbar<TData>({
         ) : (
           <kbd
             aria-hidden="true"
-            className="pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2 rounded-xs border border-line bg-raised px-1.5 py-0.5 font-mono text-[10px] text-faint"
+            title="Press / to focus search"
+            className="pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2 rounded-xs border border-line bg-raised px-1.5 py-0.5 font-mono text-[10px] text-faint group-focus-within:hidden"
           >
             /
           </kbd>
@@ -88,12 +109,12 @@ export function DataGridToolbar<TData>({
           <button
             type="button"
             onClick={onClearFilters}
+            title="Clear the search and all column filters"
             className="inline-flex h-9 items-center gap-1.5 rounded-sm border border-accent/30 bg-accent/10 px-2.5 text-xs font-medium text-accent transition-colors hover:bg-accent/15"
           >
             <SlidersHorizontal aria-hidden="true" className="size-3.5" />
-            {activeFilterCount} {pluralize(activeFilterCount, 'filter')}
+            Clear {activeFilterCount} {pluralize(activeFilterCount, 'filter')}
             <X aria-hidden="true" className="size-3.5" />
-            <span className="sr-only">Clear all filters</span>
           </button>
         ) : null}
 

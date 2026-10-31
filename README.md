@@ -183,15 +183,15 @@ mutations only pay for the sort/filter pass.
   Radix Dialog provides the focus trap, Escape handling, and focus restoration.
 - **Reduced motion:** the global stylesheet collapses animations/transitions
   under `prefers-reduced-motion: reduce`.
-- **Keyboard shortcuts:** `/` focuses grid search, `n` opens the new-event dialog,
-  `g` and `t` switch between the Registry and Agenda views, and all dialogs close
-  with Escape. Shortcuts are ignored while typing in a field or when a dialog or
-  menu owns the keyboard.
+- **Keyboard shortcuts:** `/` focuses grid search, `Escape` clears an active
+  search, `n` opens the new-event dialog, `g` and `t` switch between the Registry
+  and Agenda views, and all dialogs close with Escape. Shortcuts are ignored while
+  typing in a field or when a dialog or menu owns the keyboard.
 
 ## Tests and quality checks
 
 ```bash
-npm test          # 34 tests, 7 files
+npm test          # 36 tests, 7 files
 npm run build     # tsc -b (strict) + vite build
 npm run lint      # oxlint
 ```
