@@ -15,6 +15,7 @@ npm run dev        # http://localhost:5173
 ```
 
 - `/grid` — 100,000-row registry with client-side filtering, sorting, pagination
+  (including a typed page jump)
 - `/timeline` — 10,400 events in the default 45-day window, grouped by day
 - “New event” writes to both views through the same Zustand store
 
@@ -104,14 +105,14 @@ or an ISO timestamp key, so the same sort is a plain comparison. Formatting
 
 ### One data set, two views
 
-The header switcher is deliberately a segmented control rather than two
-independent page links: **Grid** and **Timeline** are lenses on the same event
-store, not separate destinations. A shared control makes that relationship
-visible, gives the active mode a single, consistent surface, and keeps both
-targets reachable at 320 px without a navigation drawer. The page headings carry
-the content names (“Event registry” / “Agenda”), while the switcher names the
-representation. `G` and `T` switch modes from anywhere that is not already
-capturing text input.
+The header switcher is deliberately a single sliding lens rather than two
+independent page links: **Registry** and **Agenda** are lenses on the same event
+store, not separate destinations. A shared surface makes that relationship
+visible, gives the active mode one consistent treatment, and keeps both targets
+reachable at 320 px without a navigation drawer. The labels match the page
+headings (“Event registry” / “Agenda”), so the control names the user's mental
+model instead of the widget behind it; the icons carry the representation.
+`G` and `T` switch modes from anywhere that is not already capturing text input.
 
 ### Timeline
 
@@ -183,21 +184,22 @@ mutations only pay for the sort/filter pass.
 - **Reduced motion:** the global stylesheet collapses animations/transitions
   under `prefers-reduced-motion: reduce`.
 - **Keyboard shortcuts:** `/` focuses grid search, `n` opens the new-event dialog,
-  `g` and `t` switch between the grid and timeline views, and all dialogs close
+  `g` and `t` switch between the Registry and Agenda views, and all dialogs close
   with Escape. Shortcuts are ignored while typing in a field or when a dialog or
   menu owns the keyboard.
 
 ## Tests and quality checks
 
 ```bash
-npm test          # 32 tests, 7 files
+npm test          # 34 tests, 7 files
 npm run build     # tsc -b (strict) + vite build
 npm run lint      # oxlint
 ```
 
 Coverage includes dataset determinism, store create/update, grid sorting /
-filtering / pagination / focus-row reveal, timeline grouping / windowing /
-keyboard navigation / announcements, and form validation plus the discard flow.
+filtering / pagination (including typed page jumps and clamping) / focus-row
+reveal, timeline grouping / windowing / keyboard navigation / announcements, and
+form validation plus the discard flow.
 
 ## Trade-offs and limitations
 
