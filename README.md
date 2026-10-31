@@ -45,20 +45,24 @@ Zod · date-fns · Vitest + Testing Library.
 | --- | --- |
 | `src/components/DataGrid` | Generic table: configurable columns, visibility, per-column text/select/date filters, global search, sorting, pagination, virtualized rows, loading/empty/error states, row reveal. |
 | `src/components/Timeline` | Generic grouped timeline: variable-height day groups, virtualization, roving `tabindex`, arrow-key navigation, live announcements. |
-| `src/components/EventForm` | Controlled create/edit dialog: validation, focus management, dirty-state discard confirmation, save error region. |
+| `src/features/events/components/EventForm` | Event-specific create/edit dialog: validation, focus management, dirty-state discard confirmation, save error region. |
 
-The demo owns the event-specific bits (`gridColumns.tsx`, `timelineData.ts`,
-`pages/`, `data/generate.ts`). The components only know about a row shape, a
-column definition, and an item renderer.
+The demo owns the event-specific bits (`features/events/registry/columns.tsx`,
+`features/events/agenda/agendaData.ts`, the view pages, and
+`features/events/model/generate.ts`). The generic components only know about a
+row shape, a column definition, and an item renderer.
+
+See [`docs/architecture.md`](docs/architecture.md) for the dependency rules,
+folder boundaries, and the reasoning behind the split.
 
 ## Architecture
 
 ```
-App (routes, lazy-loaded pages + form, toast)
- ├── /grid     GridPage     ── DataGrid ── TanStack Table (current page only)
- │                              └── buildRows(full data)  ← filter + sort
- └── /timeline TimelinePage ── Timeline ── timelineData grouping/windowing
-                                └── TanStack Virtual
+App (routes, lazy-loaded pages + form, toast, global shortcuts)
+ ├── /grid     RegistryPage ── DataGrid ── TanStack Table (current page only)
+ │                                └── buildRows(full data)  ← filter + sort
+ └── /timeline AgendaPage   ── Timeline ── agendaData grouping/windowing
+                                  └── TanStack Virtual
  shared Zustand store: 100k seeded events, create/update, load/error status
 ```
 
@@ -92,14 +96,14 @@ or an ISO timestamp key, so the same sort is a plain comparison. Formatting
 
 ### Data and state
 
-- `src/data/generate.ts` creates a deterministic 100k data set with a seeded
-  `mulberry32` PRNG. Dates are relative to the current day, so the demo stays
-  “live” whenever it is run.
+- `src/features/events/model/generate.ts` creates a deterministic 100k data set
+  with a seeded `mulberry32` PRNG. Dates are relative to the current day, so the
+  demo stays “live” whenever it is run.
 - Every record has a precomputed lowercase `search` string so global search is
   one `includes` call per row.
-- `src/store/events.ts` is the single source of truth. Creating an event
-  prepends it to the same array the timeline reads, which is why the two views
-  cannot drift.
+- `src/features/events/store/events.ts` is the single source of truth. Creating
+  an event prepends it to the same array the timeline reads, which is why the two
+  views cannot drift.
 - Loads include a small artificial latency (and a “Simulate error” action) so
   the loading/error/retry states are demonstrable.
 
@@ -116,9 +120,9 @@ model instead of the widget behind it; the icons carry the representation.
 
 ### Timeline
 
-`timelineData.ts` windows the store by calendar day, groups by day, and flattens
-groups + items into one virtualized list. The timeline component is generic over
-the item type and gets a `renderItem` callback.
+`features/events/agenda/agendaData.ts` windows the store by calendar day, groups
+by day, and flattens groups + items into one virtualized list. The timeline
+component is generic over the item type and gets a `renderItem` callback.
 
 Navigation is a roving `tabindex`:
 
@@ -230,22 +234,28 @@ form validation plus the discard flow.
 
 ```
 src/
-  app/
-    App.tsx            routes, lazy form, toasts, focus opener
-    AppHeader.tsx
-    gridColumns.tsx    event columns, fast sort keys, global filter
-    timelineData.ts    day window/grouping + search
-    pages/             GridPage, TimelinePage
-    ui/                small shared presentational bits
+  app/                       composition root
+    App.tsx                  routes, lazy form, global shortcuts
+    components/              AppHeader, AppToast, RouteFallback
+    hooks/useEventEditor.ts  editor state, submit, focus return, highlight
+  features/events/
+    model/                   types, seeded generator, generator tests
+    store/                   Zustand events store + tests
+    components/              EventLabels, EventForm (fields/footer/schema/values)
+    registry/                RegistryPage, header/stats, columns
+    agenda/                  AgendaPage, header, card, empty/skeleton, data
   components/
-    DataGrid/          DataGrid, model.ts (filter/sort), toolbar, pagination, tests
-    Timeline/          Timeline + tests
-    EventForm/         dialog form + tests
-  data/                types, seeded generator, generator tests
-  store/               Zustand events store + tests
-  lib/                 dates, formatting, cn
-  test/                jsdom setup
+    DataGrid/                orchestrator, table/header/body, toolbar, model/
+    Timeline/                orchestrator, rows, model
+    ui/                      PageHeader
+  shared/
+    lib/                     dates, formatting, cn, keyboard
+    test/                    jsdom setup
 ```
+
+Inside `features/events`, the model and store are the domain layer; registry
+and agenda are views over that one event set. `DataGrid`, `Timeline`, and
+`PageHeader` are generic and do not import event types.
 
 ## Scripts
 

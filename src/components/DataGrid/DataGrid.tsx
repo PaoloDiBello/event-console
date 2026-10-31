@@ -1,23 +1,13 @@
 import {
-  flexRender,
   getCoreRowModel,
   useReactTable,
+  type Column,
   type ColumnFiltersState,
   type PaginationState,
   type SortingState,
   type VisibilityState,
 } from '@tanstack/react-table'
 import { useVirtualizer } from '@tanstack/react-virtual'
-import {
-  AlertTriangle,
-  ArrowDown,
-  ArrowUp,
-  ChevronsUpDown,
-  Inbox,
-  RotateCcw,
-  SearchX,
-  SlidersHorizontal,
-} from 'lucide-react'
 import {
   useDeferredValue,
   useEffect,
@@ -27,22 +17,19 @@ import {
   useState,
   useTransition,
 } from 'react'
-import { cn } from '@/lib/cn'
-import { formatCount, pluralize } from '@/lib/format'
-import { DataGridToolbar } from './DataGridToolbar'
+import { formatCount, pluralize } from '@/shared/lib/format'
+import { hasCommandModifier, isShortcutBlocked, useGlobalKeydown } from '@/shared/lib/keyboard'
+import { DataGridEmpty } from './DataGridEmpty'
+import { DataGridError } from './DataGridError'
 import { DataGridPagination } from './DataGridPagination'
+import { DataGridTable } from './DataGridTable'
+import { DataGridToolbar } from './DataGridToolbar'
 import { buildRows } from './model'
 import { activeFilterCount } from './utils'
 import type { DataGridProps } from './types'
 
 const DEFAULT_ROW_HEIGHT = 44
 const PAGE_SIZE_OPTIONS = [25, 50, 100, 250] as const
-
-function SortIcon({ direction }: { direction: false | 'asc' | 'desc' }) {
-  if (direction === 'asc') return <ArrowUp aria-hidden="true" className="size-3 text-accent" />
-  if (direction === 'desc') return <ArrowDown aria-hidden="true" className="size-3 text-accent" />
-  return <ChevronsUpDown aria-hidden="true" className="size-3 text-faint/60" />
-}
 
 export function DataGrid<TData>({
   data,
@@ -144,7 +131,6 @@ export function DataGrid<TData>({
   const filterCount = activeFilterCount(columnFilters)
   const hasSearch = globalFilter.length > 0
   const hasFilters = filterCount > 0
-  const hasQuery = hasSearch || hasFilters
   const showFilterRow = useMemo(
     () => visibleColumns.some((column) => column.columnDef.meta?.filter),
     [visibleColumns],
@@ -227,28 +213,31 @@ export function DataGrid<TData>({
     setPagination((current) => ({ ...current, pageIndex: 0 }))
   }
 
-  const emptyQueryTitle =
-    hasSearch && hasFilters
-      ? 'No rows match your search and filters'
-      : hasSearch
-        ? 'No rows match your search'
-        : 'No rows match these filters'
-  const emptyQueryHint =
-    hasSearch && hasFilters
-      ? `0 of ${formatCount(data.length)} ${pluralize(data.length, 'row')} matched. Try a broader search or remove a filter.`
-      : hasSearch
-        ? `0 of ${formatCount(data.length)} ${pluralize(data.length, 'row')} matched. Try a broader search.`
-        : `0 of ${formatCount(data.length)} ${pluralize(data.length, 'row')} matched. Clear a filter to see more rows.`
-  const emptyQueryAction =
-    hasSearch && hasFilters
-      ? { label: 'Clear search and filters', onClick: clearAll }
-      : hasSearch
-        ? { label: 'Clear search', onClick: clearSearch }
-        : { label: 'Clear filters', onClick: clearColumnFilters }
+  const sortByColumn = (column: Column<TData, unknown>, event: unknown) => {
+    const handler = column.getToggleSortingHandler()
+    if (!handler) return
+    // Sorting 100k rows is a non-urgent update: keep the UI responsive and
+    // show the pending hint.
+    startTransition(() => handler(event))
+    setPagination((current) =>
+      current.pageIndex === 0 ? current : { ...current, pageIndex: 0 },
+    )
+  }
+
+  const filterByColumn = (column: Column<TData, unknown>, value: string | undefined) => {
+    column.setFilterValue(value)
+    setPagination((current) => ({ ...current, pageIndex: 0 }))
+  }
 
   // A fresh page/filter/sort should start at the top of the list, not halfway
   // down a scroll container that is now showing different rows.
-  const resetKey = JSON.stringify([sorting, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize])
+  const resetKey = JSON.stringify([
+    sorting,
+    columnFilters,
+    globalFilter,
+    pagination.pageIndex,
+    pagination.pageSize,
+  ])
   useEffect(() => {
     if (skipScrollResetRef.current) {
       skipScrollResetRef.current = false
@@ -258,27 +247,17 @@ export function DataGrid<TData>({
   }, [resetKey])
 
   // "/" jumps to the search box, the way most data tools behave.
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== '/' || event.metaKey || event.ctrlKey || event.altKey) return
-      const target = event.target as HTMLElement | null
-      if (target?.closest('input, textarea, select, [contenteditable="true"], [role="dialog"]')) {
-        return
-      }
-      event.preventDefault()
-      searchRef.current?.focus()
+  useGlobalKeydown((event) => {
+    if (event.key !== '/' || event.defaultPrevented || event.repeat || hasCommandModifier(event)) {
+      return
     }
-    document.addEventListener('keydown', onKeyDown)
-    return () => document.removeEventListener('keydown', onKeyDown)
-  }, [])
+    if (isShortcutBlocked(event.target)) return
+    event.preventDefault()
+    searchRef.current?.focus()
+  })
 
-  const columnCount = Math.max(visibleColumns.length, 1)
   const rangeStart = filteredCount === 0 ? 0 : pagination.pageIndex * pagination.pageSize + 1
   const rangeEnd = Math.min(filteredCount, (pagination.pageIndex + 1) * pagination.pageSize)
-  // aria-rowcount/aria-rowindex include the header row(s), so virtualized data
-  // rows must be numbered after them (title row, plus the filter row when shown).
-  const headerRowCount = showFilterRow ? 2 : 1
-  const bodyRowCount = isLoading ? 10 : rows.length === 0 ? 1 : filteredCount
 
   return (
     <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-line bg-surface/70 shadow-2xl shadow-black/30">
@@ -297,252 +276,44 @@ export function DataGrid<TData>({
 
       <div className="relative min-h-0 flex-1">
         {error ? (
-          <div className="flex h-full items-center justify-center p-8">
-            <div
-              role="alert"
-              className="max-w-md rounded-md border border-rose/25 bg-rose/[0.06] p-6 text-center"
-            >
-              <AlertTriangle aria-hidden="true" className="mx-auto size-6 text-rose" />
-              <h2 className="mt-3 text-sm font-semibold text-ink">Could not load rows</h2>
-              <p className="mt-1.5 text-xs leading-relaxed text-muted">{error}</p>
-              {onRetry ? (
-                <button
-                  type="button"
-                  onClick={onRetry}
-                  className="mt-4 inline-flex h-8 items-center gap-1.5 rounded-sm border border-rose/30 bg-rose/10 px-3 text-xs font-medium text-rose transition-colors hover:bg-rose/15"
-                >
-                  <RotateCcw aria-hidden="true" className="size-3.5" />
-                  Retry
-                </button>
-              ) : null}
-            </div>
-          </div>
+          <DataGridError error={error} onRetry={onRetry} />
         ) : (
           <div
             ref={scrollRef}
             aria-busy={isLoading}
             className="scrollbar-thin h-full overflow-auto"
           >
-            <table
-              aria-rowcount={bodyRowCount + headerRowCount}
-              className="w-full min-w-[1040px] table-fixed border-separate border-spacing-0 text-sm"
-            >
-              <caption className="sr-only">
-                {caption}. {formatCount(filteredCount)} rows, sorted{' '}
-                {sorting.length > 0 ? `by ${sorting[0]!.id} ${sorting[0]!.desc ? 'descending' : 'ascending'}` : 'by default'}.
-              </caption>
-              <colgroup>
-                {visibleColumns.map((column) => (
-                  <col
-                    key={column.id}
-                    style={column.columnDef.meta?.width ? { width: column.columnDef.meta.width } : undefined}
-                  />
-                ))}
-              </colgroup>
-
-              <thead>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <tr key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => {
-                      const sorted = header.column.getIsSorted()
-                      const align = header.column.columnDef.meta?.align
-                      return (
-                        <th
-                          key={header.id}
-                          scope="col"
-                          aria-sort={sorted === 'asc' ? 'ascending' : sorted === 'desc' ? 'descending' : 'none'}
-                          className={cn(
-                            'sticky top-0 z-20 h-10 border-b border-line bg-surface p-0',
-                            'font-mono text-[10px] font-medium tracking-[0.14em] text-faint uppercase',
-                          )}
-                        >
-                          {header.isPlaceholder ? null : (
-                            <button
-                              type="button"
-                              disabled={!header.column.getCanSort() || isLoading}
-                              onClick={(event) => {
-                                const handler = header.column.getToggleSortingHandler()
-                                if (!handler) return
-                                // Sorting 100k rows is a non-urgent update: keep
-                                // the UI responsive and show the pending hint.
-                                startTransition(() => handler(event))
-                                setPagination((current) =>
-                                  current.pageIndex === 0 ? current : { ...current, pageIndex: 0 },
-                                )
-                              }}
-                              className={cn(
-                                'flex h-10 w-full items-center gap-1.5 px-3 text-inherit',
-                                align === 'right' && 'justify-end',
-                                align === 'center' && 'justify-center',
-                                header.column.getCanSort()
-                                  ? 'cursor-pointer transition-colors hover:text-ink'
-                                  : 'cursor-default',
-                              )}
-                            >
-                              <span className="truncate">
-                                {flexRender(header.column.columnDef.header, header.getContext())}
-                              </span>
-                              {header.column.getCanSort() ? <SortIcon direction={sorted} /> : null}
-                            </button>
-                          )}
-                        </th>
-                      )
-                    })}
-                  </tr>
-                ))}
-
-                {showFilterRow ? (
-                  <tr>
-                    {table.getHeaderGroups()[0]?.headers.map((header) => {
-                      const column = header.column
-                      const meta = column.columnDef.meta
-                      const value = column.getFilterValue()
-                      const align = meta?.align
-                      return (
-                        <th
-                          key={`${header.id}-filter`}
-                          scope="col"
-                          className="sticky top-10 z-20 border-b border-line bg-surface px-2 py-1.5 font-normal"
-                        >
-                          {meta?.filter === 'select' ? (
-                            <select
-                              aria-label={`Filter by ${typeof column.columnDef.header === 'string' ? column.columnDef.header : column.id}`}
-                              value={typeof value === 'string' ? value : ''}
-                              disabled={isLoading}
-                              onChange={(event) => {
-                                column.setFilterValue(event.target.value || undefined)
-                                setPagination((current) => ({ ...current, pageIndex: 0 }))
-                              }}
-                              className={cn(
-                                'h-7 w-full rounded-xs border border-line bg-canvas px-1.5 text-[11px] text-muted',
-                                'focus:border-accent/60 focus:text-ink focus:outline-none disabled:opacity-50',
-                              )}
-                            >
-                              <option value="">All</option>
-                              {(meta.filterOptions ?? []).map((option) => (
-                                <option key={option.value} value={option.value}>
-                                  {option.label}
-                                </option>
-                              ))}
-                            </select>
-                          ) : meta?.filter === 'text' || meta?.filter === 'date' ? (
-                            <input
-                              type={meta.filter === 'date' ? 'date' : 'text'}
-                              aria-label={`Filter by ${typeof column.columnDef.header === 'string' ? column.columnDef.header : column.id}`}
-                              value={typeof value === 'string' ? value : ''}
-                              placeholder={meta.filter === 'text' ? 'Filter…' : undefined}
-                              disabled={isLoading}
-                              onChange={(event) => {
-                                column.setFilterValue(event.target.value || undefined)
-                                setPagination((current) => ({ ...current, pageIndex: 0 }))
-                              }}
-                              className={cn(
-                                'h-7 w-full rounded-xs border border-line bg-canvas px-1.5 text-[11px] text-ink placeholder:text-faint/70',
-                                'focus:border-accent/60 focus:outline-none disabled:opacity-50',
-                                align === 'right' && 'text-right',
-                              )}
-                            />
-                          ) : null}
-                        </th>
-                      )
-                    })}
-                  </tr>
-                ) : null}
-              </thead>
-
-              <tbody>
-                {isLoading ? (
-                  Array.from({ length: 10 }, (_, rowIndex) => (
-                    <tr key={`skeleton-${rowIndex}`} style={{ height: rowHeight }}>
-                      {visibleColumns.map((column, columnIndex) => (
-                        <td key={column.id} className="border-b border-line/60 px-3">
-                          <div
-                            className="h-2.5 animate-pulse rounded-full bg-line/80"
-                            style={{ width: `${45 + ((rowIndex * 13 + columnIndex * 29) % 45)}%` }}
-                          />
-                        </td>
-                      ))}
-                    </tr>
-                  ))
-                ) : rows.length === 0 ? (
-                  <tr>
-                    <td colSpan={columnCount} className="p-0">
-                      <div className="flex flex-col items-center justify-center px-6 py-24 text-center">
-                        {hasSearch ? (
-                          <SearchX aria-hidden="true" className="size-7 text-faint" />
-                        ) : hasFilters ? (
-                          <SlidersHorizontal aria-hidden="true" className="size-7 text-faint" />
-                        ) : (
-                          <Inbox aria-hidden="true" className="size-7 text-faint" />
-                        )}
-                        <p className="mt-3 text-sm font-medium text-ink">
-                          {hasQuery ? emptyQueryTitle : emptyTitle}
-                        </p>
-                        <p className="mt-1 max-w-sm text-xs leading-relaxed text-muted">
-                          {hasQuery ? emptyQueryHint : emptyHint}
-                        </p>
-                        {hasQuery ? (
-                          <button
-                            type="button"
-                            onClick={emptyQueryAction.onClick}
-                            className="mt-4 inline-flex h-8 items-center gap-1.5 rounded-sm border border-line-strong bg-raised px-3 text-xs font-medium text-ink transition-colors hover:border-accent/40 hover:text-accent"
-                          >
-                            {emptyQueryAction.label}
-                          </button>
-                        ) : null}
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  <>
-                    {paddingTop > 0 ? (
-                      <tr aria-hidden="true" style={{ height: paddingTop }}>
-                        <td colSpan={columnCount} style={{ padding: 0, border: 0 }} />
-                      </tr>
-                    ) : null}
-
-                    {virtualRows.map((virtualRow) => {
-                      const row = rows[virtualRow.index]
-                      if (!row) return null
-                      const rowNumber = pagination.pageIndex * pagination.pageSize + virtualRow.index + 1
-                      return (
-                        <tr
-                          key={row.id}
-                          aria-rowindex={rowNumber + headerRowCount}
-                          style={{ height: rowHeight }}
-                          className={cn(
-                            'group transition-colors hover:bg-raised/70',
-                            getRowClassName?.(row.original),
-                          )}
-                        >
-                          {row.getVisibleCells().map((cell) => {
-                            const align = cell.column.columnDef.meta?.align
-                            return (
-                              <td
-                                key={cell.id}
-                                className={cn(
-                                  'overflow-hidden border-b border-line/60 px-3 text-muted',
-                                  align === 'right' && 'text-right',
-                                  align === 'center' && 'text-center',
-                                )}
-                              >
-                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                              </td>
-                            )
-                          })}
-                        </tr>
-                      )
-                    })}
-
-                    {paddingBottom > 0 ? (
-                      <tr aria-hidden="true" style={{ height: paddingBottom }}>
-                        <td colSpan={columnCount} style={{ padding: 0, border: 0 }} />
-                      </tr>
-                    ) : null}
-                  </>
-                )}
-              </tbody>
-            </table>
+            <DataGridTable
+              table={table}
+              visibleColumns={visibleColumns}
+              caption={caption}
+              filteredCount={filteredCount}
+              sorting={sorting}
+              isLoading={isLoading}
+              showFilterRow={showFilterRow}
+              rows={rows}
+              virtualRows={virtualRows}
+              paddingTop={paddingTop}
+              paddingBottom={paddingBottom}
+              rowHeight={rowHeight}
+              pageIndex={pagination.pageIndex}
+              pageSize={pagination.pageSize}
+              getRowClassName={getRowClassName}
+              onSort={sortByColumn}
+              onFilterChange={filterByColumn}
+              emptyState={
+                <DataGridEmpty
+                  totalRows={data.length}
+                  hasSearch={hasSearch}
+                  hasFilters={hasFilters}
+                  emptyTitle={emptyTitle}
+                  emptyHint={emptyHint}
+                  onClearSearch={clearSearch}
+                  onClearFilters={clearColumnFilters}
+                  onClearAll={clearAll}
+                />
+              }
+            />
           </div>
         )}
       </div>

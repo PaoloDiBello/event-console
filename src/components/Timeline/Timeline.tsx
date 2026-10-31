@@ -1,25 +1,9 @@
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { CalendarRange } from 'lucide-react'
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react'
-import { cn } from '@/lib/cn'
-import { formatCount, pluralize } from '@/lib/format'
-import type { TimelineGroup, TimelineProps } from './types'
-
-type FlatRow<TItem> =
-  | {
-      kind: 'group'
-      key: string
-      group: TimelineGroup<TItem>
-      groupIndex: number
-    }
-  | {
-      kind: 'item'
-      key: string
-      group: TimelineGroup<TItem>
-      groupIndex: number
-      item: TItem
-      itemIndex: number
-    }
+import { TimelineGroupRow, TimelineItemRow } from './TimelineRow'
+import { buildTimelineRows, indexTimelineRows, type TimelineFlatRow } from './timelineModel'
+import type { TimelineProps } from './types'
 
 const DEFAULT_ITEM_HEIGHT = 84
 const DEFAULT_GROUP_HEIGHT = 56
@@ -59,38 +43,14 @@ export function Timeline<TItem>({
   const [activeKey, setActiveKey] = useState<string | null>(null)
   const [announcement, setAnnouncement] = useState('')
 
-  const flatRows = useMemo(() => {
-    const rows: FlatRow<TItem>[] = []
-    groups.forEach((group, groupIndex) => {
-      rows.push({ kind: 'group', key: `g:${group.key}`, group, groupIndex })
-      group.items.forEach((item, itemIndex) => {
-        rows.push({
-          kind: 'item',
-          key: `i:${group.key}:${getItemId(item)}`,
-          group,
-          groupIndex,
-          item,
-          itemIndex,
-        })
-      })
-    })
-    return rows
-  }, [groups, getItemId])
-
-  const indexByKey = useMemo(() => {
-    const map = new Map<string, number>()
-    flatRows.forEach((row, index) => map.set(row.key, index))
-    return map
-  }, [flatRows])
-
-  /** Flat index of the first item in each group, for ← / → jumps. */
-  const firstItemIndexByGroup = useMemo(() => {
-    const map = new Map<number, number>()
-    flatRows.forEach((row, index) => {
-      if (row.kind === 'item' && !map.has(row.groupIndex)) map.set(row.groupIndex, index)
-    })
-    return map
-  }, [flatRows])
+  const flatRows = useMemo(
+    () => buildTimelineRows(groups, getItemId),
+    [groups, getItemId],
+  )
+  const { indexByKey, firstItemIndexByGroup } = useMemo(
+    () => indexTimelineRows(flatRows),
+    [flatRows],
+  )
 
   // TanStack Virtual intentionally exposes non-memoizable instance methods;
   // this component is not compiled by React Compiler.
@@ -122,7 +82,7 @@ export function Timeline<TItem>({
   // Tab stop — otherwise the timeline would have no reachable element.
   const tabbableKey = activeKey && renderedKeys.has(activeKey) ? activeKey : firstRenderedItemKey
 
-  const announce = (row: Extract<FlatRow<TItem>, { kind: 'item' }>) => {
+  const announce = (row: Extract<TimelineFlatRow<TItem>, { kind: 'item' }>) => {
     const day = row.group.shortLabel ?? row.group.label
     setAnnouncement(
       `${day}: ${getItemLabel(row.item)}, ${row.itemIndex + 1} of ${row.group.items.length}`,
@@ -133,7 +93,9 @@ export function Timeline<TItem>({
     const row = flatRows[index]
     if (!row || row.kind !== 'item') return
 
-    const isRendered = virtualizer.getVirtualItems().some((virtualRow) => virtualRow.index === index)
+    const isRendered = virtualizer
+      .getVirtualItems()
+      .some((virtualRow) => virtualRow.index === index)
     if (isRendered) {
       const element = scrollRef.current?.querySelector<HTMLElement>(
         `[data-timeline-item="${row.key}"]`,
@@ -197,7 +159,11 @@ export function Timeline<TItem>({
       case 'ArrowRight':
       case 'ArrowLeft': {
         const step = event.key === 'ArrowRight' ? 1 : -1
-        for (let groupIndex = current.groupIndex + step; groupIndex >= 0 && groupIndex < groups.length; groupIndex += step) {
+        for (
+          let groupIndex = current.groupIndex + step;
+          groupIndex >= 0 && groupIndex < groups.length;
+          groupIndex += step
+        ) {
           const candidate = firstItemIndexByGroup.get(groupIndex)
           if (candidate !== undefined) {
             targetIndex = candidate
@@ -233,6 +199,15 @@ export function Timeline<TItem>({
   }
 
   const empty = flatRows.length === 0
+  const activate = (row: Extract<TimelineFlatRow<TItem>, { kind: 'item' }>) => {
+    setActiveKey(row.key)
+    announce(row)
+    onItemActivate?.(row.item)
+  }
+  const focus = (row: Extract<TimelineFlatRow<TItem>, { kind: 'item' }>) => {
+    setActiveKey(row.key)
+    announce(row)
+  }
 
   return (
     <section
@@ -274,40 +249,17 @@ export function Timeline<TItem>({
                   className="absolute inset-x-0 top-0"
                 >
                   {row.kind === 'group' ? (
-                    <div style={{ height: groupHeight }} className="flex items-end pb-2">
-                      <h3 className="flex w-full items-baseline gap-2.5 border-b border-line/80 pb-2">
-                        <span className="text-sm font-semibold text-ink">{row.group.label}</span>
-                        <span className="font-mono text-[10px] tracking-wide text-faint">
-                          {formatCount(row.group.items.length)}{' '}
-                          {pluralize(row.group.items.length, 'event')}
-                        </span>
-                      </h3>
-                    </div>
+                    <TimelineGroupRow group={row.group} height={groupHeight} />
                   ) : (
-                    <div style={{ height: itemHeight }} className="pb-2">
-                      <div
-                        role="button"
-                        tabIndex={row.key === tabbableKey ? 0 : -1}
-                        data-timeline-item={row.key}
-                        aria-label={`${getItemLabel(row.item)} ${row.group.label}. Event ${row.itemIndex + 1} of ${row.group.items.length}.`}
-                        onClick={() => {
-                          setActiveKey(row.key)
-                          announce(row)
-                          onItemActivate?.(row.item)
-                        }}
-                        onFocus={() => {
-                          setActiveKey(row.key)
-                          announce(row)
-                        }}
-                        className={cn(
-                          'group flex h-full w-full cursor-pointer items-stretch gap-3 rounded-md border border-line bg-surface px-3 text-left',
-                          'transition-colors hover:border-line-strong hover:bg-raised/80',
-                          'focus-visible:border-accent/70 focus-visible:bg-raised/80 focus-visible:outline-2 focus-visible:outline-accent/70',
-                        )}
-                      >
-                        {renderItem(row.item)}
-                      </div>
-                    </div>
+                    <TimelineItemRow
+                      row={row}
+                      height={itemHeight}
+                      tabbable={row.key === tabbableKey}
+                      getItemLabel={getItemLabel}
+                      renderItem={renderItem}
+                      onActivate={activate}
+                      onFocus={focus}
+                    />
                   )}
                 </div>
               )
