@@ -4,7 +4,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
 } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { useRef, useState, type ReactNode } from 'react'
 import { formatCount } from '@/lib/format'
 import { cn } from '@/lib/cn'
 
@@ -59,6 +59,22 @@ export function DataGridPagination({
 }: DataGridPaginationProps) {
   const firstRow = totalRows === 0 ? 0 : pageIndex * pageSize + 1
   const lastRow = Math.min(totalRows, (pageIndex + 1) * pageSize)
+  const safePageCount = Math.max(pageCount, 1)
+
+  // `null` means "follow the grid"; a string means the user is editing a
+  // draft. This avoids an effect that would fight the input on every page
+  // change, and a half-typed value never moves the grid.
+  const [pageDraft, setPageDraft] = useState<string | null>(null)
+  const cancelBlurRef = useRef(false)
+  const pageValue = pageDraft ?? String(pageIndex + 1)
+
+  const commitPage = () => {
+    const parsed = Number.parseInt(pageDraft ?? String(pageIndex + 1), 10)
+    setPageDraft(null)
+    if (!Number.isFinite(parsed)) return
+    const nextIndex = Math.min(Math.max(parsed, 1), safePageCount) - 1
+    if (nextIndex !== pageIndex) onPageChange(nextIndex)
+  }
 
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-line bg-surface/80 px-3 py-2.5 text-xs text-muted">
@@ -84,38 +100,79 @@ export function DataGridPagination({
         </select>
       </label>
 
-      <div className="ml-auto flex items-center gap-1.5">
-        <span className="tnum mr-1 font-mono text-[11px] text-faint">
-          Page {formatCount(pageIndex + 1)} / {formatCount(Math.max(pageCount, 1))}
-        </span>
-        <NavButton
-          label="First page"
-          disabled={pageIndex === 0}
-          onClick={() => onPageChange(0)}
-        >
-          <ChevronsLeft aria-hidden="true" className="size-4" />
-        </NavButton>
-        <NavButton
-          label="Previous page"
-          disabled={pageIndex === 0}
-          onClick={() => onPageChange(pageIndex - 1)}
-        >
-          <ChevronLeft aria-hidden="true" className="size-4" />
-        </NavButton>
-        <NavButton
-          label="Next page"
-          disabled={pageIndex >= pageCount - 1}
-          onClick={() => onPageChange(pageIndex + 1)}
-        >
-          <ChevronRight aria-hidden="true" className="size-4" />
-        </NavButton>
-        <NavButton
-          label="Last page"
-          disabled={pageIndex >= pageCount - 1}
-          onClick={() => onPageChange(Math.max(pageCount - 1, 0))}
-        >
-          <ChevronsRight aria-hidden="true" className="size-4" />
-        </NavButton>
+      <div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
+        <label className="mr-1 flex shrink-0 items-center gap-1.5 font-mono text-[11px] whitespace-nowrap text-faint">
+          <span className="hidden min-[380px]:inline">Page</span>
+          <input
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            autoComplete="off"
+            spellCheck={false}
+            aria-label={`Page number, 1 to ${formatCount(safePageCount)}`}
+            title="Type a page number and press Enter"
+            value={pageValue}
+            disabled={safePageCount <= 1}
+            onChange={(event) => setPageDraft(event.target.value.replace(/\D/g, ''))}
+            onFocus={(event) => {
+              setPageDraft(String(pageIndex + 1))
+              event.currentTarget.select()
+            }}
+            onBlur={() => {
+              if (cancelBlurRef.current) {
+                cancelBlurRef.current = false
+                setPageDraft(null)
+                return
+              }
+              commitPage()
+            }}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault()
+                commitPage()
+                event.currentTarget.select()
+              } else if (event.key === 'Escape') {
+                event.preventDefault()
+                // Cancel the edit and skip the blur commit that follows.
+                cancelBlurRef.current = true
+                setPageDraft(null)
+                event.currentTarget.blur()
+              }
+            }}
+            className="tnum h-7 w-14 rounded-xs border border-line bg-canvas px-1.5 text-center text-[11px] text-ink transition-colors focus:border-accent/60 focus:outline-none disabled:opacity-50"
+          />
+          <span className="tnum whitespace-nowrap">/ {formatCount(safePageCount)}</span>
+        </label>
+        <div className="flex items-center gap-1.5">
+          <NavButton
+            label="First page"
+            disabled={pageIndex === 0}
+            onClick={() => onPageChange(0)}
+          >
+            <ChevronsLeft aria-hidden="true" className="size-4" />
+          </NavButton>
+          <NavButton
+            label="Previous page"
+            disabled={pageIndex === 0}
+            onClick={() => onPageChange(pageIndex - 1)}
+          >
+            <ChevronLeft aria-hidden="true" className="size-4" />
+          </NavButton>
+          <NavButton
+            label="Next page"
+            disabled={pageIndex >= pageCount - 1}
+            onClick={() => onPageChange(pageIndex + 1)}
+          >
+            <ChevronRight aria-hidden="true" className="size-4" />
+          </NavButton>
+          <NavButton
+            label="Last page"
+            disabled={pageIndex >= pageCount - 1}
+            onClick={() => onPageChange(Math.max(pageCount - 1, 0))}
+          >
+            <ChevronsRight aria-hidden="true" className="size-4" />
+          </NavButton>
+        </div>
       </div>
     </div>
   )

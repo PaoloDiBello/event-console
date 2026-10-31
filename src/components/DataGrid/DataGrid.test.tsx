@@ -163,13 +163,46 @@ describe('DataGrid', () => {
 
     expect(await screen.findByText('Row 10')).toBeInTheDocument()
     expect(screen.queryByText('Row 00')).not.toBeInTheDocument()
-    expect(screen.getByText(/Page 2 \/ 3/)).toBeInTheDocument()
+    expect(screen.getByRole('textbox', { name: /Page number/ })).toHaveValue('2')
+    expect(screen.getByText('/ 3')).toBeInTheDocument()
+  })
+
+  it('jumps to a typed page number', async () => {
+    const user = userEvent.setup()
+    renderGrid()
+
+    const pageInput = screen.getByRole('textbox', { name: /Page number/ })
+    await user.clear(pageInput)
+    await user.type(pageInput, '3{Enter}')
+
+    expect(await screen.findByText('Row 20')).toBeInTheDocument()
+    expect(screen.queryByText('Row 10')).not.toBeInTheDocument()
+    expect(pageInput).toHaveValue('3')
+  })
+
+  it('clamps a typed page number and cancels with Escape', async () => {
+    const user = userEvent.setup()
+    renderGrid()
+
+    const pageInput = screen.getByRole('textbox', { name: /Page number/ })
+    await user.clear(pageInput)
+    await user.type(pageInput, '999{Enter}')
+    expect(pageInput).toHaveValue('3')
+    expect(await screen.findByText('Row 20')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'First page' }))
+    await user.clear(pageInput)
+    await user.type(pageInput, '2')
+    await user.keyboard('{Escape}')
+
+    expect(pageInput).toHaveValue('1')
+    expect(pageInput).not.toHaveFocus()
   })
 
   it('jumps to the page that contains a revealed row', async () => {
     renderGrid('r22')
 
     expect(await screen.findByText('Row 22')).toBeInTheDocument()
-    expect(screen.getByText(/Page 3 \/ 3/)).toBeInTheDocument()
+    expect(screen.getByRole('textbox', { name: /Page number/ })).toHaveValue('3')
   })
 })
