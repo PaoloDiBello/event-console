@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { Activity, CalendarRange, Database, Plus, Table2 } from 'lucide-react'
-import { NavLink, useNavigate } from 'react-router-dom'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { cn } from '@/lib/cn'
 import { formatCount } from '@/lib/format'
 import { useEvents } from '@/store/events'
@@ -11,21 +11,21 @@ interface AppHeaderProps {
 
 /**
  * These are two lenses on the same event set, not separate destinations.
- * "Grid" is the record view and "Timeline" is the time view; the page heading
- * supplies the content name ("Event registry" / "Agenda").
+ * The labels match the page headings ("Event registry" / "Agenda"); the
+ * icons carry the representation so the copy stays at the content level.
  */
 const navItems = [
   {
     to: '/grid',
-    label: 'Grid',
-    description: 'Browse every event as rows',
+    label: 'Registry',
+    description: 'Browse every event as records',
     icon: Table2,
     shortcut: 'G',
   },
   {
     to: '/timeline',
-    label: 'Timeline',
-    description: 'Browse events by day',
+    label: 'Agenda',
+    description: 'Browse events arranged by day',
     icon: CalendarRange,
     shortcut: 'T',
   },
@@ -34,6 +34,8 @@ const navItems = [
 export function AppHeader({ onNewEvent }: AppHeaderProps) {
   const events = useEvents()
   const navigate = useNavigate()
+  const { pathname } = useLocation()
+  const isTimeline = pathname.startsWith('/timeline')
 
   // Fast switching without stealing keys from fields, dialogs or menus.
   useEffect(() => {
@@ -78,8 +80,18 @@ export function AppHeader({ onNewEvent }: AppHeaderProps) {
           </span>
           <nav
             aria-label="Event views"
-            className="flex items-center rounded-md border border-line bg-surface/70 p-0.5"
+            className="relative grid grid-cols-2 rounded-md border border-line bg-surface/70 p-0.5"
           >
+            {/* One surface slides between the two modes, so the control reads
+                as a lens rather than two adjacent buttons. */}
+            <span aria-hidden="true" className="pointer-events-none absolute inset-0.5 grid grid-cols-2">
+              <span
+                className={cn(
+                  'col-start-1 row-start-1 rounded-[5px] bg-raised shadow-[inset_0_0_0_1px_var(--color-line-strong)] transition-transform duration-200 ease-out motion-reduce:transition-none',
+                  isTimeline && 'translate-x-full',
+                )}
+              />
+            </span>
             {navItems.map((item) => {
               const Icon = item.icon
               return (
@@ -90,11 +102,9 @@ export function AppHeader({ onNewEvent }: AppHeaderProps) {
                   aria-keyshortcuts={item.shortcut.toLowerCase()}
                   className={({ isActive }) =>
                     cn(
-                      'group inline-flex h-9 items-center gap-1.5 rounded-[5px] px-2.5 text-[11px] font-medium transition-colors sm:px-3 sm:text-xs',
+                      'relative z-10 inline-flex h-9 items-center justify-center gap-1.5 rounded-[5px] px-2.5 text-[11px] font-medium transition-colors sm:px-3 sm:text-xs',
                       'focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent',
-                      isActive
-                        ? 'bg-raised text-ink shadow-[inset_0_0_0_1px_var(--color-line-strong)]'
-                        : 'text-muted hover:bg-raised/60 hover:text-ink',
+                      isActive ? 'text-ink' : 'text-muted hover:text-ink',
                     )
                   }
                 >
@@ -104,7 +114,7 @@ export function AppHeader({ onNewEvent }: AppHeaderProps) {
                         aria-hidden="true"
                         className={cn(
                           'size-3.5 transition-colors',
-                          isActive ? 'text-accent' : 'text-faint group-hover:text-muted',
+                          isActive ? 'text-accent' : 'text-faint',
                         )}
                       />
                       {item.label}
