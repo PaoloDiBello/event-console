@@ -48,6 +48,8 @@ own markup.
 | Search haystack | built in both the generator and the store | `model/search.ts` |
 | Timers | two copies of “clear after N ms” in `useEventEditor` | `shared/hooks/useTransientValue` |
 | Form a11y | repeated `aria-invalid` / `aria-describedby` pairs | `fieldA11y` helper |
+| Empty states | duplicated centering and copy layout in grid, agenda and timeline | shared `EmptyState` |
+| Keyboard hints | three local `kbd` class strings | shared `Kbd` |
 
 ## Guardrails
 

@@ -257,7 +257,7 @@ src/
   components/
     DataGrid/                composition, hooks/, table/header/body, toolbar, model/
     Timeline/                composition, hooks/, rows, model
-    ui/                      PageHeader
+    ui/                      PageHeader, EmptyState, Kbd
   shared/
     hooks/                   useGlobalKeydown, useTransientValue
     lib/                     dates, formatting, cn, keyboard guards

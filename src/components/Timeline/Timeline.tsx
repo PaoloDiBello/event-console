@@ -1,6 +1,7 @@
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { CalendarRange } from 'lucide-react'
 import { useId, useRef } from 'react'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { useTimelineAnnouncement } from './hooks/useTimelineAnnouncement'
 import { useTimelineFocus } from './hooks/useTimelineFocus'
 import { useTimelineKeyboard } from './hooks/useTimelineKeyboard'
@@ -102,17 +103,14 @@ export function Timeline<TItem>({
         className="scrollbar-thin relative min-h-0 flex-1 overflow-auto px-3"
       >
         {empty ? (
-          <div className="flex h-full flex-col items-center justify-center px-6 py-16 text-center">
-            {emptyState ?? (
-              <>
-                <CalendarRange aria-hidden="true" className="size-7 text-faint" />
-                <p className="mt-3 text-sm font-medium text-ink">Nothing scheduled</p>
-                <p className="mt-1 max-w-sm text-xs text-muted">
-                  No events fall inside this window. Try a wider range or clear the search.
-                </p>
-              </>
-            )}
-          </div>
+          emptyState ?? (
+            <EmptyState
+              className="h-full px-6 py-16"
+              icon={<CalendarRange aria-hidden="true" className="size-7 text-faint" />}
+              title="Nothing scheduled"
+              hint="No events fall inside this window. Try a wider range or clear the search."
+            />
+          )
         ) : (
           <div style={{ height: totalSize }} className="relative">
             {virtualRows.map((virtualRow) => {

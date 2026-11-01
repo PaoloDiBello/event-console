@@ -1,5 +1,6 @@
 import { Search, X } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { Kbd } from '@/components/ui/Kbd'
 import { formatCount } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/cn'
 import { TIMELINE_SCOPES, type TimelineScope } from './agendaData'
@@ -12,14 +13,6 @@ interface AgendaHeaderProps {
   total: number
   dayCount: number
   atRisk: number
-}
-
-function Key({ children }: { children: string }) {
-  return (
-    <kbd className="inline-flex h-5 min-w-5 items-center justify-center rounded-xs border border-line bg-raised px-1 font-mono text-[10px] text-muted">
-      {children}
-    </kbd>
-  )
 }
 
 export function AgendaHeader({
@@ -95,19 +88,19 @@ export function AgendaHeader({
         </p>
 
         <div className="hidden items-center gap-1.5 pl-1 text-[10px] text-faint xl:flex">
-          <Key>↑</Key>
-          <Key>↓</Key>
+          <Kbd className="inline-flex h-5 min-w-5 px-1">↑</Kbd>
+          <Kbd className="inline-flex h-5 min-w-5 px-1">↓</Kbd>
           <span>move</span>
           <span aria-hidden="true" className="mx-1 text-line-strong">
             /
           </span>
-          <Key>←</Key>
-          <Key>→</Key>
+          <Kbd className="inline-flex h-5 min-w-5 px-1">←</Kbd>
+          <Kbd className="inline-flex h-5 min-w-5 px-1">→</Kbd>
           <span>day</span>
           <span aria-hidden="true" className="mx-1 text-line-strong">
             /
           </span>
-          <Key>↵</Key>
+          <Kbd className="inline-flex h-5 min-w-5 px-1">↵</Kbd>
           <span>edit</span>
         </div>
       </div>

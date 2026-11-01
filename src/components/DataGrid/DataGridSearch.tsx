@@ -1,5 +1,6 @@
 import { Search, X } from 'lucide-react'
 import type { RefObject } from 'react'
+import { Kbd } from '@/components/ui/Kbd'
 
 interface DataGridSearchProps {
   search: string
@@ -67,13 +68,14 @@ export function DataGridSearch({
           <X aria-hidden="true" className="size-3.5" />
         </button>
       ) : (
-        <kbd
-          aria-hidden="true"
+        <Kbd
+          ariaHidden
           title="Press / to focus search"
-          className="pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2 rounded-xs border border-line bg-raised px-1.5 py-0.5 font-mono text-[10px] text-faint group-focus-within:hidden"
+          tone="faint"
+          className="pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2 px-1.5 py-0.5 group-focus-within:hidden"
         >
           /
-        </kbd>
+        </Kbd>
       )}
     </div>
   )

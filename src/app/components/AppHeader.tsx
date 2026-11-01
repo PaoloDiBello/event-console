@@ -1,5 +1,6 @@
 import { Activity, CalendarRange, Database, Plus, Table2 } from 'lucide-react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { Kbd } from '@/components/ui/Kbd'
 import { useEvents } from '@/features/events/store'
 import { useGlobalKeydown } from '@/shared/hooks/useGlobalKeydown'
 import { cn } from '@/shared/lib/cn'
@@ -132,12 +133,13 @@ export function AppHeader({ onNewEvent }: AppHeaderProps) {
           >
             <Plus aria-hidden="true" className="size-4" />
             <span className="hidden sm:inline">New event</span>
-            <kbd
-              aria-hidden="true"
-              className="ml-1 hidden rounded-xs border border-accent/30 bg-canvas/60 px-1.5 py-0.5 font-mono text-[10px] font-normal text-accent/80 lg:inline"
+            <Kbd
+              ariaHidden
+              tone="accent"
+              className="ml-1 hidden px-1.5 py-0.5 font-normal lg:inline-flex"
             >
               N
-            </kbd>
+            </Kbd>
           </button>
         </div>
       </div>

@@ -136,6 +136,8 @@ src/
       types.ts / index.ts
     ui/
       PageHeader.tsx                generic page heading/actions layout
+      EmptyState.tsx                shared empty-state layout
+      Kbd.tsx                       keyboard hint chip
 
   shared/
     hooks/                          reusable React hooks
@@ -166,7 +168,7 @@ Large components were split along state ownership, not visual size:
   effects, and callbacks. They are the only place a view's rules live.
 - **Presentational regions** (`DataGridTable`, `DataGridHeader`,
   `DataGridBody`, `DataGridColumnFilter`, `TimelineRow`, `EventFormFields`,
-  `EventFormFooter`) receive data and callbacks and render markup.
+  `EventFormFooter`, `EmptyState`) receive data and callbacks and render markup.
 - **Pure model** (`model/*`, `timelineModel.ts`, `agendaData.ts`,
   `formValues.ts`, `schema.ts`, `search.ts`) has no React imports where
   possible.

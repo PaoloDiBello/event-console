@@ -1,4 +1,5 @@
 import { Inbox, SearchX, SlidersHorizontal } from 'lucide-react'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { formatCount, pluralize } from '@/shared/lib/format'
 
 interface DataGridEmptyProps {
@@ -61,21 +62,22 @@ export function DataGridEmpty({
   const Icon = hasSearch ? SearchX : hasFilters ? SlidersHorizontal : Inbox
 
   return (
-    <div className="flex flex-col items-center justify-center px-6 py-24 text-center">
-      <Icon aria-hidden="true" className="size-7 text-faint" />
-      <p className="mt-3 text-sm font-medium text-ink">{hasQuery ? copy.title : emptyTitle}</p>
-      <p className="mt-1 max-w-sm text-xs leading-relaxed text-muted">
-        {hasQuery ? copy.hint : emptyHint}
-      </p>
-      {hasQuery ? (
-        <button
-          type="button"
-          onClick={onClear}
-          className="mt-4 inline-flex h-8 items-center gap-1.5 rounded-sm border border-line-strong bg-raised px-3 text-xs font-medium text-ink transition-colors hover:border-accent/40 hover:text-accent"
-        >
-          {copy.actionLabel}
-        </button>
-      ) : null}
-    </div>
+    <EmptyState
+      icon={<Icon aria-hidden="true" className="size-7 text-faint" />}
+      title={hasQuery ? copy.title : emptyTitle}
+      hint={hasQuery ? copy.hint : emptyHint}
+      hintClassName="leading-relaxed"
+      action={
+        hasQuery ? (
+          <button
+            type="button"
+            onClick={onClear}
+            className="inline-flex h-8 items-center gap-1.5 rounded-sm border border-line-strong bg-raised px-3 text-xs font-medium text-ink transition-colors hover:border-accent/40 hover:text-accent"
+          >
+            {copy.actionLabel}
+          </button>
+        ) : undefined
+      }
+    />
   )
 }
