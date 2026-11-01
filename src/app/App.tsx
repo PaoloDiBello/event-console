@@ -5,7 +5,8 @@ import { AppToast } from '@/app/components/AppToast'
 import { RouteFallback } from '@/app/components/RouteFallback'
 import { useEventEditor } from '@/app/hooks/useEventEditor'
 import { useEventStore } from '@/features/events/store'
-import { hasCommandModifier, isShortcutBlocked, useGlobalKeydown } from '@/shared/lib/keyboard'
+import { useGlobalKeydown } from '@/shared/hooks/useGlobalKeydown'
+import { hasCommandModifier, isShortcutBlocked } from '@/shared/lib/keyboard'
 
 // Routes and the editor are split out so the initial shell does not download
 // the table, the timeline and the form stack before it can paint.

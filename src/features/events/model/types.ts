@@ -77,6 +77,13 @@ export const STATUS_TONE: Record<EventStatus, string> = {
   at_risk: 'border-rose/30 bg-rose/10 text-rose',
 }
 
+export const PRIORITY_TONE: Record<EventPriority, string> = {
+  critical: 'text-rose',
+  high: 'text-amber',
+  medium: 'text-sky',
+  low: 'text-faint',
+}
+
 export const CATEGORY_TONE: Record<EventCategory, string> = {
   meeting: 'text-violet',
   deploy: 'text-sky',

@@ -1,4 +1,5 @@
 import {
+  buildSearchText,
   generateEvents,
   nextEventId,
   type EventDraft,
@@ -20,11 +21,7 @@ interface EventStore {
 }
 
 function withSearch(draft: EventDraft): Omit<EventRecord, 'id'> {
-  return {
-    ...draft,
-    search:
-      `${draft.title} ${draft.owner} ${draft.location} ${draft.category} ${draft.status} ${draft.priority} ${draft.date}`.toLowerCase(),
-  }
+  return { ...draft, search: buildSearchText(draft) }
 }
 
 /**

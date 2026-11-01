@@ -1,13 +1,9 @@
-import { zodResolver } from '@hookform/resolvers/zod'
 import * as Dialog from '@radix-ui/react-dialog'
 import { CalendarPlus, X } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
-import { useForm } from 'react-hook-form'
 import type { EventDraft, EventRecord } from '@/features/events/model'
 import { EventFormFields } from './EventFormFields'
 import { EventFormFooter } from './EventFormFooter'
-import { toFormValues } from './formValues'
-import { eventFormSchema, parseTimeToMinute, type EventFormValues } from './schema'
+import { useEventFormController } from './useEventFormController'
 
 export interface EventFormProps {
   open: boolean
@@ -29,91 +25,18 @@ export function EventForm({
   onSubmit,
   returnFocusTo,
 }: EventFormProps) {
-  const [isSaving, setIsSaving] = useState(false)
-  const [saveError, setSaveError] = useState<string | null>(null)
-  const [confirmDiscard, setConfirmDiscard] = useState(false)
-  const keepEditingRef = useRef<HTMLButtonElement>(null)
-  const cancelRef = useRef<HTMLButtonElement>(null)
-  const wasConfirming = useRef(false)
-
-  const form = useForm<EventFormValues>({
-    resolver: zodResolver(eventFormSchema),
-    defaultValues: toFormValues(event),
-    mode: 'onSubmit',
-    reValidateMode: 'onChange',
-    // The requirement, straight from react-hook-form: on a failed submit, focus
-    // moves to the first field whose validation failed.
-    shouldFocusError: true,
-  })
-
-  const { isDirty } = form.formState
-
-  useEffect(() => {
-    // Reopening on a different event must start from that event's values.
-    // Opening state (saving/discard/save error) is cleared by close().
-    if (open) form.reset(toFormValues(event))
-  }, [open, event, form])
-
-  const close = () => {
-    form.reset(toFormValues(event))
-    setConfirmDiscard(false)
-    setSaveError(null)
-    onOpenChange(false)
-  }
-
-  const requestClose = () => {
-    if (isSaving) return
-    // Escape or Cancel while the prompt is up means "keep editing".
-    if (confirmDiscard) {
-      setConfirmDiscard(false)
-      return
-    }
-    if (isDirty) {
-      setConfirmDiscard(true)
-      return
-    }
-    close()
-  }
-
-  // The prompt replaces the action row, so move focus onto it and put it back
-  // on Cancel when the prompt is dismissed.
-  useEffect(() => {
-    if (confirmDiscard) {
-      wasConfirming.current = true
-      keepEditingRef.current?.focus()
-    } else if (wasConfirming.current) {
-      wasConfirming.current = false
-      cancelRef.current?.focus()
-    }
-  }, [confirmDiscard])
-
-  const submit = form.handleSubmit(async (values) => {
-    setIsSaving(true)
-    setSaveError(null)
-
-    const draft: EventDraft = {
-      title: values.title.trim(),
-      date: values.date,
-      startMinute: parseTimeToMinute(values.startTime),
-      durationMin: Number(values.durationMin),
-      category: values.category,
-      status: values.status,
-      priority: values.priority,
-      owner: values.owner.trim() || 'Unassigned',
-      location: values.location.trim() || 'Remote',
-      ...(values.notes.trim() ? { notes: values.notes.trim() } : {}),
-    }
-
-    try {
-      await onSubmit(draft)
-      form.reset(toFormValues({ ...draft, id: event?.id ?? 'draft', search: '' }))
-      onOpenChange(false)
-    } catch (error) {
-      setSaveError(error instanceof Error ? error.message : 'Could not save the event. Try again.')
-    } finally {
-      setIsSaving(false)
-    }
-  })
+  const {
+    form,
+    isSaving,
+    saveError,
+    confirmDiscard,
+    keepEditingRef,
+    cancelRef,
+    close,
+    requestClose,
+    submit,
+    keepEditing,
+  } = useEventFormController({ open, event, onOpenChange, onSubmit })
 
   return (
     <Dialog.Root
@@ -176,7 +99,7 @@ export function EventForm({
                 keepEditingRef={keepEditingRef}
                 cancelRef={cancelRef}
                 onCancel={requestClose}
-                onKeepEditing={() => setConfirmDiscard(false)}
+                onKeepEditing={keepEditing}
                 onDiscard={close}
               />
             </form>

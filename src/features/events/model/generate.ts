@@ -4,6 +4,7 @@ import type {
   EventRecord,
   EventStatus,
 } from './types'
+import { buildSearchText } from './search'
 import { shiftIsoDay, todayIso } from '@/shared/lib/dates'
 
 /**
@@ -212,7 +213,7 @@ function makeEvent(rng: Rng, id: string, date: string, isFuture: boolean): Event
   const priority = weighted(rng, PRIORITIES)
   const notes = rng() < 0.22 ? pick(rng, NOTES) : undefined
 
-  return {
+  const event: Omit<EventRecord, 'search'> = {
     id,
     title,
     date,
@@ -226,8 +227,9 @@ function makeEvent(rng: Rng, id: string, date: string, isFuture: boolean): Event
     owner,
     location,
     ...(notes ? { notes } : {}),
-    search: `${title} ${owner} ${location} ${category} ${status} ${priority} ${date}`.toLowerCase(),
   }
+
+  return { ...event, search: buildSearchText(event) }
 }
 
 /**

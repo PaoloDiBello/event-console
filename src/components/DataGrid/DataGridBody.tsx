@@ -47,11 +47,7 @@ export function DataGridBody<TData>({
         </tr>
       ) : (
         <>
-          {paddingTop > 0 ? (
-            <tr aria-hidden="true" style={{ height: paddingTop }}>
-              <td colSpan={columnCount} style={{ padding: 0, border: 0 }} />
-            </tr>
-          ) : null}
+          <SpacerRow height={paddingTop} colSpan={columnCount} />
 
           {virtualRows.map((virtualRow) => {
             const row = rows[virtualRow.index]
@@ -86,13 +82,19 @@ export function DataGridBody<TData>({
             )
           })}
 
-          {paddingBottom > 0 ? (
-            <tr aria-hidden="true" style={{ height: paddingBottom }}>
-              <td colSpan={columnCount} style={{ padding: 0, border: 0 }} />
-            </tr>
-          ) : null}
+          <SpacerRow height={paddingBottom} colSpan={columnCount} />
         </>
       )}
     </tbody>
+  )
+}
+
+/** Virtualizer padding: a zero-height row would still cost a DOM node. */
+function SpacerRow({ height, colSpan }: { height: number; colSpan: number }) {
+  if (height <= 0) return null
+  return (
+    <tr aria-hidden="true" style={{ height }}>
+      <td colSpan={colSpan} style={{ padding: 0, border: 0 }} />
+    </tr>
   )
 }

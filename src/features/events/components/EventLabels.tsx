@@ -2,6 +2,7 @@ import { cn } from '@/shared/lib/cn'
 import {
   CATEGORY_TONE,
   PRIORITY_LABEL,
+  PRIORITY_TONE,
   STATUS_LABEL,
   STATUS_TONE,
   type EventCategory,
@@ -21,13 +22,6 @@ export function StatusBadge({ status, className }: { status: EventStatus; classN
       {STATUS_LABEL[status]}
     </span>
   )
-}
-
-const PRIORITY_TONE: Record<EventPriority, string> = {
-  critical: 'text-rose',
-  high: 'text-amber',
-  medium: 'text-sky',
-  low: 'text-faint',
 }
 
 export function PriorityLabel({ priority }: { priority: EventPriority }) {

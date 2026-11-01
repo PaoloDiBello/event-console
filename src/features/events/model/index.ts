@@ -1,4 +1,5 @@
 export * from './types'
+export { buildSearchText } from './search'
 export {
   AGENDA_EVENT_COUNT,
   AGENDA_WINDOW_DAYS,

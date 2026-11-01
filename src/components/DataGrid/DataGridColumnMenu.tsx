@@ -9,16 +9,11 @@ import {
 } from '@radix-ui/react-dropdown-menu'
 import type { Table } from '@tanstack/react-table'
 import { Columns3 } from 'lucide-react'
+import { columnLabel } from './utils'
 
 interface DataGridColumnMenuProps<TData> {
   table: Table<TData>
   disabled?: boolean
-}
-
-function columnLabel<TData>(table: Table<TData>, columnId: string): string {
-  const column = table.getColumn(columnId)
-  const header = column?.columnDef.header
-  return typeof header === 'string' ? header : (column?.id ?? columnId)
 }
 
 export function DataGridColumnMenu<TData>({
@@ -61,7 +56,7 @@ export function DataGridColumnMenu<TData>({
             onSelect={(event) => event.preventDefault()}
             className="flex cursor-pointer items-center gap-2 rounded-xs px-2 py-1.5 text-xs text-muted outline-none select-none data-[highlighted]:bg-canvas data-[highlighted]:text-ink"
           >
-            {columnLabel(table, column.id)}
+            {columnLabel(table.getColumn(column.id), column.id)}
           </DropdownMenuCheckboxItem>
         ))}
         <DropdownMenuSeparator className="my-1 h-px bg-line" />

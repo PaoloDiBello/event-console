@@ -1,7 +1,7 @@
 import { formatCount, pluralize } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/cn'
 import type { ReactNode } from 'react'
-import type { TimelineFlatRow } from './timelineModel'
+import type { TimelineItemRowData } from './timelineModel'
 import type { TimelineGroup } from './types'
 
 interface TimelineGroupRowProps<TItem> {
@@ -21,8 +21,6 @@ export function TimelineGroupRow<TItem>({ group, height }: TimelineGroupRowProps
     </div>
   )
 }
-
-type TimelineItemRowData<TItem> = Extract<TimelineFlatRow<TItem>, { kind: 'item' }>
 
 interface TimelineItemRowProps<TItem> {
   row: TimelineItemRowData<TItem>

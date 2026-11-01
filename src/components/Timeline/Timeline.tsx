@@ -1,8 +1,12 @@
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { CalendarRange } from 'lucide-react'
-import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react'
+import { useId, useRef } from 'react'
+import { useTimelineAnnouncement } from './hooks/useTimelineAnnouncement'
+import { useTimelineFocus } from './hooks/useTimelineFocus'
+import { useTimelineKeyboard } from './hooks/useTimelineKeyboard'
+import { useTimelineModel } from './hooks/useTimelineModel'
 import { TimelineGroupRow, TimelineItemRow } from './TimelineRow'
-import { buildTimelineRows, indexTimelineRows, type TimelineFlatRow } from './timelineModel'
+import type { TimelineItemRowData } from './timelineModel'
 import type { TimelineProps } from './types'
 
 const DEFAULT_ITEM_HEIGHT = 84
@@ -16,16 +20,9 @@ const DEFAULT_GROUP_HEIGHT = 56
  * meaningful boundary — each announcement carries group + position, so focus
  * moving into a new day is never silent.
  *
- * Keyboard model:
- * - ↑ / ↓  previous / next event, crossing day boundaries in reading order
- * - ← / →  first event of the previous / next day
- * - Home / End  first / last event
- * - Enter / Space  activate (open the editor)
- *
- * The hard part of combining this with virtualization is that the element you
- * want to focus may not be mounted yet. When that happens, the target key is
- * parked in `pendingFocusRef`, the list scrolls to the row, and an effect
- * focuses it as soon as it renders.
+ * The stateful parts live in hooks: the model flattens and indexes the rows,
+ * the focus hook owns the roving tabindex and pending focus, the keyboard hook
+ * owns the navigation rules, and the announcement hook owns the live region.
  */
 export function Timeline<TItem>({
   groups,
@@ -39,17 +36,9 @@ export function Timeline<TItem>({
   groupHeight = DEFAULT_GROUP_HEIGHT,
 }: TimelineProps<TItem>) {
   const scrollRef = useRef<HTMLDivElement>(null)
-  const pendingFocusRef = useRef<string | null>(null)
-  const [activeKey, setActiveKey] = useState<string | null>(null)
-  const [announcement, setAnnouncement] = useState('')
-
-  const flatRows = useMemo(
-    () => buildTimelineRows(groups, getItemId),
-    [groups, getItemId],
-  )
-  const { indexByKey, firstItemIndexByGroup } = useMemo(
-    () => indexTimelineRows(flatRows),
-    [flatRows],
+  const { flatRows, indexByKey, firstItemIndexByGroup, groupsKey } = useTimelineModel(
+    groups,
+    getItemId,
   )
 
   // TanStack Virtual intentionally exposes non-memoizable instance methods;
@@ -66,148 +55,36 @@ export function Timeline<TItem>({
   const virtualRows = virtualizer.getVirtualItems()
   const totalSize = virtualizer.getTotalSize()
 
-  const renderedKeys = useMemo(
-    () => new Set(virtualRows.map((row) => flatRows[row.index]?.key).filter(Boolean) as string[]),
-    [virtualRows, flatRows],
-  )
-  const firstRenderedItemKey = useMemo(() => {
-    for (const virtualRow of virtualRows) {
-      const row = flatRows[virtualRow.index]
-      if (row?.kind === 'item') return row.key
-    }
-    return null
-  }, [virtualRows, flatRows])
-
-  // If the remembered item scrolled away, the first rendered item becomes the
-  // Tab stop — otherwise the timeline would have no reachable element.
-  const tabbableKey = activeKey && renderedKeys.has(activeKey) ? activeKey : firstRenderedItemKey
-
-  const announce = (row: Extract<TimelineFlatRow<TItem>, { kind: 'item' }>) => {
-    const day = row.group.shortLabel ?? row.group.label
-    setAnnouncement(
-      `${day}: ${getItemLabel(row.item)}, ${row.itemIndex + 1} of ${row.group.items.length}`,
-    )
-  }
-
-  const focusRow = (index: number) => {
-    const row = flatRows[index]
-    if (!row || row.kind !== 'item') return
-
-    const isRendered = virtualizer
-      .getVirtualItems()
-      .some((virtualRow) => virtualRow.index === index)
-    if (isRendered) {
-      const element = scrollRef.current?.querySelector<HTMLElement>(
-        `[data-timeline-item="${row.key}"]`,
-      )
-      if (element) {
-        element.focus({ preventScroll: true })
-        return
-      }
-    }
-
-    // Not mounted: scroll it into view, then let the effect below focus it.
-    pendingFocusRef.current = row.key
-    virtualizer.scrollToIndex(index, { align: 'center' })
-  }
-
-  useEffect(() => {
-    const key = pendingFocusRef.current
-    if (!key) return
-    const element = scrollRef.current?.querySelector<HTMLElement>(`[data-timeline-item="${key}"]`)
-    if (element) {
-      element.focus({ preventScroll: true })
-      pendingFocusRef.current = null
-    }
+  const { announcement, announce, clearAnnouncement } = useTimelineAnnouncement(getItemLabel)
+  const { setActiveKey, tabbableKey, focusRow } = useTimelineFocus({
+    flatRows,
+    virtualRows,
+    virtualizer,
+    scrollRef,
+    groupsKey,
+    onGroupsChange: clearAnnouncement,
+  })
+  const onKeyDown = useTimelineKeyboard({
+    groups,
+    flatRows,
+    indexByKey,
+    firstItemIndexByGroup,
+    focusRow,
+    onItemActivate,
   })
 
-  // New windows/filters start at the top; adding an event to an existing day
-  // must not yank the user back up.
-  const groupsKey = groups.map((group) => group.key).join('|')
-  useEffect(() => {
-    setActiveKey(null)
-    setAnnouncement('')
-    scrollRef.current?.scrollTo({ top: 0 })
-  }, [groupsKey])
-
-  const helpId = useId()
-
-  const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    const card = (event.target as HTMLElement).closest<HTMLElement>('[data-timeline-item]')
-    if (!card) return
-    const key = card.dataset.timelineItem
-    if (!key) return
-    const currentIndex = indexByKey.get(key)
-    if (currentIndex === undefined) return
-    const current = flatRows[currentIndex]
-    if (!current || current.kind !== 'item') return
-
-    let targetIndex: number | null = null
-
-    switch (event.key) {
-      case 'ArrowDown':
-      case 'ArrowUp': {
-        const step = event.key === 'ArrowDown' ? 1 : -1
-        for (let i = currentIndex + step; i >= 0 && i < flatRows.length; i += step) {
-          if (flatRows[i]?.kind === 'item') {
-            targetIndex = i
-            break
-          }
-        }
-        break
-      }
-      case 'ArrowRight':
-      case 'ArrowLeft': {
-        const step = event.key === 'ArrowRight' ? 1 : -1
-        for (
-          let groupIndex = current.groupIndex + step;
-          groupIndex >= 0 && groupIndex < groups.length;
-          groupIndex += step
-        ) {
-          const candidate = firstItemIndexByGroup.get(groupIndex)
-          if (candidate !== undefined) {
-            targetIndex = candidate
-            break
-          }
-        }
-        break
-      }
-      case 'Home': {
-        targetIndex = firstItemIndexByGroup.get(0) ?? null
-        break
-      }
-      case 'End': {
-        for (let i = flatRows.length - 1; i >= 0; i -= 1) {
-          if (flatRows[i]?.kind === 'item') {
-            targetIndex = i
-            break
-          }
-        }
-        break
-      }
-      case 'Enter':
-      case ' ':
-        event.preventDefault()
-        onItemActivate?.(current.item)
-        return
-      default:
-        return
-    }
-
-    event.preventDefault()
-    if (targetIndex !== null) focusRow(targetIndex)
-  }
-
   const empty = flatRows.length === 0
-  const activate = (row: Extract<TimelineFlatRow<TItem>, { kind: 'item' }>) => {
+  const activate = (row: TimelineItemRowData<TItem>) => {
     setActiveKey(row.key)
     announce(row)
     onItemActivate?.(row.item)
   }
-  const focus = (row: Extract<TimelineFlatRow<TItem>, { kind: 'item' }>) => {
+  const focus = (row: TimelineItemRowData<TItem>) => {
     setActiveKey(row.key)
     announce(row)
   }
+
+  const helpId = useId()
 
   return (
     <section

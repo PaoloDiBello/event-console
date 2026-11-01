@@ -1,6 +1,6 @@
-import type { EventRecord } from '@/features/events/model'
+import type { EventDraft, EventRecord } from '@/features/events/model'
 import { formatMinute, todayIso } from '@/shared/lib/dates'
-import { DURATION_OPTIONS, type EventFormValues } from './schema'
+import { DURATION_OPTIONS, parseTimeToMinute, type EventFormValues } from './schema'
 
 /** Map an existing event onto editable form values, with safe defaults. */
 export function toFormValues(event?: EventRecord | null): EventFormValues {
@@ -18,5 +18,24 @@ export function toFormValues(event?: EventRecord | null): EventFormValues {
     owner: event?.owner ?? '',
     location: event?.location ?? '',
     notes: event?.notes ?? '',
+  }
+}
+
+/**
+ * Map validated form values onto the domain draft. This is a pure function so
+ * the trim/default rules can be tested without mounting the dialog.
+ */
+export function toEventDraft(values: EventFormValues): EventDraft {
+  return {
+    title: values.title.trim(),
+    date: values.date,
+    startMinute: parseTimeToMinute(values.startTime),
+    durationMin: Number(values.durationMin),
+    category: values.category,
+    status: values.status,
+    priority: values.priority,
+    owner: values.owner.trim() || 'Unassigned',
+    location: values.location.trim() || 'Remote',
+    ...(values.notes.trim() ? { notes: values.notes.trim() } : {}),
   }
 }

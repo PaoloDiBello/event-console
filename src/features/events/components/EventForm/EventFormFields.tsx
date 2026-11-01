@@ -14,6 +14,17 @@ interface EventFormFieldsProps {
   form: UseFormReturn<EventFormValues>
 }
 
+/**
+ * `Field` renders the error/hint with an id derived from `htmlFor`, so the
+ * input side of the relationship can be derived the same way.
+ */
+function fieldA11y(name: string, hasError: boolean, hintId?: string) {
+  return {
+    'aria-invalid': hasError,
+    'aria-describedby': hasError ? `${name}-error` : hintId,
+  }
+}
+
 export function EventFormFields({ form }: EventFormFieldsProps) {
   const {
     control,
@@ -40,8 +51,7 @@ export function EventFormFields({ form }: EventFormFieldsProps) {
               autoComplete="off"
               placeholder="e.g. Deploy billing-api v3.2.0 to production"
               aria-required="true"
-              aria-invalid={Boolean(errors.title)}
-              aria-describedby={errors.title ? 'title-error' : undefined}
+              {...fieldA11y('title', Boolean(errors.title))}
               className={inputClass}
             />
           )}
@@ -64,8 +74,7 @@ export function EventFormFields({ form }: EventFormFieldsProps) {
               id="date"
               type="date"
               aria-required="true"
-              aria-invalid={Boolean(errors.date)}
-              aria-describedby={errors.date ? 'date-error' : 'date-hint'}
+              {...fieldA11y('date', Boolean(errors.date), 'date-hint')}
               className={inputClass}
             />
           )}
@@ -82,8 +91,7 @@ export function EventFormFields({ form }: EventFormFieldsProps) {
               id="startTime"
               type="time"
               step={300}
-              aria-invalid={Boolean(errors.startTime)}
-              aria-describedby={errors.startTime ? 'startTime-error' : undefined}
+              {...fieldA11y('startTime', Boolean(errors.startTime))}
               className={inputClass}
             />
           )}
@@ -99,8 +107,7 @@ export function EventFormFields({ form }: EventFormFieldsProps) {
               {...field}
               id="durationMin"
               className={selectClass}
-              aria-invalid={Boolean(errors.durationMin)}
-              aria-describedby={errors.durationMin ? 'durationMin-error' : undefined}
+              {...fieldA11y('durationMin', Boolean(errors.durationMin))}
             >
               {DURATION_OPTIONS.map((minutes) => (
                 <option key={minutes} value={minutes}>
@@ -121,8 +128,7 @@ export function EventFormFields({ form }: EventFormFieldsProps) {
               {...field}
               id="category"
               className={selectClass}
-              aria-invalid={Boolean(errors.category)}
-              aria-describedby={errors.category ? 'category-error' : undefined}
+              {...fieldA11y('category', Boolean(errors.category))}
             >
               {EVENT_CATEGORIES.map((category) => (
                 <option key={category} value={category} className="capitalize">
@@ -143,8 +149,7 @@ export function EventFormFields({ form }: EventFormFieldsProps) {
               {...field}
               id="status"
               className={selectClass}
-              aria-invalid={Boolean(errors.status)}
-              aria-describedby={errors.status ? 'status-error' : undefined}
+              {...fieldA11y('status', Boolean(errors.status))}
             >
               {EVENT_STATUSES.map((status) => (
                 <option key={status} value={status}>
@@ -165,8 +170,7 @@ export function EventFormFields({ form }: EventFormFieldsProps) {
               {...field}
               id="priority"
               className={selectClass}
-              aria-invalid={Boolean(errors.priority)}
-              aria-describedby={errors.priority ? 'priority-error' : undefined}
+              {...fieldA11y('priority', Boolean(errors.priority))}
             >
               {EVENT_PRIORITIES.map((priority) => (
                 <option key={priority} value={priority}>
@@ -189,8 +193,7 @@ export function EventFormFields({ form }: EventFormFieldsProps) {
               type="text"
               autoComplete="off"
               placeholder="Unassigned"
-              aria-invalid={Boolean(errors.owner)}
-              aria-describedby={errors.owner ? 'owner-error' : undefined}
+              {...fieldA11y('owner', Boolean(errors.owner))}
               className={inputClass}
             />
           )}
@@ -208,8 +211,7 @@ export function EventFormFields({ form }: EventFormFieldsProps) {
               type="text"
               autoComplete="off"
               placeholder="Remote"
-              aria-invalid={Boolean(errors.location)}
-              aria-describedby={errors.location ? 'location-error' : undefined}
+              {...fieldA11y('location', Boolean(errors.location))}
               className={inputClass}
             />
           )}
@@ -231,8 +233,7 @@ export function EventFormFields({ form }: EventFormFieldsProps) {
               id="notes"
               rows={2}
               placeholder="Optional context for the attendees…"
-              aria-invalid={Boolean(errors.notes)}
-              aria-describedby={errors.notes ? 'notes-error' : undefined}
+              {...fieldA11y('notes', Boolean(errors.notes))}
               className={`${inputClass} h-auto resize-y py-2`}
             />
           )}

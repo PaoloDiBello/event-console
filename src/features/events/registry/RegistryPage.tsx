@@ -1,7 +1,7 @@
-import { useCallback, useMemo } from 'react'
+import { useMemo } from 'react'
 import { DataGrid } from '@/components/DataGrid'
 import type { EventRecord } from '@/features/events/model'
-import { useEventError, useEventStatus, useEvents, useEventStore } from '@/features/events/store'
+import { useEventFeed } from '@/features/events/store'
 import { createEventColumns, eventGlobalFilter } from './columns'
 import { RegistryHeader } from './RegistryHeader'
 import { useRegistryStats } from './useRegistryStats'
@@ -17,21 +17,10 @@ function getEventRowId(event: EventRecord) {
 }
 
 export function RegistryPage({ onEdit, highlightedId }: RegistryPageProps) {
-  const events = useEvents()
-  const status = useEventStatus()
-  const error = useEventError()
-  const load = useEventStore((state) => state.load)
+  const { events, status, error, isLoading, reload, simulateError } = useEventFeed()
 
   const columns = useMemo(() => createEventColumns(onEdit), [onEdit])
   const stats = useRegistryStats(events)
-
-  const reload = useCallback(() => {
-    void load()
-  }, [load])
-
-  const simulateError = useCallback(() => {
-    void load({ fail: true })
-  }, [load])
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
@@ -49,7 +38,7 @@ export function RegistryPage({ onEdit, highlightedId }: RegistryPageProps) {
           columns={columns}
           getRowId={getEventRowId}
           caption="Event registry"
-          isLoading={status === 'loading' || status === 'idle'}
+          isLoading={isLoading}
           error={status === 'error' ? error : null}
           onRetry={reload}
           globalFilterFn={eventGlobalFilter}

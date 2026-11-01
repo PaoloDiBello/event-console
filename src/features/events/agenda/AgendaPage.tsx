@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { Timeline } from '@/components/Timeline'
 import type { EventRecord } from '@/features/events/model'
 import { PRIORITY_LABEL, STATUS_LABEL } from '@/features/events/model'
-import { useEvents, useEventStatus } from '@/features/events/store'
+import { useEventFeed } from '@/features/events/store'
 import { formatMinute } from '@/shared/lib/dates'
 import { buildTimeline, type TimelineScope } from './agendaData'
 import { AgendaEmptyState } from './AgendaEmptyState'
@@ -15,8 +15,7 @@ interface AgendaPageProps {
 }
 
 export function AgendaPage({ onEdit }: AgendaPageProps) {
-  const events = useEvents()
-  const status = useEventStatus()
+  const { events, isLoading } = useEventFeed()
   const [scope, setScope] = useState<TimelineScope>(45)
   const [query, setQuery] = useState('')
 
@@ -30,7 +29,6 @@ export function AgendaPage({ onEdit }: AgendaPageProps) {
   )
   const renderItem = useCallback((event: EventRecord) => <AgendaEventCard event={event} />, [])
   const clearQuery = useCallback(() => setQuery(''), [])
-  const isLoading = status === 'loading' || status === 'idle'
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">

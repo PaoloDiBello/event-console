@@ -16,6 +16,8 @@ export type TimelineFlatRow<TItem> =
       itemIndex: number
     }
 
+export type TimelineItemRowData<TItem> = Extract<TimelineFlatRow<TItem>, { kind: 'item' }>
+
 /** Flatten groups into the single row list the virtualizer renders. */
 export function buildTimelineRows<TItem>(
   groups: readonly TimelineGroup<TItem>[],

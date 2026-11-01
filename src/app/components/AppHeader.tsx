@@ -1,9 +1,10 @@
 import { Activity, CalendarRange, Database, Plus, Table2 } from 'lucide-react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useEvents } from '@/features/events/store'
+import { useGlobalKeydown } from '@/shared/hooks/useGlobalKeydown'
 import { cn } from '@/shared/lib/cn'
 import { formatCount } from '@/shared/lib/format'
-import { hasCommandModifier, isShortcutBlocked, useGlobalKeydown } from '@/shared/lib/keyboard'
+import { hasCommandModifier, isShortcutBlocked } from '@/shared/lib/keyboard'
 
 interface AppHeaderProps {
   onNewEvent: () => void
