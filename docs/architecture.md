@@ -31,8 +31,8 @@ Decisions were ranked by how much they affect day-to-day work:
 ```
 app  ──────────────► features/events ──────────► components/*
  │                         │                        │
- │                         └──────────► shared/lib ◄┘
- └──────────────────────────────────────► shared/lib
+ │                         └──────────► shared ◄────┘
+ └─────────────────────────────────────► shared
 ```
 
 Arrows point at dependencies. The rules are:
@@ -43,8 +43,8 @@ Arrows point at dependencies. The rules are:
   Registry and Agenda may import the event model/store and generic components.
 - `components/` contains reusable, domain-free UI. `DataGrid` and `Timeline`
   know only about row/item types and callbacks.
-- `shared/` contains pure utilities and test setup. It must not import features or
-  components.
+- `shared/` contains pure utilities, reusable hooks, and test setup. It must not
+  import features or components.
 - No feature imports another feature's internal file. Cross-feature imports use
   the destination's `index.ts`.
 
@@ -65,19 +65,22 @@ src/
     model/                          pure domain
       types.ts                      EventRecord, labels, categories, tones
       generate.ts                   deterministic 100k dataset
+      search.ts                     the single global-search haystack builder
       index.ts                      public model API
     store/                          state
       events.ts                     Zustand store, load/create/update
+      useEventFeed.ts               feed hook: events/status/error/loading/reload
       index.ts                      public store API
     components/
       EventLabels.tsx               status/priority/category presentation
       EventForm/
-        EventForm.tsx               dialog shell and submit orchestration
+        EventForm.tsx               dialog shell
+        useEventFormController.ts   form state, submit, discard and focus flow
         EventFormFields.tsx         field grid
         EventFormFooter.tsx         actions, discard prompt, save error
         Field.tsx                   label/error/hint wrapper
         schema.ts                   Zod schema and time parsing
-        formValues.ts               EventRecord -> form values
+        formValues.ts               EventRecord <-> form values / EventDraft
         styles.ts                   shared input/select classes
         index.ts                    public form API
     registry/                       "records" lens
@@ -97,9 +100,15 @@ src/
 
   components/                       reusable, domain-free
     DataGrid/
-      DataGrid.tsx                  state, table, virtualizer, effects
+      DataGrid.tsx                  composition: controller + virtualizer + reveal
+      hooks/
+        useDataGridController.ts    search, sort, filters, pagination, table
+        useRowReveal.ts             jump to a row's page and scroll it into view
+        useGridScrollReset.ts       top-of-list reset on view changes
+        useDataGridShortcuts.ts     "/" focuses the search box
       DataGridTable.tsx             table/colgroup composition
       DataGridHeader.tsx            sortable headers + filter row
+      DataGridColumnFilter.tsx      one filter-row control
       DataGridBody.tsx              skeleton/empty/virtual rows
       DataGridToolbar.tsx           toolbar composition
       DataGridSearch.tsx            global search control
@@ -116,15 +125,23 @@ src/
         buildRows.ts                full-set filter + sort
       types.ts / utils.ts / index.ts
     Timeline/
-      Timeline.tsx                  virtualization and keyboard navigation
+      Timeline.tsx                  composition: model + virtualizer + focus hooks
+      hooks/
+        useTimelineModel.ts         flatten and index rows
+        useTimelineFocus.ts         roving tabindex and pending focus
+        useTimelineKeyboard.ts      arrow/Home/End/Enter navigation
+        useTimelineAnnouncement.ts  polite live-region copy
       TimelineRow.tsx               group and item rows
-      timelineModel.ts              flatten/index rows
+      timelineModel.ts              flatten/index row types and helpers
       types.ts / index.ts
     ui/
       PageHeader.tsx                generic page heading/actions layout
 
   shared/
-    lib/                            cn, dates, formatting, keyboard
+    hooks/                          reusable React hooks
+      useGlobalKeydown.ts           global shortcut subscription
+      useTransientValue.ts          value that clears itself after N ms
+    lib/                            cn, dates, formatting, keyboard guards
     test/setup.ts                   jsdom + Testing Library setup
 ```
 
@@ -141,31 +158,37 @@ a new top-level feature.
 
 Large components were split along state ownership, not visual size:
 
-- **Orchestrator** (`DataGrid.tsx`, `Timeline.tsx`, `EventForm.tsx`,
-  `RegistryPage.tsx`, `AgendaPage.tsx`) owns state, effects, and callbacks.
+- **Composition** (`DataGrid.tsx`, `Timeline.tsx`, `EventForm.tsx`) wires
+  controller hooks to presentational regions. It should read like a layout, not
+  a state machine.
+- **Controller hooks** (`useDataGridController`, `useTimelineFocus`,
+  `useTimelineKeyboard`, `useEventFormController`, `useEventFeed`) own state,
+  effects, and callbacks. They are the only place a view's rules live.
 - **Presentational regions** (`DataGridTable`, `DataGridHeader`,
-  `DataGridBody`, `TimelineRow`, `EventFormFields`, `EventFormFooter`) receive
-  data and callbacks and render markup.
+  `DataGridBody`, `DataGridColumnFilter`, `TimelineRow`, `EventFormFields`,
+  `EventFormFooter`) receive data and callbacks and render markup.
 - **Pure model** (`model/*`, `timelineModel.ts`, `agendaData.ts`,
-  `formValues.ts`, `schema.ts`) has no React imports where possible.
+  `formValues.ts`, `schema.ts`, `search.ts`) has no React imports where
+  possible.
 - **Small controls** (`DataGridSearch`, `DataGridColumnMenu`,
   `DataGridPageJump`) own only their local UI state.
 
-This keeps the orchestrator readable while avoiding a forest of one-line
+This keeps the composition readable while avoiding a forest of one-line
 components. A file boundary exists where a unit has a distinct reason to change.
 
 ## Public APIs and imports
 
-- `@/features/events/model` — event types, labels, generation.
-- `@/features/events/store` — store hooks and `LoadStatus`.
+- `@/features/events/model` — event types, labels, generation, search text.
+- `@/features/events/store` — store hooks, `useEventFeed`, and `LoadStatus`.
 - `@/features/events/components/EventForm` — `EventForm` and props.
 - `@/features/events/registry` — `RegistryPage`.
 - `@/features/events/agenda` — `AgendaPage`.
 - `@/components/DataGrid` — `DataGrid`, column/props types.
 - `@/components/Timeline` — `Timeline`, group/props types.
 - `@/shared/lib/*` — pure utilities.
-- `@/shared/lib/keyboard` — `isShortcutBlocked`, `hasCommandModifier`,
-  `useGlobalKeydown`.
+- `@/shared/lib/keyboard` — `isShortcutBlocked`, `hasCommandModifier`.
+- `@/shared/hooks/useGlobalKeydown` — global shortcut subscription.
+- `@/shared/hooks/useTransientValue` — auto-clearing toast/highlight state.
 
 Inside `features/events/model`, files import sibling `./types` directly to avoid
 a barrel cycle. Consumers outside the model import the barrel.
@@ -196,16 +219,19 @@ writes through the store so both views update without synchronization code.
 
 `shared/lib/keyboard.ts` centralizes the rule for when single-key shortcuts are
 allowed. It blocks fields, dialogs, menus, and listboxes, and ignores modifier
-keys. `App` (`n`), `AppHeader` (`g`/`t`), and `DataGrid` (`/`) all use the same
-helper, so the guard cannot drift between features.
+keys. `shared/hooks/useGlobalKeydown.ts` owns the listener lifecycle. `App` (`n`),
+`AppHeader` (`g`/`t`), and `DataGrid` (`/`) all use the same helper, so the guard
+cannot drift between features.
 
 ## Testing
 
 Tests are colocated with the unit they exercise:
 
 - `features/events/model/generate.test.ts` — deterministic dataset shape.
+- `features/events/model/search.test.ts` — the global-search haystack.
 - `features/events/store/events.test.ts` — load/error/create/update.
 - `features/events/components/EventForm/schema.test.ts` — validation.
+- `features/events/components/EventForm/formValues.test.ts` — draft mapping.
 - `features/events/components/EventForm/EventForm.test.tsx` — focus, errors,
   discard flow.
 - `features/events/agenda/agendaData.test.ts` — windowing, grouping, search.
@@ -223,8 +249,10 @@ that is awkward to observe through the UI.
   `EventRecord`, it belongs in `features/events/components/`.
 - Put a new event view under `features/events/<view>/` and expose only its page
   through `index.ts`.
-- Keep filter/sort/virtualization decisions in the orchestrator or model, not in
+- Put stateful view logic in a controller hook under the component's `hooks/`
+  folder; keep the view itself about composition.
+- Keep filter/sort/virtualization decisions in the controller/model, not in
   presentational rows.
-- Add a shared helper to `shared/lib` only when at least two callers need the same
-  policy (as with keyboard guards).
+- Add a shared hook to `shared/hooks` only when at least two callers need the
+  same lifecycle policy (as with `useTransientValue`).
 - Prefer extending an existing public boundary over adding a new global barrel.

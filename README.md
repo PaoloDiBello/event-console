@@ -53,18 +53,27 @@ The demo owns the event-specific bits (`features/events/registry/columns.tsx`,
 row shape, a column definition, and an item renderer.
 
 See [`docs/architecture.md`](docs/architecture.md) for the dependency rules,
-folder boundaries, and the reasoning behind the split.
+folder boundaries, and the reasoning behind the split,
+[`docs/refactoring.md`](docs/refactoring.md) for the controller-hook refactor,
+and [`docs/assignment-audit.md`](docs/assignment-audit.md) for the
+requirement-by-requirement audit.
 
 ## Architecture
 
 ```
 App (routes, lazy-loaded pages + form, toast, global shortcuts)
- ├── /grid     RegistryPage ── DataGrid ── TanStack Table (current page only)
- │                                └── buildRows(full data)  ← filter + sort
+ ├── /grid     RegistryPage ── DataGrid ── useDataGridController
+ │                                ├── buildRows(full data)  ← filter + sort
+ │                                └── TanStack Table (current page only)
  └── /timeline AgendaPage   ── Timeline ── agendaData grouping/windowing
+                                  ├── useTimelineFocus / useTimelineKeyboard
                                   └── TanStack Virtual
  shared Zustand store: 100k seeded events, create/update, load/error status
 ```
+
+The stateful view logic lives in controller hooks (`useDataGridController`,
+`useTimelineFocus`, `useTimelineKeyboard`, `useEventFormController`); the
+components themselves are mostly composition and markup.
 
 ### The 100k-row problem
 
@@ -198,15 +207,16 @@ mutations only pay for the sort/filter pass.
 ## Tests and quality checks
 
 ```bash
-npm test          # 39 tests, 7 files
+npm test          # 42 tests, 9 files
 npm run build     # tsc -b (strict) + vite build
 npm run lint      # oxlint
 ```
 
-Coverage includes dataset determinism, store create/update, grid sorting /
-filtering / pagination (including typed page jumps and clamping) / focus-row
-reveal, timeline grouping / windowing / keyboard navigation / announcements, and
-form validation plus the discard flow.
+Coverage includes dataset determinism, search-text construction, store
+create/update, grid sorting / filtering / pagination (including typed page jumps
+and clamping) / focus-row reveal, timeline grouping / windowing / keyboard
+navigation / announcements, and form validation, draft mapping plus the discard
+flow.
 
 ## Trade-offs and limitations
 
@@ -239,17 +249,18 @@ src/
     components/              AppHeader, AppToast, RouteFallback
     hooks/useEventEditor.ts  editor state, submit, focus return, highlight
   features/events/
-    model/                   types, seeded generator, generator tests
-    store/                   Zustand events store + tests
-    components/              EventLabels, EventForm (fields/footer/schema/values)
+    model/                   types, seeded generator, search text, tests
+    store/                   Zustand events store, useEventFeed, tests
+    components/              EventLabels, EventForm (controller/fields/footer/schema/values)
     registry/                RegistryPage, header/stats, columns
     agenda/                  AgendaPage, header, card, empty/skeleton, data
   components/
-    DataGrid/                orchestrator, table/header/body, toolbar, model/
-    Timeline/                orchestrator, rows, model
+    DataGrid/                composition, hooks/, table/header/body, toolbar, model/
+    Timeline/                composition, hooks/, rows, model
     ui/                      PageHeader
   shared/
-    lib/                     dates, formatting, cn, keyboard
+    hooks/                   useGlobalKeydown, useTransientValue
+    lib/                     dates, formatting, cn, keyboard guards
     test/                    jsdom setup
 ```
 
