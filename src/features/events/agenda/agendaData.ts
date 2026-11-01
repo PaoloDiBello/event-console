@@ -1,5 +1,9 @@
 import type { TimelineGroup } from '@/components/Timeline'
-import type { EventRecord } from '@/features/events/model'
+import {
+  matchesNormalizedSearch,
+  normalizeSearchQuery,
+  type EventRecord,
+} from '@/features/events/model'
 import { formatDayHeading, formatDayShort, shiftIsoDay, todayIso } from '@/shared/lib/dates'
 
 export const TIMELINE_SCOPES = [7, 30, 45] as const
@@ -25,7 +29,7 @@ export function buildTimeline(
 ): TimelineData {
   const start = todayIso()
   const end = shiftIsoDay(start, days)
-  const needle = query.trim().toLowerCase()
+  const needle = normalizeSearchQuery(query)
 
   const byDay = new Map<string, EventRecord[]>()
   let total = 0
@@ -33,7 +37,7 @@ export function buildTimeline(
 
   for (const event of events) {
     if (event.date < start || event.date >= end) continue
-    if (needle && !event.search.includes(needle)) continue
+    if (!matchesNormalizedSearch(event, needle)) continue
 
     total += 1
     if (event.status === 'at_risk') atRisk += 1

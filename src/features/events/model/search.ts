@@ -14,3 +14,21 @@ type SearchableEvent = Pick<
 export function buildSearchText(event: SearchableEvent): string {
   return `${event.title} ${event.owner} ${event.location} ${event.category} ${event.status} ${event.priority} ${event.date}`.toLowerCase()
 }
+
+/** Normalize a user query once when scanning many rows. */
+export function normalizeSearchQuery(query: string): string {
+  return query.trim().toLowerCase()
+}
+
+/** Test a pre-normalized query against a record's haystack. */
+export function matchesNormalizedSearch(
+  event: Pick<EventRecord, 'search'>,
+  needle: string,
+): boolean {
+  return needle === '' || event.search.includes(needle)
+}
+
+/** Convenience for one-off checks, such as TanStack's global filter callback. */
+export function matchesSearch(event: Pick<EventRecord, 'search'>, query: string): boolean {
+  return matchesNormalizedSearch(event, normalizeSearchQuery(query))
+}

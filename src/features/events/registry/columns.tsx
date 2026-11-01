@@ -8,6 +8,7 @@ import {
   STATUS_LABEL,
 } from '@/features/events/model'
 import type { DataGridColumn } from '@/components/DataGrid'
+import { matchesSearch } from '@/features/events/model'
 import { formatGridDate, formatMinute } from '@/shared/lib/dates'
 import { CategoryLabel, PriorityLabel, StatusBadge } from '@/features/events/components/EventLabels'
 
@@ -176,5 +177,5 @@ export function createEventColumns(onEdit: (event: EventRecord) => void): DataGr
 
 /** Every text field is already lower-cased into `search` at write time. */
 export function eventGlobalFilter(row: { original: EventRecord }, _columnId: string, value: unknown): boolean {
-  return row.original.search.includes(String(value).toLowerCase())
+  return matchesSearch(row.original, String(value))
 }
