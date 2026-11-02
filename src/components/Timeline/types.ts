@@ -23,4 +23,8 @@ export interface TimelineProps<TItem> {
   emptyState?: ReactNode
   itemHeight?: number
   groupHeight?: number
+  /** ISO day key to scroll to, e.g. `2026-11-12`. */
+  jumpToDay?: string
+  /** Change this to re-trigger a jump to the same day. */
+  jumpRequestId?: number
 }

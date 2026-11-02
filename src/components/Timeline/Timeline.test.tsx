@@ -5,7 +5,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { TimelineGroup } from './types'
 import { Timeline } from './Timeline'
 
-const virtualizerState = vi.hoisted(() => ({ scrollOffset: 0 }))
+const virtualizerState = vi.hoisted(() => ({
+  scrollOffset: 0,
+  scrollToIndex: vi.fn(),
+}))
 
 // jsdom has no layout: render the whole flattened list and exercise the
 // roving-tabindex / announcement behaviour.
@@ -24,7 +27,7 @@ vi.mock('@tanstack/react-virtual', () => ({
       getVirtualItems: () => items,
       getTotalSize: () => items.length * 84,
       scrollOffset: virtualizerState.scrollOffset,
-      scrollToIndex: vi.fn(),
+      scrollToIndex: virtualizerState.scrollToIndex,
       measureElement: vi.fn(),
     }
   },
@@ -54,7 +57,7 @@ const groups: TimelineGroup<Item>[] = [
   },
 ]
 
-function renderTimeline() {
+function renderTimeline(props: { jumpToDay?: string; jumpRequestId?: number } = {}) {
   const onActivate = vi.fn()
   render(
     <Timeline
@@ -64,6 +67,7 @@ function renderTimeline() {
       renderItem={(item) => <span>{item.title}</span>}
       onItemActivate={onActivate}
       ariaLabel="Agenda"
+      {...props}
     />,
   )
   return { onActivate }
@@ -71,6 +75,7 @@ function renderTimeline() {
 
 afterEach(() => {
   virtualizerState.scrollOffset = 0
+  virtualizerState.scrollToIndex.mockClear()
 })
 
 describe('Timeline', () => {
@@ -81,6 +86,12 @@ describe('Timeline', () => {
     const stickyDay = document.querySelector('[data-timeline-sticky-day]')
     expect(stickyDay).toHaveTextContent('Thursday, 29 October')
     expect(stickyDay).toHaveTextContent('2 events')
+  })
+
+  it('scrolls to a requested day', () => {
+    renderTimeline({ jumpToDay: '2026-10-30', jumpRequestId: 1 })
+
+    expect(virtualizerState.scrollToIndex).toHaveBeenCalledWith(3, { align: 'start' })
   })
 
   it('keeps exactly one item in the tab order', () => {

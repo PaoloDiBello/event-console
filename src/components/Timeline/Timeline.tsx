@@ -1,6 +1,6 @@
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { CalendarDays, CalendarRange } from 'lucide-react'
-import { useId, useRef } from 'react'
+import { useEffect, useId, useRef } from 'react'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { cn } from '@/shared/lib/cn'
 import { formatCount, pluralize } from '@/shared/lib/format'
@@ -37,6 +37,8 @@ export function Timeline<TItem>({
   emptyState,
   itemHeight = DEFAULT_ITEM_HEIGHT,
   groupHeight = DEFAULT_GROUP_HEIGHT,
+  jumpToDay,
+  jumpRequestId,
 }: TimelineProps<TItem>) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const { flatRows, indexByKey, firstItemIndexByGroup, groupsKey } = useTimelineModel(
@@ -82,6 +84,18 @@ export function Timeline<TItem>({
     groupsKey,
     onGroupsChange: clearAnnouncement,
   })
+  const lastJumpRequest = useRef<number | undefined>(undefined)
+  useEffect(() => {
+    if (!jumpToDay || jumpRequestId === undefined) return
+    if (lastJumpRequest.current === jumpRequestId) return
+
+    const index = indexByKey.get(`g:${jumpToDay}`)
+    if (index === undefined) return
+
+    lastJumpRequest.current = jumpRequestId
+    virtualizer.scrollToIndex(index, { align: 'start' })
+  }, [indexByKey, jumpRequestId, jumpToDay, virtualizer])
+
   const onKeyDown = useTimelineKeyboard({
     groups,
     flatRows,

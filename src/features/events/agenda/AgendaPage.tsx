@@ -3,8 +3,8 @@ import { Timeline } from '@/components/Timeline'
 import type { EventRecord } from '@/features/events/model'
 import { PRIORITY_LABEL, STATUS_LABEL } from '@/features/events/model'
 import { useEventFeed } from '@/features/events/store'
-import { formatMinute } from '@/shared/lib/dates'
-import { buildTimeline, type TimelineScope } from './agendaData'
+import { formatMinute, shiftIsoDay, todayIso } from '@/shared/lib/dates'
+import { buildTimeline, TIMELINE_SCOPES, type TimelineScope } from './agendaData'
 import { AgendaEmptyState } from './AgendaEmptyState'
 import { AgendaEventCard } from './AgendaEventCard'
 import { AgendaHeader } from './AgendaHeader'
@@ -18,8 +18,31 @@ export function AgendaPage({ onEdit }: AgendaPageProps) {
   const { events, isLoading } = useEventFeed()
   const [scope, setScope] = useState<TimelineScope>(45)
   const [query, setQuery] = useState('')
+  const today = useMemo(() => todayIso(), [])
+  const [selectedDate, setSelectedDate] = useState(today)
+  const [jumpRequest, setJumpRequest] = useState<{ day: string; id: number } | null>(null)
+  const maxJumpDate = shiftIsoDay(today, TIMELINE_SCOPES[TIMELINE_SCOPES.length - 1]! - 1)
 
   const data = useMemo(() => buildTimeline(events, scope, query), [events, scope, query])
+
+  const handleScopeChange = (nextScope: TimelineScope) => {
+    setScope(nextScope)
+    const end = shiftIsoDay(today, nextScope)
+    setSelectedDate((current) => (current >= end ? today : current))
+  }
+
+  const handleJumpDateChange = (day: string) => {
+    if (!day) return
+
+    setSelectedDate(day)
+    if (day >= shiftIsoDay(today, scope)) {
+      const nextScope =
+        TIMELINE_SCOPES.find((days) => day < shiftIsoDay(today, days)) ??
+        TIMELINE_SCOPES[TIMELINE_SCOPES.length - 1]!
+      setScope(nextScope)
+    }
+    setJumpRequest((current) => ({ day, id: (current?.id ?? 0) + 1 }))
+  }
 
   const getItemId = useCallback((event: EventRecord) => event.id, [])
   const getItemLabel = useCallback(
@@ -34,9 +57,13 @@ export function AgendaPage({ onEdit }: AgendaPageProps) {
     <div className="flex h-full min-h-0 flex-col gap-4">
       <AgendaHeader
         scope={scope}
-        onScopeChange={setScope}
+        onScopeChange={handleScopeChange}
         query={query}
         onQueryChange={setQuery}
+        jumpDate={selectedDate}
+        jumpMin={today}
+        jumpMax={maxJumpDate}
+        onJumpDateChange={handleJumpDateChange}
         total={data.total}
         dayCount={data.groups.length}
         atRisk={data.atRisk}
@@ -54,6 +81,8 @@ export function AgendaPage({ onEdit }: AgendaPageProps) {
             onItemActivate={onEdit}
             ariaLabel={`Upcoming events, next ${scope} days, grouped by day`}
             emptyState={<AgendaEmptyState query={query} onClearQuery={clearQuery} />}
+            jumpToDay={jumpRequest?.day}
+            jumpRequestId={jumpRequest?.id}
           />
         )}
       </div>
