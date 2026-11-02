@@ -50,18 +50,21 @@ export function RegistryHeader({
       description="Every meeting, deploy, incident and release in one sortable archive. Filters run in the browser against all 100,000 rows — no server round-trips."
       actions={
         <>
-          <Stat
-            icon={<CalendarClock aria-hidden="true" className="size-4" />}
-            label={`Next ${AGENDA_WINDOW_DAYS} days`}
-            value={formatCount(nextWindow)}
-            tone="text-sky"
-          />
-          <Stat
-            icon={<AlertTriangle aria-hidden="true" className="size-4" />}
-            label="At risk"
-            value={formatCount(atRisk)}
-            tone="text-rose"
-          />
+          {/* Peer metrics: one shared column width keeps the cards reading as a set. */}
+          <div className="grid grid-cols-2 gap-2">
+            <Stat
+              icon={<CalendarClock aria-hidden="true" className="size-4" />}
+              label={`Next ${AGENDA_WINDOW_DAYS} days`}
+              value={formatCount(nextWindow)}
+              tone="text-sky"
+            />
+            <Stat
+              icon={<AlertTriangle aria-hidden="true" className="size-4" />}
+              label="At risk"
+              value={formatCount(atRisk)}
+              tone="text-rose"
+            />
+          </div>
           <button
             type="button"
             onClick={onReload}
