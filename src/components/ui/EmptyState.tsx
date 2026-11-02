@@ -11,8 +11,9 @@ interface EmptyStateProps {
 }
 
 /**
- * Shared layout for the "nothing to show" cases. The copy and the action stay
- * with the caller; this only owns the vertical rhythm and alignment.
+ * Shared layout for the "nothing to show" cases. The copy, action and outer
+ * spacing stay with the caller; this only owns the internal rhythm and
+ * alignment.
  */
 export function EmptyState({
   icon,
@@ -23,12 +24,7 @@ export function EmptyState({
   hintClassName,
 }: EmptyStateProps) {
   return (
-    <div
-      className={cn(
-        'flex flex-col items-center justify-center px-6 py-24 text-center',
-        className,
-      )}
-    >
+    <div className={cn('flex flex-col items-center justify-center text-center', className)}>
       {icon}
       <p className="mt-3 text-sm font-medium text-ink">{title}</p>
       <p className={cn('mt-1 max-w-sm text-xs text-muted', hintClassName)}>{hint}</p>

@@ -5,7 +5,7 @@ import type { EventDraft, EventRecord } from '@/features/events/model'
 import { toEventDraft, toFormValues } from './formValues'
 import { eventFormSchema, type EventFormValues } from './schema'
 
-interface UseEventFormControllerOptions {
+interface EventFormControllerOptions {
   open: boolean
   /** Present in edit mode; ignored when creating. */
   event?: EventRecord | null
@@ -25,7 +25,7 @@ export function useEventFormController({
   event,
   onOpenChange,
   onSubmit,
-}: UseEventFormControllerOptions) {
+}: EventFormControllerOptions) {
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [confirmDiscard, setConfirmDiscard] = useState(false)

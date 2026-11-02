@@ -13,7 +13,7 @@ import { buildRows } from '../model'
 import { activeFilterCount } from '../utils'
 import type { DataGridColumn } from '../types'
 
-export interface DataGridControllerOptions<TData> {
+interface DataGridControllerOptions<TData> {
   data: TData[]
   columns: DataGridColumn<TData>[]
   getRowId: (row: TData) => string

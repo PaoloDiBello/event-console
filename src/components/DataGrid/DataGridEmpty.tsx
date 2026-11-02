@@ -63,6 +63,7 @@ export function DataGridEmpty({
 
   return (
     <EmptyState
+      className="px-6 py-24"
       icon={<Icon aria-hidden="true" className="size-7 text-faint" />}
       title={hasQuery ? copy.title : emptyTitle}
       hint={hasQuery ? copy.hint : emptyHint}

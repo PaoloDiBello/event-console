@@ -3,7 +3,7 @@ import { AGENDA_WINDOW_DAYS } from '@/features/events/model'
 import type { EventRecord } from '@/features/events/model'
 import { daysFromToday } from '@/shared/lib/dates'
 
-export interface RegistryStats {
+interface RegistryStats {
   nextWindow: number
   atRisk: number
 }

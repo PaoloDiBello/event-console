@@ -51,6 +51,26 @@ own markup.
 | Empty states | duplicated centering and copy layout in grid, agenda and timeline | shared `EmptyState` |
 | Keyboard hints | three local `kbd` class strings | shared `Kbd` |
 
+## Consistency conventions
+
+- **File names** follow their role: components are `PascalCase.tsx`, hooks are
+  `useX.ts`, and pure modules are `camelCase.ts`.
+- **Hook inputs** are positional for one or two simple arguments
+  (`useTimelineModel(groups, getItemId)`), and an options object once a hook has
+  several inputs. Option interfaces are named `XOptions`.
+- **Hook outputs** are inferred for local controller hooks. A named interface is
+  used when the return shape is a shared model (`EventFeed`, `TimelineModel`,
+  `RegistryStats`).
+- **Callbacks** are wrapped in `useCallback` only when identity is part of the
+  contract: effect dependencies, or a controller surface passed to
+  memoized/virtualized children. Local form handlers stay plain because they are
+  recreated with the form state anyway.
+- **Types** use `interface` for object shapes and `type` for unions. Type-only
+  imports use `import type` / inline `type` imports.
+- **Placement**: generic components in `components/`, domain UI in
+  `features/events/`, app shell in `app/components/`, and shared primitives in
+  `components/ui/`. Tests sit next to the unit they cover.
+
 ## Guardrails
 
 - No behavior changes; the existing behavior tests stay green.

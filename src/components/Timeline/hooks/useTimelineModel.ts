@@ -6,7 +6,7 @@ import {
 } from '../timelineModel'
 import type { TimelineGroup } from '../types'
 
-export interface TimelineModel<TItem> {
+interface TimelineModel<TItem> {
   flatRows: TimelineFlatRow<TItem>[]
   indexByKey: Map<string, number>
   firstItemIndexByGroup: Map<number, number>
