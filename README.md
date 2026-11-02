@@ -237,8 +237,9 @@ flow.
   created/edited events. That keeps the demo self-contained.
 - **Mock latency is intentional.** Save takes 380 ms and load 420 ms so pending
   and error states are visible; they are not measurements of real I/O.
-- The timeline defaults to 45 days; events outside that window still exist in
-  the store and are reachable by changing the scope (7/30/45 days).
+- The timeline defaults to 45 days. Events outside the current 7- or 30-day
+  scope are reachable by widening to 45 days; events outside 45 days remain in
+  the store but are not shown by the current scopes.
 
 ## Project layout
 
