@@ -1,9 +1,11 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { act } from 'react'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { TimelineGroup } from './types'
 import { Timeline } from './Timeline'
+
+const virtualizerState = vi.hoisted(() => ({ scrollOffset: 0 }))
 
 // jsdom has no layout: render the whole flattened list and exercise the
 // roving-tabindex / announcement behaviour.
@@ -21,6 +23,7 @@ vi.mock('@tanstack/react-virtual', () => ({
     return {
       getVirtualItems: () => items,
       getTotalSize: () => items.length * 84,
+      scrollOffset: virtualizerState.scrollOffset,
       scrollToIndex: vi.fn(),
       measureElement: vi.fn(),
     }
@@ -66,7 +69,20 @@ function renderTimeline() {
   return { onActivate }
 }
 
+afterEach(() => {
+  virtualizerState.scrollOffset = 0
+})
+
 describe('Timeline', () => {
+  it('keeps the active day visible once its heading scrolls away', () => {
+    virtualizerState.scrollOffset = 200
+    renderTimeline()
+
+    const stickyDay = document.querySelector('[data-timeline-sticky-day]')
+    expect(stickyDay).toHaveTextContent('Thursday, 29 October')
+    expect(stickyDay).toHaveTextContent('2 events')
+  })
+
   it('keeps exactly one item in the tab order', () => {
     renderTimeline()
     const items = screen.getAllByRole('button')

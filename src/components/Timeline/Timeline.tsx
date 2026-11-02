@@ -1,7 +1,9 @@
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { CalendarRange } from 'lucide-react'
+import { CalendarDays, CalendarRange } from 'lucide-react'
 import { useId, useRef } from 'react'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { cn } from '@/shared/lib/cn'
+import { formatCount, pluralize } from '@/shared/lib/format'
 import { useTimelineAnnouncement } from './hooks/useTimelineAnnouncement'
 import { useTimelineFocus } from './hooks/useTimelineFocus'
 import { useTimelineKeyboard } from './hooks/useTimelineKeyboard'
@@ -56,6 +58,21 @@ export function Timeline<TItem>({
   const virtualRows = virtualizer.getVirtualItems()
   const totalSize = virtualizer.getTotalSize()
 
+  // Keep the current day visible while scrolling through a long group. The
+  // in-list heading is hidden behind the scrollport once a day starts, so this
+  // compact sticky copy takes over at exactly that point.
+  const scrollOffset = virtualizer.scrollOffset ?? 0
+  const topRow = virtualRows.find((virtualRow) => virtualRow.end > scrollOffset)
+  const activeGroup = topRow ? flatRows[topRow.index]?.group : undefined
+  const activeGroupRowIndex = activeGroup ? indexByKey.get(`g:${activeGroup.key}`) : undefined
+  const activeGroupRow =
+    activeGroupRowIndex === undefined
+      ? undefined
+      : virtualRows.find((virtualRow) => virtualRow.index === activeGroupRowIndex)
+  const showActiveGroup = Boolean(
+    activeGroup && (!activeGroupRow || activeGroupRow.end <= scrollOffset),
+  )
+
   const { announcement, announce, clearAnnouncement } = useTimelineAnnouncement(getItemLabel)
   const { setActiveKey, tabbableKey, focusRow } = useTimelineFocus({
     flatRows,
@@ -102,6 +119,26 @@ export function Timeline<TItem>({
         onKeyDown={onKeyDown}
         className="scrollbar-thin relative min-h-0 flex-1 overflow-auto px-3"
       >
+        {showActiveGroup && activeGroup ? (
+          <div
+            aria-hidden="true"
+            data-timeline-sticky-day={activeGroup.key}
+            className="pointer-events-none sticky top-0 z-20 h-0"
+          >
+            <div
+              className={cn(
+                '-mx-3 flex items-center gap-2 border-b border-line/80 bg-surface/95 px-3 py-2',
+                'shadow-lg shadow-black/25 backdrop-blur',
+              )}
+            >
+              <CalendarDays className="size-3.5 shrink-0 text-accent" />
+              <span className="truncate text-xs font-semibold text-ink">{activeGroup.label}</span>
+              <span className="ml-auto shrink-0 font-mono text-[10px] tracking-wide text-faint">
+                {formatCount(activeGroup.items.length)} {pluralize(activeGroup.items.length, 'event')}
+              </span>
+            </div>
+          </div>
+        ) : null}
         {empty ? (
           emptyState ?? (
             <EmptyState
