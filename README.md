@@ -168,7 +168,7 @@ will vary by machine; the shape is what matters.
 
 | Scenario | Result |
 | --- | --- |
-| First `/grid` paint → 100k rows, first page rendered | **~2.1 s** (includes 420 ms simulated fetch) |
+| First `/grid` paint → 100k rows, first page rendered | **~0.9 s** (includes 120 ms simulated fetch) |
 | Global search `deploy` over 100k rows → 17,724 matches | **~255 ms** |
 | Status filter `At risk` → 9,513 matches | **~197 ms** |
 | Date filter `2026-10-30` → 234 matches | **~115 ms** |
@@ -235,7 +235,7 @@ flow.
 - **Date filtering is exact-day**, not a range.
 - **No persistence.** Refresh regenerates the deterministic data set and drops
   created/edited events. That keeps the demo self-contained.
-- **Mock latency is intentional.** Save takes 380 ms and load 420 ms so pending
+- **Mock latency is intentional.** Save takes 380 ms and load 120 ms so pending
   and error states are visible; they are not measurements of real I/O.
 - The timeline defaults to 45 days. Events outside the current 7- or 30-day
   scope are reachable by widening to 45 days; events outside 45 days remain in

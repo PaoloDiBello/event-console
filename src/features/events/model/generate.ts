@@ -41,8 +41,15 @@ function pick<T>(rng: Rng, values: readonly T[]): T {
   return values[Math.floor(rng() * values.length)] as T
 }
 
-function weighted<T>(rng: Rng, entries: readonly (readonly [T, number])[]): T {
-  const total = entries.reduce((sum, [, weight]) => sum + weight, 0)
+function totalWeight(entries: readonly (readonly [unknown, number])[]): number {
+  return entries.reduce((sum, [, weight]) => sum + weight, 0)
+}
+
+function weighted<T>(
+  rng: Rng,
+  entries: readonly (readonly [T, number])[],
+  total: number,
+): T {
   let roll = rng() * total
   for (const [value, weight] of entries) {
     roll -= weight
@@ -161,6 +168,12 @@ const PRIORITIES = [
   ['critical', 8],
 ] as const satisfies readonly (readonly [EventPriority, number])[]
 
+// Weight totals are invariant; compute them once instead of once per row.
+const CATEGORY_TOTAL = totalWeight(CATEGORY_WEIGHTS)
+const STATUS_FUTURE_TOTAL = totalWeight(STATUS_FUTURE)
+const STATUS_PAST_TOTAL = totalWeight(STATUS_PAST)
+const PRIORITY_TOTAL = totalWeight(PRIORITIES)
+
 function makeTitle(rng: Rng, category: EventCategory): string {
   const service = pick(rng, SERVICES)
   const team = pick(rng, TEAMS)
@@ -205,15 +218,19 @@ function makeTitle(rng: Rng, category: EventCategory): string {
 }
 
 function makeEvent(rng: Rng, id: string, date: string, isFuture: boolean): EventRecord {
-  const category = weighted(rng, CATEGORY_WEIGHTS)
+  const category = weighted(rng, CATEGORY_WEIGHTS, CATEGORY_TOTAL)
   const title = makeTitle(rng, category)
   const owner = pick(rng, PEOPLE)
   const location = pick(rng, LOCATIONS)
-  const status = weighted(rng, isFuture ? STATUS_FUTURE : STATUS_PAST)
-  const priority = weighted(rng, PRIORITIES)
+  const status = weighted(
+    rng,
+    isFuture ? STATUS_FUTURE : STATUS_PAST,
+    isFuture ? STATUS_FUTURE_TOTAL : STATUS_PAST_TOTAL,
+  )
+  const priority = weighted(rng, PRIORITIES, PRIORITY_TOTAL)
   const notes = rng() < 0.22 ? pick(rng, NOTES) : undefined
 
-  const event: Omit<EventRecord, 'search'> = {
+  const event: EventRecord = {
     id,
     title,
     date,
@@ -227,13 +244,16 @@ function makeEvent(rng: Rng, id: string, date: string, isFuture: boolean): Event
     owner,
     location,
     ...(notes ? { notes } : {}),
+    search: '',
   }
 
-  return { ...event, search: buildSearchText(event) }
+  // Fill the local row in place; spreading would allocate a second 100k-row set.
+  event.search = buildSearchText(event)
+  return event
 }
 
 /**
- * Builds the full dataset synchronously (~150 ms for 100k rows on a laptop).
+ * Builds the full dataset synchronously (~200 ms for 100k rows on a laptop).
  * The store calls this behind a small artificial delay so the grid's loading
  * state is real rather than decorative.
  */
@@ -242,17 +262,38 @@ export function generateEvents(seed = DATASET_SEED): EventRecord[] {
   const today = todayIso()
   const events: EventRecord[] = new Array(DATASET_SIZE)
 
+  // Dates repeat across thousands of rows. Precompute each offset once instead
+  // of parsing and formatting an ISO day for every event.
+  const futureDates = new Array<string>(AGENDA_WINDOW_DAYS)
+  for (let offset = 0; offset < AGENDA_WINDOW_DAYS; offset += 1) {
+    futureDates[offset] = shiftIsoDay(today, offset)
+  }
+
   // Agenda window first so the timeline gets an exact, predictable slice.
   for (let i = 0; i < AGENDA_EVENT_COUNT; i += 1) {
     const offset = Math.floor(rng() * AGENDA_WINDOW_DAYS)
-    events[i] = makeEvent(rng, `evt_${i.toString(36).padStart(5, '0')}`, shiftIsoDay(today, offset), true)
+    events[i] = makeEvent(
+      rng,
+      `evt_${i.toString(36).padStart(5, '0')}`,
+      futureDates[offset]!,
+      true,
+    )
   }
 
   // History: ~4 years back, excluding today so the "past" status mix stays honest.
   const archiveDays = 1460
+  const archiveDates = new Array<string>(archiveDays)
+  for (let offset = 0; offset < archiveDays; offset += 1) {
+    archiveDates[offset] = shiftIsoDay(today, -(offset + 1))
+  }
   for (let i = AGENDA_EVENT_COUNT; i < DATASET_SIZE; i += 1) {
-    const offset = -(1 + Math.floor(rng() * archiveDays))
-    events[i] = makeEvent(rng, `evt_${i.toString(36).padStart(5, '0')}`, shiftIsoDay(today, offset), false)
+    const offset = Math.floor(rng() * archiveDays)
+    events[i] = makeEvent(
+      rng,
+      `evt_${i.toString(36).padStart(5, '0')}`,
+      archiveDates[offset]!,
+      false,
+    )
   }
 
   return events

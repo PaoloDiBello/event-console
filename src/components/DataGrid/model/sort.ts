@@ -13,8 +13,10 @@ function compareValues(a: unknown, b: unknown, text: boolean): number {
   if (a == null) return b == null ? 0 : 1
   if (b == null) return -1
   if (!text && typeof a === 'number' && typeof b === 'number') return a - b
-  const left = asText(a).toLowerCase()
-  const right = asText(b).toLowerCase()
+  // String keys are lower-cased once while building the key table, not once
+  // per comparison (100k rows means ~1.5M comparisons).
+  const left = asText(a)
+  const right = asText(b)
   return left < right ? -1 : left > right ? 1 : 0
 }
 
@@ -78,7 +80,8 @@ export function sortRows<TData>(
         }
         keys[planIndex]![index] = shim
       } else {
-        keys[planIndex]![index] = sortKey(row, plan.column, index)
+        const key = sortKey(row, plan.column, index)
+        keys[planIndex]![index] = typeof key === 'string' ? key.toLowerCase() : key
       }
     }
   }

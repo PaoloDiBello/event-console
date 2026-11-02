@@ -9,6 +9,12 @@ import { create } from 'zustand'
 
 export type LoadStatus = 'idle' | 'loading' | 'ready' | 'error'
 
+/**
+ * One frame plus a little slack: enough for the skeleton to paint before the
+ * synchronous 100k-row build, without adding noticeable startup latency.
+ */
+const LOAD_DELAY_MS = 120
+
 interface EventStore {
   events: EventRecord[]
   status: LoadStatus
@@ -39,8 +45,7 @@ export const useEventStore = create<EventStore>()((set, get) => ({
     if (get().status === 'loading') return
     set({ status: 'loading', error: null })
 
-    // A short delay makes the loading skeleton a real state, not a decoration.
-    await new Promise((resolve) => setTimeout(resolve, 420))
+    await new Promise((resolve) => setTimeout(resolve, LOAD_DELAY_MS))
 
     if (fail) {
       set({
