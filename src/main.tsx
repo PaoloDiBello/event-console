@@ -1,3 +1,4 @@
+import '@daypicker/react/style.css'
 import '@fontsource-variable/inter'
 import '@fontsource-variable/jetbrains-mono'
 import { StrictMode } from 'react'

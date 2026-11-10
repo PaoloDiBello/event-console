@@ -1,8 +1,9 @@
-import { CalendarDays, Search, X } from 'lucide-react'
+import { Search, X } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Kbd } from '@/components/ui/Kbd'
 import { formatCount } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/cn'
+import { AgendaDatePicker } from './AgendaDatePicker'
 import { TIMELINE_SCOPES, type TimelineScope } from './agendaData'
 
 interface AgendaHeaderProps {
@@ -64,19 +65,12 @@ export function AgendaHeader({
           </div>
         </div>
 
-        <label className="flex h-10 items-center gap-2 rounded-md border border-line bg-surface/60 px-2.5 focus-within:border-accent/60">
-          <CalendarDays aria-hidden="true" className="size-3.5 shrink-0 text-faint" />
-          <span className="font-mono text-[10px] tracking-wider text-faint uppercase">Jump</span>
-          <input
-            type="date"
-            value={jumpDate}
-            min={jumpMin}
-            max={jumpMax}
-            onChange={(event) => onJumpDateChange(event.target.value)}
-            aria-label="Jump to a date in the next 45 days"
-            className="tnum h-6 w-[8.25rem] bg-transparent font-mono text-[11px] text-ink outline-none [color-scheme:dark]"
-          />
-        </label>
+        <AgendaDatePicker
+          value={jumpDate}
+          min={jumpMin}
+          max={jumpMax}
+          onChange={onJumpDateChange}
+        />
 
         <div className="relative">
           <Search

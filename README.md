@@ -17,7 +17,7 @@ npm run dev        # http://localhost:5173
 - `/grid` — 100,000-row registry with client-side filtering, sorting, pagination
   (including a typed page jump)
 - `/timeline` — 10,400 events in the default 45-day window, grouped by day
-  with a sticky current-day header and a jump-to-date control
+  with a sticky current-day header and a calendar jump-to-date control
 - “New event” writes to both views through the same Zustand store
 
 ## Screenshots

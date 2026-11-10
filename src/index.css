@@ -109,3 +109,116 @@
     transform: translateY(10px) scale(0.985);
   }
 }
+
+/*
+ * DayPicker theming. The package stylesheet is loaded before this file, so
+ * these variables and overrides stay in the app's dark console palette.
+ */
+.agenda-calendar {
+  --rdp-accent-color: var(--color-accent);
+  --rdp-accent-background-color: var(--color-accent-soft);
+  --rdp-day-height: 32px;
+  --rdp-day-width: 32px;
+  --rdp-day_button-height: 30px;
+  --rdp-day_button-width: 30px;
+  --rdp-day_button-border: 1px solid transparent;
+  --rdp-day_button-border-radius: var(--radius-sm);
+  --rdp-selected-border: 1px solid transparent;
+  --rdp-disabled-opacity: 0.22;
+  --rdp-outside-opacity: 0.3;
+  --rdp-today-color: var(--color-accent);
+  --rdp-nav_button-height: 28px;
+  --rdp-nav_button-width: 28px;
+  --rdp-nav-height: 36px;
+  --rdp-weekday-opacity: 1;
+  --rdp-weekday-padding: 0.35rem 0;
+  --rdp-animation_duration: 0.15s;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+.agenda-calendar .rdp-month_caption {
+  height: var(--rdp-nav-height);
+  color: var(--color-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.agenda-calendar .rdp-month_grid {
+  margin-inline: auto;
+}
+
+.agenda-calendar .rdp-weekday {
+  color: var(--color-faint);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.agenda-calendar .rdp-day_button {
+  color: var(--color-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.agenda-calendar .rdp-day_button:hover:not(:disabled) {
+  background-color: var(--color-raised);
+  color: var(--color-ink);
+}
+
+.agenda-calendar .rdp-day_button:disabled {
+  cursor: not-allowed;
+}
+
+.agenda-calendar .rdp-today:not(.rdp-selected) .rdp-day_button {
+  box-shadow: inset 0 0 0 1px rgb(45 212 191 / 0.4);
+  color: var(--color-accent);
+}
+
+.agenda-calendar .rdp-selected {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.agenda-calendar .rdp-selected .rdp-day_button {
+  border: 0;
+  background-color: var(--color-accent);
+  color: var(--color-canvas);
+  font-weight: 600;
+}
+
+.agenda-calendar .rdp-selected .rdp-day_button:hover {
+  background-color: var(--color-accent);
+  color: var(--color-canvas);
+}
+
+.agenda-calendar .rdp-disabled:not(.rdp-selected) {
+  opacity: var(--rdp-disabled-opacity);
+}
+
+.agenda-calendar .rdp-button_previous,
+.agenda-calendar .rdp-button_next {
+  border-radius: var(--radius-xs);
+  color: var(--color-muted);
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
+}
+
+.agenda-calendar .rdp-button_previous:hover:not(:disabled),
+.agenda-calendar .rdp-button_next:hover:not(:disabled) {
+  background-color: var(--color-raised);
+  color: var(--color-ink);
+}
+
+.agenda-calendar .rdp-chevron {
+  fill: currentColor;
+}
