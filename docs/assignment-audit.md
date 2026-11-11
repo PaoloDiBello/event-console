@@ -10,11 +10,12 @@ the README.
 | --- | --- |
 | Client-side pagination | `DataGrid` page slice + `DataGridPagination` / `DataGridPageJump` |
 | Client-side sorting | `model/buildRows.ts` → `model/sort.ts` (precomputed sort keys) |
-| Column filtering | filter row in `DataGridHeader`; `model/filter.ts` |
+| Column filtering | filter row in `DataGridHeader`; removable chips in `DataGridFilterChips`; `model/filter.ts` |
+| Search | 200 ms debounce in `useDataGridController`; urgent input, interruptible filter pass |
 | Loading state | `DataGridSkeleton` via `DataGridBody` |
 | Empty state | `DataGridEmpty` (no data, no match, no search/filter match) |
 | Error state | `DataGridError` + “Simulate error” in `RegistryHeader` |
-| Hide/show columns | `DataGridColumnMenu`, `initialColumnVisibility` |
+| Hide/show columns | `DataGridColumnMenu` (checked state per column, “Show all”), `initialColumnVisibility` |
 | Column label | `header` on the TanStack `ColumnDef` |
 | Column accessor | `accessorKey` / `accessorFn` on the `ColumnDef` |
 
@@ -53,7 +54,7 @@ the README.
 
 - Public repository: `github.com/PaoloDiBello/event-console`.
 - Commit history separates scaffold, data/store, components, demo, and polish.
-- `npm test` (49 tests), `npm run build`, and `npm run lint` pass.
+- `npm test` (56 tests), `npm run build`, and `npm run lint` pass.
 
 ## Judgment calls worth knowing
 

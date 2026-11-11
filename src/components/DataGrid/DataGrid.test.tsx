@@ -285,4 +285,114 @@ describe('DataGrid', () => {
     expect(await screen.findByText('Row 22')).toBeInTheDocument()
     expect(screen.getByRole('textbox', { name: /Page number/ })).toHaveValue('3')
   })
+
+  it('waits for a pause in typing before running the filter pass', async () => {
+    const user = userEvent.setup()
+    renderGrid()
+
+    const search = screen.getByRole('searchbox', { name: 'Search all columns' })
+    await user.type(search, 'Row 07')
+
+    // The input is urgent; the applied query trails it by a pause.
+    expect(search).toHaveValue('Row 07')
+    await waitFor(() =>
+      expect(screen.getByText(/rows? match\. Showing/)).toHaveTextContent(
+        '1 row match. Showing 1 to 1.',
+      ),
+    )
+  })
+
+  it('marks visible columns in the column menu', async () => {
+    const user = userEvent.setup()
+    renderGrid()
+
+    const trigger = screen.getByRole('button', { name: /Columns/ })
+    expect(trigger).toHaveTextContent('3/3')
+
+    await user.click(trigger)
+
+    const visible = screen.getByRole('menuitemcheckbox', { name: 'Status' })
+    expect(visible).toHaveAttribute('aria-checked', 'true')
+    expect(visible.querySelector('svg')).not.toBeNull()
+
+    await user.click(visible)
+
+    const hidden = screen.getByRole('menuitemcheckbox', { name: 'Status' })
+    expect(hidden).toHaveAttribute('aria-checked', 'false')
+    expect(hidden.querySelector('svg')).toBeNull()
+
+    // The open menu hides the rest of the page from the accessibility tree.
+    await user.keyboard('{Escape}')
+    expect(screen.getByRole('button', { name: /Columns/ })).toHaveTextContent('2/3')
+  })
+
+  it('shows every column from the column menu', async () => {
+    const user = userEvent.setup()
+    render(
+      <DataGrid
+        data={rows}
+        columns={columns}
+        getRowId={(row) => row.id}
+        caption="Test rows"
+        initialPageSize={10}
+        initialColumnVisibility={{ score: false }}
+      />,
+    )
+
+    expect(screen.queryByRole('columnheader', { name: 'Score' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Columns/ })).toHaveTextContent('2/3')
+
+    await user.click(screen.getByRole('button', { name: /Columns/ }))
+    await user.click(screen.getByRole('menuitem', { name: 'Show all columns' }))
+
+    expect(await screen.findByRole('columnheader', { name: 'Score' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Columns/ })).toHaveTextContent('3/3')
+  })
+
+  it('removes one filter from its chip and leaves the others alone', async () => {
+    const user = userEvent.setup()
+    renderGrid()
+
+    await user.type(screen.getByLabelText('Filter by Name'), 'Row 0')
+    await user.selectOptions(screen.getByLabelText('Filter by Status'), 'on')
+
+    await waitFor(() =>
+      expect(screen.getByText(/rows? match\. Showing/)).toHaveTextContent(
+        '5 rows match. Showing 1 to 5.',
+      ),
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Remove Status filter: On' }))
+
+    await waitFor(() =>
+      expect(screen.getByText(/rows? match\. Showing/)).toHaveTextContent(
+        '10 rows match. Showing 1 to 10.',
+      ),
+    )
+    expect(screen.getByLabelText('Filter by Status')).toHaveValue('')
+    expect(screen.getByRole('button', { name: 'Remove Name filter: Row 0' })).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Remove Status filter: On' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('keeps a hidden column filter removable', async () => {
+    const user = userEvent.setup()
+    renderGrid()
+
+    await user.selectOptions(screen.getByLabelText('Filter by Status'), 'on')
+    await user.click(screen.getByRole('button', { name: /Columns/ }))
+    await user.click(screen.getByRole('menuitemcheckbox', { name: 'Status' }))
+    await user.keyboard('{Escape}')
+
+    expect(screen.queryByRole('columnheader', { name: 'Status' })).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Remove Status filter: On' }))
+
+    await waitFor(() =>
+      expect(screen.getByText(/rows? match\. Showing/)).toHaveTextContent(
+        '23 rows match. Showing 1 to 10.',
+      ),
+    )
+  })
 })

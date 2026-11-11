@@ -86,6 +86,8 @@ export function DataGrid<TData>({
         search={grid.search}
         onSearchChange={grid.setSearch}
         onClearColumnFilters={grid.clearColumnFilters}
+        onRemoveColumnFilter={grid.removeColumnFilter}
+        chips={grid.chips}
         activeFilterCount={grid.filterCount}
         isPending={grid.isPending}
         searchPlaceholder={searchPlaceholder}

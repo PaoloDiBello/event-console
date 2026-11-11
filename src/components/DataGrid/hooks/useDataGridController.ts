@@ -8,10 +8,14 @@ import {
   type SortingState,
   type VisibilityState,
 } from '@tanstack/react-table'
-import { useCallback, useDeferredValue, useEffect, useMemo, useState, useTransition } from 'react'
+import { useCallback, useEffect, useMemo, useState, useTransition } from 'react'
+import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
 import { buildRows } from '../model'
-import { activeFilterCount } from '../utils'
+import { activeFilterCount, filterChips } from '../utils'
 import type { DataGridColumn } from '../types'
+
+/** Long enough to swallow a burst of keystrokes, short enough to feel live. */
+const SEARCH_DEBOUNCE_MS = 200
 
 interface DataGridControllerOptions<TData> {
   data: TData[]
@@ -50,10 +54,9 @@ export function useDataGridController<TData>({
     pageSize: initialPageSize,
   })
 
-  // Search is the one control that can reasonably outrun the 100k-row filter
-  // pass: the input stays urgent, the table catches up on the deferred value.
-  const [search, setSearch] = useState('')
-  const deferredSearch = useDeferredValue(search)
+  // The input is urgent; the applied query waits for a pause in typing.
+  const [search, setSearchState] = useState('')
+  const debouncedSearch = useDebouncedValue(search, SEARCH_DEBOUNCE_MS)
   const [isPending, startTransition] = useTransition()
 
   const resetPage = useCallback(() => {
@@ -62,10 +65,31 @@ export function useDataGridController<TData>({
     )
   }, [])
 
+  // Clearing must feel instant, so an empty box skips the debounce entirely
+  // and drops the applied query now. Typing still waits for the pause below.
+  const setSearch = useCallback(
+    (value: string) => {
+      setSearchState(value)
+      if (value.trim() !== '') return
+      setGlobalFilter('')
+      resetPage()
+    },
+    [resetPage],
+  )
+
   useEffect(() => {
-    setGlobalFilter(deferredSearch.trim())
-    resetPage()
-  }, [deferredSearch, resetPage])
+    // While the debounce is catching up, the input is ahead of it. Applying a
+    // stale value here would resurrect a query the user just cleared.
+    if (debouncedSearch !== search) return
+    const next = search.trim()
+    if (next === globalFilter) return
+    // The filter pass walks the full 100k rows: keep it interruptible so a
+    // resumed keystroke is never stuck behind it.
+    startTransition(() => {
+      setGlobalFilter(next)
+      resetPage()
+    })
+  }, [debouncedSearch, search, globalFilter, resetPage])
 
   // Filter, sort and count the full data set here, then give TanStack only the
   // current page. Its row model stays small even when the source is 100k rows.
@@ -120,6 +144,9 @@ export function useDataGridController<TData>({
   const rows = table.getRowModel().rows
   const visibleColumns = table.getVisibleLeafColumns()
   const filterCount = activeFilterCount(columnFilters)
+  // Chips come from filter state, not from the visible columns, so a filter on
+  // a hidden column stays visible and removable.
+  const chips = useMemo(() => filterChips(table, columnFilters), [table, columnFilters])
   const hasSearch = globalFilter.length > 0
   const hasFilters = filterCount > 0
   const showFilterRow = useMemo(
@@ -131,12 +158,20 @@ export function useDataGridController<TData>({
     setSearch('')
     setGlobalFilter('')
     resetPage()
-  }, [resetPage])
+  }, [resetPage, setSearch])
 
   const clearColumnFilters = useCallback(() => {
     setColumnFilters([])
     resetPage()
   }, [resetPage])
+
+  const removeColumnFilter = useCallback(
+    (columnId: string) => {
+      setColumnFilters((current) => current.filter((filter) => filter.id !== columnId))
+      resetPage()
+    },
+    [resetPage],
+  )
 
   // Only the empty state resets both: the toolbar keeps search and filters
   // independent so one never silently discards the other.
@@ -145,7 +180,7 @@ export function useDataGridController<TData>({
     setGlobalFilter('')
     setColumnFilters([])
     resetPage()
-  }, [resetPage])
+  }, [resetPage, setSearch])
 
   const sortByColumn = useCallback(
     (column: Column<TData, unknown>, event: unknown) => {
@@ -201,12 +236,14 @@ export function useDataGridController<TData>({
     isPending,
     sorting,
     filterCount,
+    chips,
     hasSearch,
     hasFilters,
     showFilterRow,
     resetKey,
     clearSearch,
     clearColumnFilters,
+    removeColumnFilter,
     clearAll,
     sortByColumn,
     filterByColumn,

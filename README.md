@@ -202,13 +202,19 @@ mutations only pay for the sort/filter pass.
   and Agenda views, and all dialogs close with Escape. Shortcuts are ignored while
   typing in a field or when a dialog or menu owns the keyboard.
 - **Search vs filters:** global search and column filters are independent. The
-  search field clears itself with its X or Escape; the “Clear N filters” chip
-  clears only column filters, so a query is never silently discarded.
+  search input stays urgent while the applied query waits for a 200 ms pause in
+  typing, and clearing it is immediate. Active column filters appear as
+  removable chips — including filters whose column is hidden — and the “Clear N
+  filters” button clears them all without touching the query.
+- **Column visibility:** the Columns menu marks each visible column with a
+  check, stays open so several columns can be toggled in a row, and “Show all
+  columns” reveals every hideable column instead of resetting to the initial
+  set.
 
 ## Tests and quality checks
 
 ```bash
-npm test          # 49 tests, 10 files
+npm test          # 56 tests, 11 files
 npm run build     # tsc -b (strict) + vite build
 npm run lint      # oxlint
 ```
