@@ -1,5 +1,7 @@
 import { AlertTriangle, Loader2, Save } from 'lucide-react'
 import type { RefObject } from 'react'
+import { Button } from '@/components/ui/Button'
+import { buttonClass } from '@/components/ui/buttonStyles'
 
 interface EventFormFooterProps {
   mode: 'create' | 'edit'
@@ -43,17 +45,18 @@ export function EventFormFooter({
             type="button"
             ref={keepEditingRef}
             onClick={onKeepEditing}
-            className="h-8 rounded-xs border border-line bg-canvas px-3 text-[11px] font-medium text-ink hover:border-line-strong"
+            className={buttonClass({ size: 'sm', className: 'rounded-xs' })}
           >
             Keep editing
           </button>
-          <button
-            type="button"
+          <Button
+            variant="danger"
+            size="sm"
             onClick={onDiscard}
-            className="h-8 rounded-xs border border-rose/30 bg-rose/10 px-3 text-[11px] font-medium text-rose hover:bg-rose/15"
+            className="rounded-xs"
           >
             Discard changes
-          </button>
+          </Button>
         </div>
       ) : (
         <div className="flex items-center justify-end gap-2">
@@ -62,14 +65,16 @@ export function EventFormFooter({
             ref={cancelRef}
             onClick={onCancel}
             disabled={isSaving}
-            className="h-9 rounded-sm border border-line bg-canvas px-4 text-xs font-medium text-muted transition-colors hover:border-line-strong hover:text-ink disabled:opacity-50"
+            className={buttonClass({ size: 'md', className: 'bg-canvas px-4' })}
           >
             Cancel
           </button>
-          <button
+          <Button
             type="submit"
+            variant="primary"
+            size="md"
             disabled={isSaving}
-            className="inline-flex h-9 items-center gap-2 rounded-sm border border-accent/40 bg-accent/15 px-4 text-xs font-semibold text-accent transition-colors hover:bg-accent/20 disabled:opacity-60"
+            className="gap-2 px-4 font-semibold"
           >
             {isSaving ? (
               <Loader2 aria-hidden="true" className="size-3.5 animate-spin" />
@@ -77,7 +82,7 @@ export function EventFormFooter({
               <Save aria-hidden="true" className="size-3.5" />
             )}
             {isSaving ? 'Saving…' : mode === 'create' ? 'Create event' : 'Save changes'}
-          </button>
+          </Button>
         </div>
       )}
     </div>

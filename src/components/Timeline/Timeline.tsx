@@ -2,6 +2,7 @@ import { useVirtualizer } from '@tanstack/react-virtual'
 import { CalendarDays, CalendarRange } from 'lucide-react'
 import { useEffect, useId, useRef } from 'react'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { panelClass } from '@/components/ui/surfaces'
 import { cn } from '@/shared/lib/cn'
 import { formatCount, pluralize } from '@/shared/lib/format'
 import { useTimelineAnnouncement } from './hooks/useTimelineAnnouncement'
@@ -35,6 +36,8 @@ export function Timeline<TItem>({
   onItemActivate,
   ariaLabel,
   emptyState,
+  toolbar,
+  footer,
   itemHeight = DEFAULT_ITEM_HEIGHT,
   groupHeight = DEFAULT_GROUP_HEIGHT,
   jumpToDay,
@@ -119,11 +122,8 @@ export function Timeline<TItem>({
   const helpId = useId()
 
   return (
-    <section
-      aria-label={ariaLabel}
-      aria-describedby={helpId}
-      className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-line bg-surface/60 shadow-2xl shadow-black/30"
-    >
+    <section aria-label={ariaLabel} aria-describedby={helpId} className={panelClass}>
+      {toolbar}
       <p id={helpId} className="sr-only">
         Grouped by day. Press Down or Up to move between events, Left or Right to jump to the
         previous or next day, Home or End to jump to the edges, and Enter to edit an event.
@@ -198,6 +198,8 @@ export function Timeline<TItem>({
       <p role="status" aria-live="polite" aria-atomic="true" className="sr-only">
         {announcement}
       </p>
+
+      {footer}
     </section>
   )
 }

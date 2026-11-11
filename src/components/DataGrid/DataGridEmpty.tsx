@@ -1,4 +1,5 @@
 import { Inbox, SearchX, SlidersHorizontal } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { formatCount, pluralize } from '@/shared/lib/format'
 
@@ -70,13 +71,7 @@ export function DataGridEmpty({
       hintClassName="leading-relaxed"
       action={
         hasQuery ? (
-          <button
-            type="button"
-            onClick={onClear}
-            className="inline-flex h-8 items-center gap-1.5 rounded-sm border border-line-strong bg-raised px-3 text-xs font-medium text-ink transition-colors hover:border-accent/40 hover:text-accent"
-          >
-            {copy.actionLabel}
-          </button>
+          <Button onClick={onClear}>{copy.actionLabel}</Button>
         ) : undefined
       }
     />

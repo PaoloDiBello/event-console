@@ -1,6 +1,8 @@
 import { Activity, CalendarRange, Database, Plus, Table2 } from 'lucide-react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { buttonClass } from '@/components/ui/buttonStyles'
 import { Kbd } from '@/components/ui/Kbd'
+import { selectedSegmentClass } from '@/components/ui/surfaces'
 import { useEvents } from '@/features/events/store'
 import { useGlobalKeydown } from '@/shared/hooks/useGlobalKeydown'
 import { cn } from '@/shared/lib/cn'
@@ -80,7 +82,8 @@ export function AppHeader({ onNewEvent }: AppHeaderProps) {
             >
               <span
                 className={cn(
-                  'col-start-1 row-start-1 rounded-[5px] bg-raised shadow-[inset_0_0_0_1px_var(--color-line-strong)] transition-transform duration-200 ease-out motion-reduce:transition-none',
+                  'col-start-1 row-start-1 rounded-[5px] transition-transform duration-200 ease-out motion-reduce:transition-none',
+                  selectedSegmentClass,
                   isTimeline && 'translate-x-full',
                 )}
               />
@@ -129,7 +132,11 @@ export function AppHeader({ onNewEvent }: AppHeaderProps) {
             onClick={onNewEvent}
             aria-label="New event"
             title="New event (N)"
-            className="inline-flex h-10 w-10 items-center justify-center gap-2 rounded-sm border border-accent/40 bg-accent/15 px-2.5 text-xs font-semibold text-accent transition-colors hover:bg-accent/20 focus-visible:outline-accent sm:w-auto sm:justify-start sm:px-3"
+            className={buttonClass({
+              variant: 'primary',
+              size: 'md',
+              className: 'w-9 px-0 font-semibold sm:w-auto sm:px-3',
+            })}
           >
             <Plus aria-hidden="true" className="size-4" />
             <span className="hidden sm:inline">New event</span>

@@ -128,6 +128,13 @@ headings (“Event registry” / “Agenda”), so the control names the user's 
 model instead of the widget behind it; the icons carry the representation.
 `G` and `T` switch modes from anywhere that is not already capturing text input.
 
+Both pages also share one shell: a page header with two metric cards and the
+page actions, then a single panel with a toolbar, a scrolling body and a status
+footer. The agenda's search, window and jump controls sit in its panel toolbar,
+the same slot the grid uses for search and the column menu. `Button`,
+`SearchField`, `Stat` and the classes in `components/ui/surfaces.ts` keep the
+control heights, radii and states identical across both views.
+
 ### Timeline
 
 `features/events/agenda/agendaData.ts` windows the store by calendar day, groups
@@ -261,11 +268,11 @@ src/
     store/                   Zustand events store, useEventFeed, tests
     components/              EventLabels, EventForm (controller/fields/footer/schema/values)
     registry/                RegistryPage, header/stats, columns
-    agenda/                  AgendaPage, header, card, empty/skeleton, data
+    agenda/                  AgendaPage, header, toolbar/footer, card, empty/skeleton, data
   components/
     DataGrid/                composition, hooks/, table/header/body, toolbar, model/
     Timeline/                composition, hooks/, rows, model
-    ui/                      PageHeader, EmptyState, Kbd
+    ui/                      PageHeader, EmptyState, Kbd, Button, SearchField, Stat, surfaces
   shared/
     hooks/                   useGlobalKeydown, useTransientValue
     lib/                     dates, formatting, cn, keyboard guards

@@ -2,6 +2,7 @@ import { DayPicker } from '@daypicker/react'
 import * as Popover from '@radix-ui/react-popover'
 import { CalendarDays, ChevronDown } from 'lucide-react'
 import { useState } from 'react'
+import { buttonClass } from '@/components/ui/buttonStyles'
 import { formatDayFull, formatDayShort, parseIsoDay, toIsoDay } from '@/shared/lib/dates'
 
 interface AgendaDatePickerProps {
@@ -28,7 +29,10 @@ export function AgendaDatePicker({ value, min, max, onChange }: AgendaDatePicker
           aria-haspopup="dialog"
           aria-label={`Jump to date. Currently ${formatDayFull(value)}`}
           title={formatDayFull(value)}
-          className="flex h-10 min-w-[10.5rem] items-center gap-2 rounded-md border border-line bg-surface/60 px-2.5 text-left transition-colors hover:border-line-strong hover:bg-raised/50"
+          className={buttonClass({
+            size: 'md',
+            className: 'min-w-[10.5rem] justify-start gap-2 px-2.5 font-normal',
+          })}
         >
           <CalendarDays aria-hidden="true" className="size-3.5 shrink-0 text-faint" />
           <span className="font-mono text-[10px] tracking-wider text-faint uppercase">Jump</span>

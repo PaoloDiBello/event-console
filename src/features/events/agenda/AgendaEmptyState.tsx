@@ -1,4 +1,5 @@
 import { AlertTriangle } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 
 interface AgendaEmptyStateProps {
@@ -17,17 +18,7 @@ export function AgendaEmptyState({ query, onClearQuery }: AgendaEmptyStateProps)
           ? 'Try a different title, owner or category — or clear the filter.'
           : 'Widen the window, or add an event with the New event button.'
       }
-      action={
-        query ? (
-          <button
-            type="button"
-            onClick={onClearQuery}
-            className="inline-flex h-8 items-center rounded-sm border border-line-strong bg-raised px-3 text-xs text-ink hover:border-accent/40 hover:text-accent"
-          >
-            Clear filter
-          </button>
-        ) : undefined
-      }
+      action={query ? <Button onClick={onClearQuery}>Clear filter</Button> : undefined}
     />
   )
 }

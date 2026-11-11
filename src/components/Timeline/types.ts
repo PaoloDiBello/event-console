@@ -21,6 +21,10 @@ export interface TimelineProps<TItem> {
   /** Accessible name for the whole timeline region. */
   ariaLabel: string
   emptyState?: ReactNode
+  /** Panel toolbar: search and view controls, above the scroll area. */
+  toolbar?: ReactNode
+  /** Panel footer: counts and keyboard help, below the scroll area. */
+  footer?: ReactNode
   itemHeight?: number
   groupHeight?: number
   /** ISO day key to scroll to, e.g. `2026-11-12`. */

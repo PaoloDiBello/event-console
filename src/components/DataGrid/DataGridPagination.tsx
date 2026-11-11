@@ -5,6 +5,8 @@ import {
   ChevronsRight,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
+import { buttonClass } from '@/components/ui/buttonStyles'
+import { footerClass } from '@/components/ui/surfaces'
 import { formatCount } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/cn'
 import { DataGridPageJump } from './DataGridPageJump'
@@ -39,8 +41,9 @@ function NavButton({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        'inline-flex size-8 items-center justify-center rounded-xs border border-line bg-raised text-muted transition-colors',
-        'hover:border-line-strong hover:text-ink disabled:cursor-not-allowed disabled:opacity-35',
+        buttonClass({ size: 'icon-sm' }),
+        'rounded-xs',
+        'disabled:cursor-not-allowed disabled:opacity-35',
       )}
     >
       {children}
@@ -62,7 +65,7 @@ export function DataGridPagination({
   const lastRow = Math.min(totalRows, (pageIndex + 1) * pageSize)
 
   return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-line bg-surface/80 px-3 py-2.5 text-xs text-muted">
+    <div className={footerClass}>
       <p className="tnum">
         <span className="font-mono text-ink">
           {formatCount(firstRow)}–{formatCount(lastRow)}

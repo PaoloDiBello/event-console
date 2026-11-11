@@ -20,7 +20,7 @@ export function DataGridFilterChips({
   if (chips.length === 0) return null
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5 border-t border-line/70 px-3 py-2">
+    <div className="flex flex-wrap items-center gap-1.5 bg-surface/80 px-3 py-2">
       <span className="mr-1 font-mono text-[10px] tracking-[0.14em] text-faint uppercase">
         Filters
       </span>

@@ -1,5 +1,6 @@
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { useRef } from 'react'
+import { panelClass } from '@/components/ui/surfaces'
 import { formatCount, pluralize } from '@/shared/lib/format'
 import { DataGridEmpty } from './DataGridEmpty'
 import { DataGridError } from './DataGridError'
@@ -80,7 +81,7 @@ export function DataGrid<TData>({
       : 0
 
   return (
-    <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-line bg-surface/70 shadow-2xl shadow-black/30">
+    <section className={panelClass}>
       <DataGridToolbar
         table={grid.table}
         search={grid.search}

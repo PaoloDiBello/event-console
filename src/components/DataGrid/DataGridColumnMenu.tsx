@@ -10,6 +10,7 @@ import {
 } from '@radix-ui/react-dropdown-menu'
 import type { Table } from '@tanstack/react-table'
 import { Check, Columns3 } from 'lucide-react'
+import { buttonClass } from '@/components/ui/buttonStyles'
 import { columnLabel } from './utils'
 
 interface DataGridColumnMenuProps<TData> {
@@ -34,7 +35,7 @@ export function DataGridColumnMenu<TData>({
         <button
           type="button"
           disabled={disabled}
-          className="inline-flex h-9 items-center gap-2 rounded-sm border border-line bg-raised px-3 text-xs font-medium text-muted transition-colors hover:border-line-strong hover:text-ink disabled:opacity-50"
+          className={buttonClass({ size: 'md', className: 'gap-2' })}
         >
           <Columns3 aria-hidden="true" className="size-3.5" />
           Columns

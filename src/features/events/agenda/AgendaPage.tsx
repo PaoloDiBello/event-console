@@ -7,8 +7,10 @@ import { formatMinute, shiftIsoDay, todayIso } from '@/shared/lib/dates'
 import { buildTimeline, TIMELINE_SCOPES, type TimelineScope } from './agendaData'
 import { AgendaEmptyState } from './AgendaEmptyState'
 import { AgendaEventCard } from './AgendaEventCard'
+import { AgendaFooter } from './AgendaFooter'
 import { AgendaHeader } from './AgendaHeader'
 import { AgendaSkeleton } from './AgendaSkeleton'
+import { AgendaToolbar } from './AgendaToolbar'
 
 interface AgendaPageProps {
   onEdit: (event: EventRecord) => void
@@ -53,25 +55,26 @@ export function AgendaPage({ onEdit }: AgendaPageProps) {
   const renderItem = useCallback((event: EventRecord) => <AgendaEventCard event={event} />, [])
   const clearQuery = useCallback(() => setQuery(''), [])
 
+  const toolbar = (
+    <AgendaToolbar
+      scope={scope}
+      onScopeChange={handleScopeChange}
+      query={query}
+      onQueryChange={setQuery}
+      jumpDate={selectedDate}
+      jumpMin={today}
+      jumpMax={maxJumpDate}
+      onJumpDateChange={handleJumpDateChange}
+    />
+  )
+
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
-      <AgendaHeader
-        scope={scope}
-        onScopeChange={handleScopeChange}
-        query={query}
-        onQueryChange={setQuery}
-        jumpDate={selectedDate}
-        jumpMin={today}
-        jumpMax={maxJumpDate}
-        onJumpDateChange={handleJumpDateChange}
-        total={data.total}
-        dayCount={data.groups.length}
-        atRisk={data.atRisk}
-      />
+      <AgendaHeader scope={scope} total={data.total} atRisk={data.atRisk} />
 
       <div className="min-h-0 flex-1">
         {isLoading ? (
-          <AgendaSkeleton />
+          <AgendaSkeleton toolbar={toolbar} />
         ) : (
           <Timeline
             groups={data.groups}
@@ -81,6 +84,8 @@ export function AgendaPage({ onEdit }: AgendaPageProps) {
             onItemActivate={onEdit}
             ariaLabel={`Upcoming events, next ${scope} days, grouped by day`}
             emptyState={<AgendaEmptyState query={query} onClearQuery={clearQuery} />}
+            toolbar={toolbar}
+            footer={<AgendaFooter total={data.total} dayCount={data.groups.length} />}
             jumpToDay={jumpRequest?.day}
             jumpRequestId={jumpRequest?.id}
           />

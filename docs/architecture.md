@@ -91,7 +91,9 @@ src/
       index.ts                      public page API
     agenda/                         "by day" lens
       AgendaPage.tsx                data + Timeline composition
-      AgendaHeader.tsx              window, search, counts, key help
+      AgendaHeader.tsx              page header and window stats
+      AgendaToolbar.tsx             panel toolbar: search, window, jump
+      AgendaFooter.tsx              panel footer: counts and key help
       AgendaEmptyState.tsx          query/window empty copy
       AgendaSkeleton.tsx            loading placeholder
       AgendaEventCard.tsx           one event's card content
@@ -138,6 +140,11 @@ src/
       PageHeader.tsx                generic page heading/actions layout
       EmptyState.tsx                shared empty-state layout
       Kbd.tsx                       keyboard hint chip
+      Button.tsx                    one button component
+      buttonStyles.ts               variant/size classes for triggers and refs
+      SearchField.tsx               one search control for both views
+      Stat.tsx                      one metric card for both headers
+      surfaces.ts                   panel/toolbar/footer/segment classes
 
   shared/
     hooks/                          reusable React hooks
@@ -177,6 +184,28 @@ Large components were split along state ownership, not visual size:
 
 This keeps the composition readable while avoiding a forest of one-line
 components. A file boundary exists where a unit has a distinct reason to change.
+
+## One visual system
+
+Registry and agenda are two lenses on the same data, so they share one shell:
+`PageHeader` (title, description, metric cards, actions), then a panel with a
+toolbar, a scrolling body and a status footer.
+
+- `components/ui/buttonStyles.ts` is the only source of button classes.
+  `Button` uses it; Radix triggers and buttons that need a ref call
+  `buttonClass()` directly.
+- `SearchField` is the only search control, so icon, height, clear affordance
+  and focus ring cannot drift between views.
+- `Stat` is the only metric card. Both headers show two of them at the same
+  height as the adjacent buttons.
+- `components/ui/surfaces.ts` owns `panelClass`, `toolbarClass`, `footerClass`
+  and the segmented-control classes. `DataGrid`, `Timeline`, `AgendaSkeleton`
+  and `RouteFallback` all use `panelClass`.
+- `Timeline` accepts `toolbar` and `footer` slots, which is how the agenda gets
+  the same anatomy as the grid without duplicating panel markup.
+
+Scale: panels are `rounded-lg`, cards and dense controls `rounded-sm`/`rounded-xs`,
+page buttons are `h-9`, compact buttons `h-8`, icon buttons `size-9`/`size-8`.
 
 ## Public APIs and imports
 
