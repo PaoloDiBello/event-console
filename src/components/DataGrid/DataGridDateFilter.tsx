@@ -51,7 +51,7 @@ export function DataGridDateFilter({
             title={active ? `Filtered to ${formatGridDate(value)}` : `Filter by ${label}`}
             className={cn(
               filterControlClass(active),
-              'flex items-center pr-8 pl-2 text-left whitespace-nowrap',
+              'flex items-center pr-8 pl-2 text-left whitespace-nowrap data-[state=open]:border-accent/70 data-[state=open]:bg-canvas',
             )}
           >
             <span className="truncate">{active ? formatGridDate(value) : 'Any date'}</span>

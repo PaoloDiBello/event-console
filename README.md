@@ -236,14 +236,15 @@ mutations only pay for the sort/filter pass.
   filters” button clears them all without touching the query.
 - **Column filter row:** filters stay quiet until they are doing something. An
   applied control takes the accent border and a tinted fill, text and date
-  filters grow a one-click clear button, selects use an in-app chevron, and the
-  column header marks a filtered column with an accent dot. The When filter
-  opens the shared calendar instead of the browser's date input, spells the
-  applied day out in the trigger and in its chip, and offers Today as a
-  shortcut. Scanning the row is therefore enough to see which columns are
+  filters grow a one-click clear button, and the column header marks a filtered
+  column with an accent dot. Select filters open an in-app menu — the native
+  `<select>` popup is drawn by the operating system and breaks the console
+  palette — with the current option checked and an **All** item to reset. The
+  When filter opens the shared calendar instead of the browser's date input,
+  spells the applied day out in the trigger and in its chip, and offers Today as
+  a shortcut. Scanning the row is therefore enough to see which columns are
   narrowing the view, while the chip strip remains the universal removal
-  surface. The **Filters** button collapses the row when you want the extra
-  height back; the chips stay visible so nothing becomes unreachable.
+  surface.
 - **Column visibility:** the Columns menu marks each visible column with a
   check, stays open so several columns can be toggled in a row, and “Show all
   columns” reveals every hideable column instead of resetting to the initial
@@ -252,15 +253,15 @@ mutations only pay for the sort/filter pass.
 ## Tests and quality checks
 
 ```bash
-npm test          # 68 tests, 13 files
+npm test          # 69 tests, 13 files
 npm run build     # tsc -b (strict) + vite build
 npm run lint      # oxlint
 ```
 
 Coverage includes dataset determinism, search-text construction, store
 create/update, grid sorting / filtering / pagination (including typed page jumps
-and clamping) / focus-row reveal / filter-row clearing and collapsing / the
-date-filter calendar, timeline grouping / windowing / keyboard navigation /
+and clamping) / focus-row reveal / filter-row clearing / the select and
+date-filter menus, timeline grouping / windowing / keyboard navigation /
 announcements, the shortcut cheatsheet, and form validation, draft mapping plus
 the discard flow.
 

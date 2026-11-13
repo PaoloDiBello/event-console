@@ -9,7 +9,7 @@ import { cn } from '@/shared/lib/cn'
  * with `px-*` so the clear button, chevron and date text never collide.
  */
 export const FILTER_CONTROL_CLASS =
-  'h-7 w-full rounded-xs border text-[11px] transition-colors focus:outline-none focus:ring-1 disabled:cursor-not-allowed disabled:opacity-50'
+  'h-8 w-full rounded-xs border text-[11px] transition-colors focus:outline-none focus:ring-1 disabled:cursor-not-allowed disabled:opacity-50 sm:h-7'
 
 const FILTER_IDLE_CLASS =
   'border-line/70 bg-canvas/60 text-muted hover:border-line-strong hover:bg-canvas'

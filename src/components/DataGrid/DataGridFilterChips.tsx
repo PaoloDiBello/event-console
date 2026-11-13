@@ -8,9 +8,8 @@ interface DataGridFilterChipsProps {
 }
 
 /**
- * Active filters as individual chips. The column filter row can be scrolled
- * away or hidden with its column; this row cannot, and each chip removes only
- * its own filter.
+ * Active filters as individual chips. The filter row scrolls away with the
+ * table; this row does not, and each chip removes only its own filter.
  */
 export function DataGridFilterChips({
   chips,

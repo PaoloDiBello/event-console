@@ -1,6 +1,6 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import { render, screen, waitFor, within } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import userEvent, { type UserEvent } from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { formatGridDate, todayIso } from '@/shared/lib/dates'
 import { DataGrid } from './DataGrid'
@@ -82,6 +82,16 @@ function dataRows() {
   return screen.getAllByRole('row').slice(2)
 }
 
+/** The select filter is a custom menu, so the trigger is a button. */
+function statusFilter() {
+  return screen.getByRole('button', { name: /^Filter by Status/ })
+}
+
+async function chooseStatus(user: UserEvent, option: 'All' | 'On' | 'Off') {
+  await user.click(statusFilter())
+  await user.click(await screen.findByRole('menuitemradio', { name: option }))
+}
+
 describe('DataGrid', () => {
   it('paginates rows and reports the range to assistive tech', () => {
     renderGrid()
@@ -154,12 +164,48 @@ describe('DataGrid', () => {
     const user = userEvent.setup()
     renderGrid()
 
-    await user.selectOptions(screen.getByLabelText('Filter by Status'), 'on')
+    await chooseStatus(user, 'On')
 
     await waitFor(() =>
       expect(screen.getByRole('status')).toHaveTextContent('12 rows match. Showing 1 to 10.'),
     )
     expect(screen.queryByText('off')).not.toBeInTheDocument()
+  })
+
+  it('marks the current option in the select menu', async () => {
+    const user = userEvent.setup()
+    renderGrid()
+
+    await chooseStatus(user, 'Off')
+
+    await user.click(statusFilter())
+
+    expect(await screen.findByRole('menuitemradio', { name: 'Off' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    )
+    expect(screen.getByRole('menuitemradio', { name: 'All' })).toHaveAttribute(
+      'aria-checked',
+      'false',
+    )
+
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+  })
+
+  it('resets a select filter from the All option', async () => {
+    const user = userEvent.setup()
+    renderGrid()
+
+    await chooseStatus(user, 'On')
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('12 rows match.'))
+
+    await chooseStatus(user, 'All')
+
+    expect(statusFilter()).toHaveAccessibleName('Filter by Status')
+    await waitFor(() =>
+      expect(screen.getByRole('status')).toHaveTextContent('23 rows match. Showing 1 to 10.'),
+    )
   })
 
   it('clears a text filter from the filter row itself', async () => {
@@ -176,29 +222,6 @@ describe('DataGrid', () => {
     await waitFor(() =>
       expect(screen.getByRole('status')).toHaveTextContent('23 rows match. Showing 1 to 10.'),
     )
-  })
-
-  it('collapses the filter row without losing active filters', async () => {
-    const user = userEvent.setup()
-    renderGrid()
-
-    await user.type(screen.getByLabelText('Filter by Name'), 'Row 0')
-    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('10 rows match.'))
-
-    const toggle = screen.getByRole('button', { name: 'Filters' })
-    expect(toggle).toHaveAttribute('aria-expanded', 'true')
-
-    await user.click(toggle)
-
-    expect(toggle).toHaveAttribute('aria-expanded', 'false')
-    expect(screen.queryByLabelText('Filter by Name')).not.toBeInTheDocument()
-    // The chip strip is the removal surface, so it stays visible.
-    expect(screen.getByRole('button', { name: 'Remove Name filter: Row 0' })).toBeInTheDocument()
-    expect(screen.getByRole('status')).toHaveTextContent('10 rows match.')
-
-    await user.click(toggle)
-
-    expect(screen.getByLabelText('Filter by Name')).toHaveValue('Row 0')
   })
 
   it('hides a column from the column menu', async () => {
@@ -229,7 +252,7 @@ describe('DataGrid', () => {
 
     const search = screen.getByRole('searchbox', { name: 'Search all columns' })
     await user.type(search, 'Row')
-    await user.selectOptions(screen.getByLabelText('Filter by Status'), 'on')
+    await chooseStatus(user, 'On')
     await waitFor(() =>
       expect(screen.getByRole('status')).toHaveTextContent('12 rows match. Showing 1 to 10.'),
     )
@@ -246,7 +269,7 @@ describe('DataGrid', () => {
     const user = userEvent.setup()
     renderGrid()
 
-    await user.selectOptions(screen.getByLabelText('Filter by Status'), 'on')
+    await chooseStatus(user, 'On')
     const search = screen.getByRole('searchbox', { name: 'Search all columns' })
     await user.type(search, 'Row 0')
     await waitFor(() =>
@@ -254,7 +277,7 @@ describe('DataGrid', () => {
     )
 
     await user.click(screen.getByRole('button', { name: 'Clear search field' }))
-    expect(screen.getByLabelText('Filter by Status')).toHaveValue('on')
+    expect(statusFilter()).toHaveAccessibleName('Filter by Status, currently On')
     await waitFor(() =>
       expect(screen.getByRole('status')).toHaveTextContent('12 rows match. Showing 1 to 10.'),
     )
@@ -264,14 +287,14 @@ describe('DataGrid', () => {
     const user = userEvent.setup()
     renderGrid()
 
-    await user.selectOptions(screen.getByLabelText('Filter by Status'), 'on')
+    await chooseStatus(user, 'On')
     await user.type(screen.getByRole('searchbox', { name: 'Search all columns' }), 'nothing-matches')
 
     await screen.findByText('No rows match your search and filters')
     await user.click(screen.getByRole('button', { name: 'Clear search and filters' }))
 
     await screen.findByText('Row 00')
-    expect(screen.getByLabelText('Filter by Status')).toHaveValue('')
+    expect(statusFilter()).toHaveAccessibleName('Filter by Status')
     expect(screen.getByRole('status')).toHaveTextContent('23 rows match. Showing 1 to 10.')
   })
 
@@ -394,7 +417,7 @@ describe('DataGrid', () => {
     renderGrid()
 
     await user.type(screen.getByLabelText('Filter by Name'), 'Row 0')
-    await user.selectOptions(screen.getByLabelText('Filter by Status'), 'on')
+    await chooseStatus(user, 'On')
 
     await waitFor(() =>
       expect(screen.getByText(/rows? match\. Showing/)).toHaveTextContent(
@@ -409,7 +432,7 @@ describe('DataGrid', () => {
         '10 rows match. Showing 1 to 10.',
       ),
     )
-    expect(screen.getByLabelText('Filter by Status')).toHaveValue('')
+    expect(statusFilter()).toHaveAccessibleName('Filter by Status')
     expect(screen.getByRole('button', { name: 'Remove Name filter: Row 0' })).toBeInTheDocument()
     expect(
       screen.queryByRole('button', { name: 'Remove Status filter: On' }),
@@ -420,7 +443,7 @@ describe('DataGrid', () => {
     const user = userEvent.setup()
     renderGrid()
 
-    await user.selectOptions(screen.getByLabelText('Filter by Status'), 'on')
+    await chooseStatus(user, 'On')
     await user.click(screen.getByRole('button', { name: /Columns/ }))
     await user.click(screen.getByRole('menuitemcheckbox', { name: 'Status' }))
     await user.keyboard('{Escape}')

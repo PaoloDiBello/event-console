@@ -1,8 +1,8 @@
 import type { Column } from '@tanstack/react-table'
-import { ChevronDown } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { DataGridDateFilter } from './DataGridDateFilter'
 import { DataGridFilterClear } from './DataGridFilterClear'
+import { DataGridSelectFilter } from './DataGridSelectFilter'
 import { filterControlClass } from './filterControlStyles'
 import { columnLabel } from './utils'
 
@@ -42,29 +42,13 @@ export function DataGridColumnFilter<TData>({
 
   if (meta?.filter === 'select') {
     return (
-      <div className="relative">
-        <select
-          aria-label={`Filter by ${label}`}
-          value={stringValue}
-          disabled={disabled}
-          onChange={(event) => onChange(column, event.target.value || undefined)}
-          className={cn(controlClass, 'cursor-pointer appearance-none pr-6 pl-2')}
-        >
-          <option value="">All</option>
-          {(meta.filterOptions ?? []).map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-        <ChevronDown
-          aria-hidden="true"
-          className={cn(
-            'pointer-events-none absolute top-1/2 right-1.5 size-3 -translate-y-1/2 transition-colors',
-            active ? 'text-accent' : 'text-faint',
-          )}
-        />
-      </div>
+      <DataGridSelectFilter
+        label={label}
+        value={stringValue}
+        options={meta.filterOptions ?? []}
+        disabled={disabled}
+        onChange={(next) => onChange(column, next)}
+      />
     )
   }
 

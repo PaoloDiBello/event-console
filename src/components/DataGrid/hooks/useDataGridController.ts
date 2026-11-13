@@ -149,13 +149,10 @@ export function useDataGridController<TData>({
   const chips = useMemo(() => filterChips(table, columnFilters), [table, columnFilters])
   const hasSearch = globalFilter.length > 0
   const hasFilters = filterCount > 0
-  const hasFilterableColumns = useMemo(
+  const showFilterRow = useMemo(
     () => visibleColumns.some((column) => column.columnDef.meta?.filter),
     [visibleColumns],
   )
-  const [filterRowOpen, setFilterRowOpen] = useState(true)
-  const toggleFilterRow = useCallback(() => setFilterRowOpen((open) => !open), [])
-  const showFilterRow = hasFilterableColumns && filterRowOpen
 
   const clearSearch = useCallback(() => {
     setSearch('')
@@ -243,9 +240,6 @@ export function useDataGridController<TData>({
     hasSearch,
     hasFilters,
     showFilterRow,
-    filterRowOpen,
-    hasFilterableColumns,
-    toggleFilterRow,
     resetKey,
     clearSearch,
     clearColumnFilters,
