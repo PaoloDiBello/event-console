@@ -114,7 +114,7 @@
  * DayPicker theming. The package stylesheet is loaded before this file, so
  * these variables and overrides stay in the app's dark console palette.
  */
-.agenda-calendar {
+.event-calendar {
   --rdp-accent-color: var(--color-accent);
   --rdp-accent-background-color: var(--color-accent-soft);
   --rdp-day-height: 34px;
@@ -137,7 +137,7 @@
   font-family: var(--font-sans);
 }
 
-.agenda-calendar .rdp-month_caption {
+.event-calendar .rdp-month_caption {
   height: var(--rdp-nav-height);
   color: var(--color-muted);
   font-family: var(--font-mono);
@@ -147,11 +147,11 @@
   text-transform: uppercase;
 }
 
-.agenda-calendar .rdp-month_grid {
+.event-calendar .rdp-month_grid {
   margin-inline: auto;
 }
 
-.agenda-calendar .rdp-weekday {
+.event-calendar .rdp-weekday {
   color: var(--color-faint);
   font-family: var(--font-mono);
   font-size: 10px;
@@ -159,7 +159,7 @@
   text-transform: uppercase;
 }
 
-.agenda-calendar .rdp-day_button {
+.event-calendar .rdp-day_button {
   color: var(--color-muted);
   font-family: var(--font-mono);
   font-size: 11px;
@@ -169,44 +169,44 @@
     box-shadow 120ms ease;
 }
 
-.agenda-calendar .rdp-day_button:hover:not(:disabled) {
+.event-calendar .rdp-day_button:hover:not(:disabled) {
   background-color: var(--color-raised);
   color: var(--color-ink);
 }
 
-.agenda-calendar .rdp-day_button:disabled {
+.event-calendar .rdp-day_button:disabled {
   cursor: not-allowed;
 }
 
-.agenda-calendar .rdp-today:not(.rdp-selected) .rdp-day_button {
+.event-calendar .rdp-today:not(.rdp-selected) .rdp-day_button {
   box-shadow: inset 0 0 0 1px rgb(45 212 191 / 0.45);
   color: var(--color-accent);
   font-weight: 600;
 }
 
-.agenda-calendar .rdp-selected {
+.event-calendar .rdp-selected {
   font-size: inherit;
   font-weight: inherit;
 }
 
-.agenda-calendar .rdp-selected .rdp-day_button {
+.event-calendar .rdp-selected .rdp-day_button {
   border: 0;
   background-color: var(--color-accent);
   color: var(--color-canvas);
   font-weight: 600;
 }
 
-.agenda-calendar .rdp-selected .rdp-day_button:hover {
+.event-calendar .rdp-selected .rdp-day_button:hover {
   background-color: var(--color-accent);
   color: var(--color-canvas);
 }
 
-.agenda-calendar .rdp-disabled:not(.rdp-selected) {
+.event-calendar .rdp-disabled:not(.rdp-selected) {
   opacity: var(--rdp-disabled-opacity);
 }
 
-.agenda-calendar .rdp-button_previous,
-.agenda-calendar .rdp-button_next {
+.event-calendar .rdp-button_previous,
+.event-calendar .rdp-button_next {
   display: grid;
   place-items: center;
   border-radius: var(--radius-sm);
@@ -217,21 +217,21 @@
     opacity 120ms ease;
 }
 
-.agenda-calendar .rdp-button_previous:hover:not([aria-disabled='true']),
-.agenda-calendar .rdp-button_next:hover:not([aria-disabled='true']) {
+.event-calendar .rdp-button_previous:hover:not([aria-disabled='true']),
+.event-calendar .rdp-button_next:hover:not([aria-disabled='true']) {
   background-color: var(--color-raised);
   color: var(--color-ink);
 }
 
 /* DayPicker marks the edge months with aria-disabled, not the disabled
    attribute, so the default button state would otherwise look clickable. */
-.agenda-calendar .rdp-button_previous[aria-disabled='true'],
-.agenda-calendar .rdp-button_next[aria-disabled='true'] {
+.event-calendar .rdp-button_previous[aria-disabled='true'],
+.event-calendar .rdp-button_next[aria-disabled='true'] {
   opacity: 0.3;
   cursor: default;
 }
 
-.agenda-calendar .rdp-chevron {
+.event-calendar .rdp-chevron {
   width: 15px;
   height: 15px;
   fill: currentColor;

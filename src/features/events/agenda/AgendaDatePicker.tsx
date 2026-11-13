@@ -68,7 +68,7 @@ export function AgendaDatePicker({ value, min, max, onChange }: AgendaDatePicker
               return iso < min || iso > max
             }}
             onSelect={(date) => choose(toIsoDay(date))}
-            className="agenda-calendar"
+            className="event-calendar"
           />
 
           <div className="mt-2 flex min-h-8 items-center justify-between gap-3 border-t border-line pt-2">

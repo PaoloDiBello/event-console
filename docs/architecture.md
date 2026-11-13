@@ -113,6 +113,9 @@ src/
       DataGridTable.tsx             table/colgroup composition
       DataGridHeader.tsx            sortable headers + filter row
       DataGridColumnFilter.tsx      one filter-row control
+      DataGridDateFilter.tsx        date filter trigger + shared calendar
+      DataGridFilterClear.tsx       inline clear affordance
+      filterControlStyles.ts        idle/active/focus control classes
       DataGridBody.tsx              skeleton/empty/virtual rows
       DataGridToolbar.tsx           toolbar composition
       DataGridSearch.tsx            global search control

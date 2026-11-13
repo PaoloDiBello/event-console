@@ -91,6 +91,9 @@ export function DataGrid<TData>({
         chips={grid.chips}
         activeFilterCount={grid.filterCount}
         isPending={grid.isPending}
+        filterRowOpen={grid.filterRowOpen}
+        canToggleFilterRow={grid.hasFilterableColumns}
+        onToggleFilterRow={grid.toggleFilterRow}
         searchPlaceholder={searchPlaceholder}
         searchRef={searchRef}
         toolbarActions={toolbarActions}

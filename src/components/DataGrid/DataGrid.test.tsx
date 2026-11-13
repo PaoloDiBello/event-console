@@ -2,6 +2,7 @@ import type { ColumnDef } from '@tanstack/react-table'
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
+import { formatGridDate, todayIso } from '@/shared/lib/dates'
 import { DataGrid } from './DataGrid'
 
 // Render every row of the current page instead of measuring a scroll viewport;
@@ -175,6 +176,29 @@ describe('DataGrid', () => {
     await waitFor(() =>
       expect(screen.getByRole('status')).toHaveTextContent('23 rows match. Showing 1 to 10.'),
     )
+  })
+
+  it('collapses the filter row without losing active filters', async () => {
+    const user = userEvent.setup()
+    renderGrid()
+
+    await user.type(screen.getByLabelText('Filter by Name'), 'Row 0')
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('10 rows match.'))
+
+    const toggle = screen.getByRole('button', { name: 'Filters' })
+    expect(toggle).toHaveAttribute('aria-expanded', 'true')
+
+    await user.click(toggle)
+
+    expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.queryByLabelText('Filter by Name')).not.toBeInTheDocument()
+    // The chip strip is the removal surface, so it stays visible.
+    expect(screen.getByRole('button', { name: 'Remove Name filter: Row 0' })).toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent('10 rows match.')
+
+    await user.click(toggle)
+
+    expect(screen.getByLabelText('Filter by Name')).toHaveValue('Row 0')
   })
 
   it('hides a column from the column menu', async () => {
@@ -410,5 +434,29 @@ describe('DataGrid', () => {
         '23 rows match. Showing 1 to 10.',
       ),
     )
+  })
+
+  it('labels a date filter chip with the formatted day', async () => {
+    const user = userEvent.setup()
+    const today = todayIso()
+    render(
+      <DataGrid
+        data={[{ id: 'd1', name: 'Dated row', when: today }]}
+        columns={[
+          { accessorKey: 'name', header: 'Name', meta: { filter: 'text' } },
+          { accessorKey: 'when', header: 'When', meta: { filter: 'date' } },
+        ]}
+        getRowId={(row) => row.id}
+        caption="Dated rows"
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Filter by When' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Filter When by date' })
+    await user.click(within(dialog).getByRole('button', { name: 'Today' }))
+
+    expect(
+      screen.getByRole('button', { name: `Remove When filter: ${formatGridDate(today)}` }),
+    ).toBeInTheDocument()
   })
 })

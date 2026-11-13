@@ -1,4 +1,5 @@
 import type { Column, Table } from '@tanstack/react-table'
+import { formatGridDate } from '@/shared/lib/dates'
 
 /** Number of active per-column filters. Global search is a query, not a filter. */
 export function activeFilterCount(
@@ -29,6 +30,23 @@ export interface FilterChip {
 }
 
 /**
+ * The human label for a filter value. Selects use the option label, dates use
+ * the grid's compact day format, and everything else falls back to the raw
+ * value the column stores.
+ */
+export function filterChipValue<TData>(
+  column: Column<TData, unknown> | undefined,
+  raw: string,
+): string {
+  const option = column?.columnDef.meta?.filterOptions?.find(
+    (candidate) => candidate.value === raw,
+  )
+  if (option) return option.label
+  if (column?.columnDef.meta?.filter === 'date') return formatGridDate(raw)
+  return raw
+}
+
+/**
  * Turn filter state into chips the user can read and remove one at a time.
  *
  * This reads `columnFilters`, not the header row, so a filter on a hidden
@@ -43,13 +61,10 @@ export function filterChips<TData>(
     .map((filter) => {
       const column = table.getColumn(filter.id)
       const raw = String(filter.value)
-      const option = column?.columnDef.meta?.filterOptions?.find(
-        (candidate) => candidate.value === raw,
-      )
       return {
         id: filter.id,
         label: columnLabel(column, filter.id),
-        value: option?.label ?? raw,
+        value: filterChipValue(column, raw),
       }
     })
 }

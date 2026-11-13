@@ -1,5 +1,5 @@
 import type { Table } from '@tanstack/react-table'
-import { Loader2, SlidersHorizontal, X } from 'lucide-react'
+import { Filter, Loader2, SlidersHorizontal, X } from 'lucide-react'
 import type { ReactNode, RefObject } from 'react'
 import { buttonClass } from '@/components/ui/buttonStyles'
 import { toolbarClass } from '@/components/ui/surfaces'
@@ -18,6 +18,11 @@ interface DataGridToolbarProps<TData> {
   chips: readonly FilterChip[]
   activeFilterCount: number
   isPending: boolean
+  /** Whether the filter row is expanded. */
+  filterRowOpen: boolean
+  /** False when no visible column can be filtered. */
+  canToggleFilterRow: boolean
+  onToggleFilterRow: () => void
   searchPlaceholder?: string
   searchRef: RefObject<HTMLInputElement | null>
   toolbarActions?: ReactNode
@@ -33,6 +38,9 @@ export function DataGridToolbar<TData>({
   chips,
   activeFilterCount,
   isPending,
+  filterRowOpen,
+  canToggleFilterRow,
+  onToggleFilterRow,
   searchPlaceholder,
   searchRef,
   toolbarActions,
@@ -77,6 +85,23 @@ export function DataGridToolbar<TData>({
 
         <div className="ml-auto flex items-center gap-2">
           {toolbarActions}
+          {canToggleFilterRow ? (
+            <button
+              type="button"
+              onClick={onToggleFilterRow}
+              aria-label="Filters"
+              aria-expanded={filterRowOpen}
+              title={filterRowOpen ? 'Hide column filters' : 'Show column filters'}
+              className={buttonClass({
+                variant: filterRowOpen ? 'secondary' : 'ghost',
+                size: 'md',
+                className: 'w-9 px-0 sm:w-auto sm:px-2.5',
+              })}
+            >
+              <Filter aria-hidden="true" className="size-3.5" />
+              <span className="hidden sm:inline">Filters</span>
+            </button>
+          ) : null}
           <DataGridColumnMenu table={table} disabled={disabled} />
         </div>
       </div>
