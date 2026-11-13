@@ -4,16 +4,19 @@ import type { FilterChip } from './utils'
 interface DataGridFilterChipsProps {
   chips: readonly FilterChip[]
   onRemove: (columnId: string) => void
+  onClearAll: () => void
   disabled?: boolean
 }
 
 /**
- * Active filters as individual chips. The filter row scrolls away with the
- * table; this row does not, and each chip removes only its own filter.
+ * Applied filters, grouped in one strip under the toolbar. Each chip removes
+ * only its own filter; "Clear all" sits at the far end so the destructive
+ * action is available without competing with the search field.
  */
 export function DataGridFilterChips({
   chips,
   onRemove,
+  onClearAll,
   disabled = false,
 }: DataGridFilterChipsProps) {
   if (chips.length === 0) return null
@@ -41,6 +44,17 @@ export function DataGridFilterChips({
           />
         </button>
       ))}
+
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={onClearAll}
+        aria-label="Clear all filters"
+        className="ml-auto inline-flex h-6 items-center gap-1 rounded-xs px-2 font-mono text-[10px] tracking-wider text-faint uppercase transition-colors hover:bg-raised hover:text-ink disabled:opacity-50"
+      >
+        <X aria-hidden="true" className="size-3" />
+        Clear all
+      </button>
     </div>
   )
 }

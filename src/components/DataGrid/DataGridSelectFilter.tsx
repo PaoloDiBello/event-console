@@ -52,6 +52,7 @@ export function DataGridSelectFilter({
         <DropdownMenuTrigger asChild disabled={disabled}>
           <button
             type="button"
+            data-grid-filter=""
             aria-label={`Filter by ${label}${active ? `, currently ${current}` : ''}`}
             title={active ? `Filtered to ${current}` : `Filter by ${label}`}
             className={cn(
@@ -77,7 +78,7 @@ export function DataGridSelectFilter({
           align="start"
           sideOffset={6}
           collisionPadding={8}
-          className="z-50 min-w-36 rounded-md border border-line-strong bg-raised p-1 shadow-2xl shadow-black/60"
+          className="z-50 w-[var(--radix-dropdown-menu-trigger-width)] rounded-md border border-line-strong bg-raised p-1 shadow-2xl shadow-black/60"
         >
           <DropdownMenuRadioGroup
             value={active ? value : ALL_VALUE}

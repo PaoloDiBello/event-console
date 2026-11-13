@@ -46,6 +46,7 @@ export function DataGridDateFilter({
           <button
             type="button"
             disabled={disabled}
+            data-grid-filter=""
             aria-label={`Filter by ${label}${active ? `, currently ${formatGridDate(value)}` : ''}`}
             aria-haspopup="dialog"
             title={active ? `Filtered to ${formatGridDate(value)}` : `Filter by ${label}`}

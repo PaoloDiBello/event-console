@@ -10,6 +10,7 @@ import { footerClass } from '@/components/ui/surfaces'
 import { formatCount } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/cn'
 import { DataGridPageJump } from './DataGridPageJump'
+import { DataGridPageSize } from './DataGridPageSize'
 
 interface DataGridPaginationProps {
   pageIndex: number
@@ -82,20 +83,11 @@ export function DataGridPagination({
         </p>
       ) : null}
 
-      <label className="flex items-center gap-2">
-        <span className="text-faint">Rows per page</span>
-        <select
-          value={pageSize}
-          onChange={(event) => onPageSizeChange(Number(event.target.value))}
-          className="h-8 rounded-xs border border-line bg-canvas px-2 font-mono text-xs text-ink focus:border-accent/60 focus:outline-none"
-        >
-          {pageSizeOptions.map((size) => (
-            <option key={size} value={size}>
-              {size}
-            </option>
-          ))}
-        </select>
-      </label>
+      <DataGridPageSize
+        pageSize={pageSize}
+        options={pageSizeOptions}
+        onChange={onPageSizeChange}
+      />
 
       <div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
         <DataGridPageJump

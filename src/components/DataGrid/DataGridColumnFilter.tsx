@@ -61,6 +61,7 @@ export function DataGridColumnFilter<TData>({
           value={stringValue}
           placeholder="Filter…"
           disabled={disabled}
+          data-grid-filter=""
           onChange={(event) => onChange(column, event.target.value || undefined)}
           className={cn(controlClass, 'pr-8 pl-2', align === 'right' && 'text-right')}
         />

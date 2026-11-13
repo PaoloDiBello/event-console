@@ -146,6 +146,35 @@ describe('DataGrid', () => {
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('1 row match.'))
   })
 
+  it('focuses the first column filter with f', async () => {
+    const user = userEvent.setup()
+    renderGrid()
+
+    await user.keyboard('f')
+
+    const nameFilter = screen.getByRole('textbox', { name: 'Filter by Name' })
+    expect(nameFilter).toHaveFocus()
+
+    await user.type(nameFilter, 'Row 07')
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('1 row match.'))
+  })
+
+  it('changes the page size from an in-app menu', async () => {
+    const user = userEvent.setup()
+    renderGrid()
+
+    expect(screen.queryByText('Row 22')).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Rows per page, currently 10' }))
+    await user.click(await screen.findByRole('menuitemradio', { name: '25' }))
+
+    expect(screen.getByRole('button', { name: 'Rows per page, currently 25' })).toBeInTheDocument()
+    expect(screen.getByText('Row 22')).toBeInTheDocument()
+    await waitFor(() =>
+      expect(screen.getByRole('status')).toHaveTextContent('23 rows match. Showing 1 to 23.'),
+    )
+  })
+
   it('clears an active search with Escape', async () => {
     const user = userEvent.setup()
     renderGrid()
@@ -257,7 +286,7 @@ describe('DataGrid', () => {
       expect(screen.getByRole('status')).toHaveTextContent('12 rows match. Showing 1 to 10.'),
     )
 
-    await user.click(screen.getByRole('button', { name: 'Clear 1 filter' }))
+    await user.click(screen.getByRole('button', { name: 'Clear all filters' }))
 
     expect(search).toHaveValue('Row')
     await waitFor(() =>

@@ -224,16 +224,18 @@ mutations only pay for the sort/filter pass.
   Radix Dialog provides the focus trap, Escape handling, and focus restoration.
 - **Reduced motion:** the global stylesheet collapses animations/transitions
   under `prefers-reduced-motion: reduce`.
-- **Keyboard shortcuts:** `/` focuses grid search, `Escape` clears an active
-  search, `n` opens the new-event dialog, `?` opens the shortcut cheatsheet, `g`
-  and `t` switch between the Registry and Agenda views, and all dialogs close with
-  Escape. Shortcuts are ignored while typing in a field or when a dialog or menu
-  owns the keyboard.
+- **Keyboard shortcuts:** `/` focuses grid search, `f` focuses the first column
+  filter, `Escape` clears an active search, `n` opens the new-event dialog, `?`
+  opens the shortcut cheatsheet, `g` and `t` switch between the Registry and
+  Agenda views, and all dialogs close with Escape. Shortcuts are ignored while
+  typing in a field or when a dialog or menu owns the keyboard.
 - **Search vs filters:** global search and column filters are independent. The
   search input stays urgent while the applied query waits for a 200 ms pause in
   typing, and clearing it is immediate. Active column filters appear as
-  removable chips — including filters whose column is hidden — and the “Clear N
-  filters” button clears them all without touching the query.
+  removable chips — including filters whose column is hidden — grouped in one
+  strip under the toolbar; a quiet **Clear all** sits at the far end of that
+  strip, so clearing filters never competes with the search field and never
+  throws away the query.
 - **Column filter row:** filters stay quiet until they are doing something. An
   applied control takes the accent border and a tinted fill, text and date
   filters grow a one-click clear button, and the column header marks a filtered
@@ -249,11 +251,15 @@ mutations only pay for the sort/filter pass.
   check, stays open so several columns can be toggled in a row, and “Show all
   columns” reveals every hideable column instead of resetting to the initial
   set.
+- **One menu language:** every menu in the panel — select filters, rows per
+  page, column visibility — is an in-app Radix menu on the raised surface with a
+  check on the current choice. No control hands the keyboard to an
+  operating-system popup.
 
 ## Tests and quality checks
 
 ```bash
-npm test          # 69 tests, 13 files
+npm test          # 71 tests, 13 files
 npm run build     # tsc -b (strict) + vite build
 npm run lint      # oxlint
 ```

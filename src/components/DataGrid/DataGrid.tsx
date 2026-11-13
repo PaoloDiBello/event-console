@@ -71,7 +71,7 @@ export function DataGrid<TData>({
   })
 
   useGridScrollReset({ scrollRef, resetKey: grid.resetKey, skipRef: skipScrollResetRef })
-  useDataGridShortcuts(searchRef)
+  useDataGridShortcuts(searchRef, scrollRef)
 
   const virtualRows = rowVirtualizer.getVirtualItems()
   const paddingTop = virtualRows.length > 0 ? virtualRows[0]!.start : 0
@@ -89,7 +89,6 @@ export function DataGrid<TData>({
         onClearColumnFilters={grid.clearColumnFilters}
         onRemoveColumnFilter={grid.removeColumnFilter}
         chips={grid.chips}
-        activeFilterCount={grid.filterCount}
         isPending={grid.isPending}
         searchPlaceholder={searchPlaceholder}
         searchRef={searchRef}

@@ -109,7 +109,7 @@ src/
         useDataGridController.ts    search, sort, filters, pagination, table
         useRowReveal.ts             jump to a row's page and scroll it into view
         useGridScrollReset.ts       top-of-list reset on view changes
-        useDataGridShortcuts.ts     "/" focuses the search box
+        useDataGridShortcuts.ts     "/" focuses search, "f" the first filter
       DataGridTable.tsx             table/colgroup composition
       DataGridHeader.tsx            sortable headers + filter row
       DataGridColumnFilter.tsx      one filter-row control
@@ -123,6 +123,7 @@ src/
       DataGridColumnMenu.tsx        visibility menu
       DataGridPagination.tsx        footer and navigation
       DataGridPageJump.tsx          typed page input
+      DataGridPageSize.tsx          rows-per-page menu
       DataGridEmpty.tsx             empty-state copy and reset actions
       DataGridError.tsx             error state
       DataGridSkeleton.tsx          loading rows
