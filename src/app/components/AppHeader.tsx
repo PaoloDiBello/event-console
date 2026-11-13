@@ -1,4 +1,4 @@
-import { Activity, CalendarRange, Database, Plus, Table2 } from 'lucide-react'
+import { Activity, CalendarRange, Database, Keyboard, Plus, Table2 } from 'lucide-react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { buttonClass } from '@/components/ui/buttonStyles'
 import { Kbd } from '@/components/ui/Kbd'
@@ -11,6 +11,7 @@ import { hasCommandModifier, isShortcutBlocked } from '@/shared/lib/keyboard'
 
 interface AppHeaderProps {
   onNewEvent: () => void
+  onOpenShortcuts: () => void
 }
 
 /**
@@ -35,7 +36,7 @@ const navItems = [
   },
 ] as const
 
-export function AppHeader({ onNewEvent }: AppHeaderProps) {
+export function AppHeader({ onNewEvent, onOpenShortcuts }: AppHeaderProps) {
   const events = useEvents()
   const navigate = useNavigate()
   const { pathname } = useLocation()
@@ -122,11 +123,33 @@ export function AppHeader({ onNewEvent }: AppHeaderProps) {
           </nav>
         </div>
 
-        <div className="ml-auto flex items-center gap-3">
+        <div className="ml-auto flex items-center gap-2 sm:gap-3">
           <span className="hidden items-center gap-2 font-mono text-[10px] tracking-wide text-faint md:inline-flex">
             <Database aria-hidden="true" className="size-3.5" />
             {formatCount(events.length)} events
           </span>
+          <button
+            type="button"
+            onClick={onOpenShortcuts}
+            aria-label="Keyboard shortcuts"
+            title="Keyboard shortcuts (?)"
+            aria-keyshortcuts="?"
+            className={buttonClass({
+              variant: 'ghost',
+              size: 'md',
+              className: 'w-9 px-0 sm:w-auto sm:px-2.5',
+            })}
+          >
+            <Keyboard aria-hidden="true" className="size-4" />
+            <span className="hidden sm:inline">Shortcuts</span>
+            <Kbd
+              ariaHidden
+              tone="faint"
+              className="ml-0.5 hidden px-1.5 py-0.5 font-normal lg:inline-flex"
+            >
+              ?
+            </Kbd>
+          </button>
           <button
             type="button"
             onClick={onNewEvent}

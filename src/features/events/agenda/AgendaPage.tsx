@@ -61,6 +61,7 @@ export function AgendaPage({ onEdit }: AgendaPageProps) {
       onScopeChange={handleScopeChange}
       query={query}
       onQueryChange={setQuery}
+      today={today}
       jumpDate={selectedDate}
       jumpMin={today}
       jumpMax={maxJumpDate}
@@ -86,6 +87,7 @@ export function AgendaPage({ onEdit }: AgendaPageProps) {
             emptyState={<AgendaEmptyState query={query} onClearQuery={clearQuery} />}
             toolbar={toolbar}
             footer={<AgendaFooter total={data.total} dayCount={data.groups.length} />}
+            resetKey={`${scope}|${query}`}
             jumpToDay={jumpRequest?.day}
             jumpRequestId={jumpRequest?.id}
           />

@@ -16,6 +16,8 @@ interface DataGridPaginationProps {
   pageSize: number
   pageCount: number
   totalRows: number
+  /** Rows before search and filters, used to explain a narrowed result set. */
+  sourceRows?: number
   pageSizeOptions: readonly number[]
   onPageChange: (pageIndex: number) => void
   onPageSizeChange: (pageSize: number) => void
@@ -56,6 +58,7 @@ export function DataGridPagination({
   pageSize,
   pageCount,
   totalRows,
+  sourceRows,
   pageSizeOptions,
   onPageChange,
   onPageSizeChange,
@@ -72,6 +75,12 @@ export function DataGridPagination({
         </span>{' '}
         of <span className="font-mono text-ink">{formatCount(totalRows)}</span> {itemLabel}
       </p>
+
+      {sourceRows !== undefined && sourceRows !== totalRows ? (
+        <p className="text-faint">
+          filtered from <span className="font-mono">{formatCount(sourceRows)}</span>
+        </p>
+      ) : null}
 
       <label className="flex items-center gap-2">
         <span className="text-faint">Rows per page</span>

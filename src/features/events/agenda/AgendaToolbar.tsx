@@ -1,3 +1,5 @@
+import { CalendarCheck } from 'lucide-react'
+import { buttonClass } from '@/components/ui/buttonStyles'
 import { SearchField } from '@/components/ui/SearchField'
 import {
   segmentClass,
@@ -14,6 +16,8 @@ interface AgendaToolbarProps {
   onScopeChange: (scope: TimelineScope) => void
   query: string
   onQueryChange: (query: string) => void
+  /** Today's ISO day; drives the one-click return when you have jumped away. */
+  today: string
   jumpDate: string
   jumpMin: string
   jumpMax: string
@@ -29,6 +33,7 @@ export function AgendaToolbar({
   onScopeChange,
   query,
   onQueryChange,
+  today,
   jumpDate,
   jumpMin,
   jumpMax,
@@ -78,6 +83,22 @@ export function AgendaToolbar({
           max={jumpMax}
           onChange={onJumpDateChange}
         />
+
+        {jumpDate !== today ? (
+          <button
+            type="button"
+            onClick={() => onJumpDateChange(today)}
+            title="Back to today"
+            className={buttonClass({
+              variant: 'ghost',
+              size: 'md',
+              className: 'gap-1.5 px-2.5 font-normal',
+            })}
+          >
+            <CalendarCheck aria-hidden="true" className="size-3.5 text-accent" />
+            <span className="text-accent">Today</span>
+          </button>
+        ) : null}
       </div>
     </div>
   )

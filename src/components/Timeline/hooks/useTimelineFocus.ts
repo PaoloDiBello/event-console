@@ -9,6 +9,11 @@ interface TimelineFocusOptions<TItem> {
   scrollRef: RefObject<HTMLDivElement | null>
   /** Changes when the day groups change, not when an item is added to a day. */
   groupsKey: string
+  /**
+   * The view inputs (window, search) that should start the list at the top.
+   * Optional so existing callers keep the group-key behaviour.
+   */
+  resetKey?: string
   onGroupsChange?: () => void
 }
 
@@ -25,6 +30,7 @@ export function useTimelineFocus<TItem>({
   virtualizer,
   scrollRef,
   groupsKey,
+  resetKey,
   onGroupsChange,
 }: TimelineFocusOptions<TItem>) {
   const pendingFocusRef = useRef<string | null>(null)
@@ -94,7 +100,7 @@ export function useTimelineFocus<TItem>({
     setActiveKey(null)
     onGroupsChange?.()
     scrollRef.current?.scrollTo({ top: 0 })
-  }, [groupsKey, onGroupsChange, scrollRef])
+  }, [groupsKey, resetKey, onGroupsChange, scrollRef])
 
   return { setActiveKey, tabbableKey, focusRow }
 }

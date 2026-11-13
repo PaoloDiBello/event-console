@@ -25,6 +25,8 @@ export interface TimelineProps<TItem> {
   toolbar?: ReactNode
   /** Panel footer: counts and keyboard help, below the scroll area. */
   footer?: ReactNode
+  /** View inputs that should reset the scroll position, e.g. window + search. */
+  resetKey?: string
   itemHeight?: number
   groupHeight?: number
   /** ISO day key to scroll to, e.g. `2026-11-12`. */

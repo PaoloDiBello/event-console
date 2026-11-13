@@ -58,6 +58,7 @@ src/
       AppHeader.tsx                 shell navigation and new-event action
       AppToast.tsx                  polite success live region
       RouteFallback.tsx             Suspense fallback
+      ShortcutsDialog.tsx           keyboard cheatsheet dialog
     hooks/
       useEventEditor.ts             editor state, submit, focus return, highlight
 
@@ -92,7 +93,7 @@ src/
     agenda/                         "by day" lens
       AgendaPage.tsx                data + Timeline composition
       AgendaHeader.tsx              page header and window stats
-      AgendaToolbar.tsx             panel toolbar: search, window, jump
+      AgendaToolbar.tsx             panel toolbar: search, window, jump, today
       AgendaFooter.tsx              panel footer: counts and key help
       AgendaEmptyState.tsx          query/window empty copy
       AgendaSkeleton.tsx            loading placeholder
@@ -250,9 +251,15 @@ writes through the store so both views update without synchronization code.
 
 `shared/lib/keyboard.ts` centralizes the rule for when single-key shortcuts are
 allowed. It blocks fields, dialogs, menus, and listboxes, and ignores modifier
-keys. `shared/hooks/useGlobalKeydown.ts` owns the listener lifecycle. `App` (`n`),
-`AppHeader` (`g`/`t`), and `DataGrid` (`/`) all use the same helper, so the guard
-cannot drift between features.
+keys. `shared/hooks/useGlobalKeydown.ts` owns the listener lifecycle. `App` (`n`,
+`?`), `AppHeader` (`g`/`t`), and `DataGrid` (`/`) all use the same helper, so the
+guard cannot drift between features.
+
+`?` opens `ShortcutsDialog`, which is the single discoverable list of every
+shortcut grouped by context. The dialog is also reachable from the header, so
+the cheatsheet is not itself a hidden shortcut. Because the guard includes
+`[role="dialog"]`, the panel cannot be re-opened from inside itself and Escape
+closes it like every other overlay.
 
 ## Testing
 
@@ -269,6 +276,7 @@ Tests are colocated with the unit they exercise:
 - `components/DataGrid/DataGrid.test.tsx` — sorting, filtering, pagination,
   page jump, focus reveal.
 - `components/Timeline/Timeline.test.tsx` — navigation and announcements.
+- `app/components/ShortcutsDialog.test.tsx` — cheatsheet groups and Escape close.
 
 The suite is behavior-focused. Pure model helpers are covered through their
 public components and page data tests; add unit tests when a helper grows logic

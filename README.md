@@ -135,6 +135,15 @@ the same slot the grid uses for search and the column menu. `Button`,
 `SearchField`, `Stat` and the classes in `components/ui/surfaces.ts` keep the
 control heights, radii and states identical across both views.
 
+Filtered results stay explainable: the grid footer reads “filtered from
+100,000” whenever search or column filters narrow the set, and the agenda keeps
+its own total in the same footer slot.
+
+Press `?` anywhere outside a field or overlay — or use the **Shortcuts** button
+in the header — to open the keyboard cheatsheet. It groups shortcuts by where
+they apply, so the ones you would otherwise discover by accident are documented
+in the product rather than only in this README.
+
 ### Timeline
 
 `features/events/agenda/agendaData.ts` windows the store by calendar day, groups
@@ -151,7 +160,13 @@ Navigation is a roving `tabindex`:
   the tab order.
 
 Every focus move updates a polite live region with the day and position:
-`Friday, 30 October: Deploy edge-cache, 3 of 52`.
+`Today, Friday 13 November: Deploy edge-cache, 3 of 52`.
+
+Day headings lead with `Today` or `Tomorrow` before the date, so a jump, a
+window change or a fresh search landing mid-list still tells you where you are.
+Changing the window or the query resets the list to the top; adding an event to
+a day you are already reading does not. Once you have jumped to another day the
+toolbar offers a one-click **Today** action to come back.
 
 ### Form
 
@@ -205,9 +220,10 @@ mutations only pay for the sort/filter pass.
 - **Reduced motion:** the global stylesheet collapses animations/transitions
   under `prefers-reduced-motion: reduce`.
 - **Keyboard shortcuts:** `/` focuses grid search, `Escape` clears an active
-  search, `n` opens the new-event dialog, `g` and `t` switch between the Registry
-  and Agenda views, and all dialogs close with Escape. Shortcuts are ignored while
-  typing in a field or when a dialog or menu owns the keyboard.
+  search, `n` opens the new-event dialog, `?` opens the shortcut cheatsheet, `g`
+  and `t` switch between the Registry and Agenda views, and all dialogs close with
+  Escape. Shortcuts are ignored while typing in a field or when a dialog or menu
+  owns the keyboard.
 - **Search vs filters:** global search and column filters are independent. The
   search input stays urgent while the applied query waits for a 200 ms pause in
   typing, and clearing it is immediate. Active column filters appear as
@@ -221,7 +237,7 @@ mutations only pay for the sort/filter pass.
 ## Tests and quality checks
 
 ```bash
-npm test          # 56 tests, 11 files
+npm test          # 59 tests, 12 files
 npm run build     # tsc -b (strict) + vite build
 npm run lint      # oxlint
 ```
@@ -229,8 +245,8 @@ npm run lint      # oxlint
 Coverage includes dataset determinism, search-text construction, store
 create/update, grid sorting / filtering / pagination (including typed page jumps
 and clamping) / focus-row reveal, timeline grouping / windowing / keyboard
-navigation / announcements, and form validation, draft mapping plus the discard
-flow.
+navigation / announcements, the shortcut cheatsheet, and form validation, draft
+mapping plus the discard flow.
 
 ## Trade-offs and limitations
 
@@ -261,7 +277,7 @@ flow.
 src/
   app/                       composition root
     App.tsx                  routes, lazy form, global shortcuts
-    components/              AppHeader, AppToast, RouteFallback
+    components/              AppHeader, AppToast, RouteFallback, ShortcutsDialog
     hooks/useEventEditor.ts  editor state, submit, focus return, highlight
   features/events/
     model/                   types, seeded generator, search text, tests

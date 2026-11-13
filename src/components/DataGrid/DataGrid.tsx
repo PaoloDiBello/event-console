@@ -146,6 +146,7 @@ export function DataGrid<TData>({
         pageSize={grid.pagination.pageSize}
         pageCount={grid.pageCount}
         totalRows={grid.filteredCount}
+        sourceRows={data.length}
         pageSizeOptions={pageSizeOptions}
         onPageChange={grid.setPage}
         onPageSizeChange={grid.setPageSize}

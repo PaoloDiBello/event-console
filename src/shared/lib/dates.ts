@@ -37,9 +37,16 @@ export function formatGridDate(iso: string): string {
   return format(parseIsoDay(iso), 'dd MMM yyyy')
 }
 
-/** `Thursday, 29 October` — used by the timeline group headings. */
+/**
+ * `Today, Friday 13 November` / `Tomorrow, Saturday 14 November` /
+ * `Friday, 13 November` — used by the timeline group headings. The relative
+ * word is what orients you when you land mid-list after a jump or window change.
+ */
 export function formatDayHeading(iso: string): string {
-  return format(parseIsoDay(iso), 'EEEE, d MMMM')
+  const date = parseIsoDay(iso)
+  if (isToday(date)) return `Today, ${format(date, 'EEEE d MMMM')}`
+  if (isTomorrow(date)) return `Tomorrow, ${format(date, 'EEEE d MMMM')}`
+  return format(date, 'EEEE, d MMMM')
 }
 
 /**

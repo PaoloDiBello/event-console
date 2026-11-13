@@ -1,8 +1,9 @@
-import { lazy, Suspense, useEffect } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AppHeader } from '@/app/components/AppHeader'
 import { AppToast } from '@/app/components/AppToast'
 import { RouteFallback } from '@/app/components/RouteFallback'
+import { ShortcutsDialog } from '@/app/components/ShortcutsDialog'
 import { useEventEditor } from '@/app/hooks/useEventEditor'
 import { useEventStore } from '@/features/events/store'
 import { useGlobalKeydown } from '@/shared/hooks/useGlobalKeydown'
@@ -35,10 +36,19 @@ export function App() {
     closeEditor,
     handleSubmit,
   } = useEventEditor()
+  const [shortcutsOpen, setShortcutsOpen] = useState(false)
 
   useEffect(() => {
     void load()
   }, [load])
+
+  // "?" is the conventional help key; it never fires from a field or an overlay.
+  useGlobalKeydown((event) => {
+    if (event.defaultPrevented || event.repeat || hasCommandModifier(event)) return
+    if (event.key !== '?' || isShortcutBlocked(event.target)) return
+    event.preventDefault()
+    setShortcutsOpen(true)
+  })
 
   // "n" opens the create form from anywhere outside a text field or overlay.
   useGlobalKeydown((event) => {
@@ -50,7 +60,7 @@ export function App() {
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden">
-      <AppHeader onNewEvent={openCreate} />
+      <AppHeader onNewEvent={openCreate} onOpenShortcuts={() => setShortcutsOpen(true)} />
 
       <main className="mx-auto flex min-h-0 w-full max-w-[1600px] flex-1 flex-col px-3 py-4 sm:px-4">
         <Suspense fallback={<RouteFallback />}>
@@ -79,6 +89,8 @@ export function App() {
           />
         </Suspense>
       ) : null}
+
+      <ShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
 
       <AppToast message={success} />
     </div>

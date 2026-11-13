@@ -38,6 +38,7 @@ export function Timeline<TItem>({
   emptyState,
   toolbar,
   footer,
+  resetKey,
   itemHeight = DEFAULT_ITEM_HEIGHT,
   groupHeight = DEFAULT_GROUP_HEIGHT,
   jumpToDay,
@@ -85,6 +86,7 @@ export function Timeline<TItem>({
     virtualizer,
     scrollRef,
     groupsKey,
+    resetKey,
     onGroupsChange: clearAnnouncement,
   })
   const lastJumpRequest = useRef<number | undefined>(undefined)
