@@ -161,6 +161,22 @@ describe('DataGrid', () => {
     expect(screen.queryByText('off')).not.toBeInTheDocument()
   })
 
+  it('clears a text filter from the filter row itself', async () => {
+    const user = userEvent.setup()
+    renderGrid()
+
+    const nameFilter = screen.getByLabelText('Filter by Name')
+    await user.type(nameFilter, 'Row 0')
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('10 rows match.'))
+
+    await user.click(screen.getByRole('button', { name: 'Clear Name filter' }))
+
+    expect(nameFilter).toHaveValue('')
+    await waitFor(() =>
+      expect(screen.getByRole('status')).toHaveTextContent('23 rows match. Showing 1 to 10.'),
+    )
+  })
+
   it('hides a column from the column menu', async () => {
     const user = userEvent.setup()
     renderGrid()

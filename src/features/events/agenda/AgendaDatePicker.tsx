@@ -1,6 +1,7 @@
 import { DayPicker } from '@daypicker/react'
 import * as Popover from '@radix-ui/react-popover'
-import { CalendarDays, ChevronDown } from 'lucide-react'
+import { differenceInCalendarDays } from 'date-fns'
+import { CalendarCheck, CalendarDays, ChevronDown } from 'lucide-react'
 import { useState } from 'react'
 import { buttonClass } from '@/components/ui/buttonStyles'
 import { formatDayFull, formatDayShort, parseIsoDay, toIsoDay } from '@/shared/lib/dates'
@@ -15,6 +16,7 @@ interface AgendaDatePickerProps {
 export function AgendaDatePicker({ value, min, max, onChange }: AgendaDatePickerProps) {
   const [open, setOpen] = useState(false)
   const selected = parseIsoDay(value)
+  const windowDays = differenceInCalendarDays(parseIsoDay(max), parseIsoDay(min)) + 1
 
   const choose = (date: string) => {
     onChange(date)
@@ -69,17 +71,24 @@ export function AgendaDatePicker({ value, min, max, onChange }: AgendaDatePicker
             className="agenda-calendar"
           />
 
-          <div className="mt-2 flex items-center justify-between gap-3 border-t border-line pt-2">
+          <div className="mt-2 flex min-h-8 items-center justify-between gap-3 border-t border-line pt-2">
             <span className="font-mono text-[9px] tracking-wider text-faint uppercase">
-              Next 45 days
+              Next {windowDays} days
             </span>
-            <button
-              type="button"
-              onClick={() => choose(min)}
-              className="rounded-xs px-1.5 py-0.5 font-mono text-[10px] text-accent transition-colors hover:bg-accent/10"
-            >
-              Today
-            </button>
+            {value !== min ? (
+              <button
+                type="button"
+                onClick={() => choose(min)}
+                className={buttonClass({
+                  variant: 'ghost',
+                  size: 'sm',
+                  className: 'gap-1 px-2 text-accent hover:bg-accent/10 hover:text-accent',
+                })}
+              >
+                <CalendarCheck aria-hidden="true" className="size-3.5" />
+                Today
+              </button>
+            ) : null}
           </div>
         </Popover.Content>
       </Popover.Portal>

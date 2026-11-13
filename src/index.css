@@ -117,18 +117,18 @@
 .agenda-calendar {
   --rdp-accent-color: var(--color-accent);
   --rdp-accent-background-color: var(--color-accent-soft);
-  --rdp-day-height: 32px;
-  --rdp-day-width: 32px;
-  --rdp-day_button-height: 30px;
-  --rdp-day_button-width: 30px;
+  --rdp-day-height: 34px;
+  --rdp-day-width: 34px;
+  --rdp-day_button-height: 32px;
+  --rdp-day_button-width: 32px;
   --rdp-day_button-border: 1px solid transparent;
   --rdp-day_button-border-radius: var(--radius-sm);
   --rdp-selected-border: 1px solid transparent;
-  --rdp-disabled-opacity: 0.22;
+  --rdp-disabled-opacity: 0.32;
   --rdp-outside-opacity: 0.3;
   --rdp-today-color: var(--color-accent);
-  --rdp-nav_button-height: 28px;
-  --rdp-nav_button-width: 28px;
+  --rdp-nav_button-height: 32px;
+  --rdp-nav_button-width: 32px;
   --rdp-nav-height: 36px;
   --rdp-weekday-opacity: 1;
   --rdp-weekday-padding: 0.35rem 0;
@@ -154,8 +154,8 @@
 .agenda-calendar .rdp-weekday {
   color: var(--color-faint);
   font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 0.08em;
+  font-size: 10px;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
@@ -179,8 +179,9 @@
 }
 
 .agenda-calendar .rdp-today:not(.rdp-selected) .rdp-day_button {
-  box-shadow: inset 0 0 0 1px rgb(45 212 191 / 0.4);
+  box-shadow: inset 0 0 0 1px rgb(45 212 191 / 0.45);
   color: var(--color-accent);
+  font-weight: 600;
 }
 
 .agenda-calendar .rdp-selected {
@@ -206,19 +207,32 @@
 
 .agenda-calendar .rdp-button_previous,
 .agenda-calendar .rdp-button_next {
-  border-radius: var(--radius-xs);
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-sm);
   color: var(--color-muted);
   transition:
     background-color 120ms ease,
-    color 120ms ease;
+    color 120ms ease,
+    opacity 120ms ease;
 }
 
-.agenda-calendar .rdp-button_previous:hover:not(:disabled),
-.agenda-calendar .rdp-button_next:hover:not(:disabled) {
+.agenda-calendar .rdp-button_previous:hover:not([aria-disabled='true']),
+.agenda-calendar .rdp-button_next:hover:not([aria-disabled='true']) {
   background-color: var(--color-raised);
   color: var(--color-ink);
 }
 
+/* DayPicker marks the edge months with aria-disabled, not the disabled
+   attribute, so the default button state would otherwise look clickable. */
+.agenda-calendar .rdp-button_previous[aria-disabled='true'],
+.agenda-calendar .rdp-button_next[aria-disabled='true'] {
+  opacity: 0.3;
+  cursor: default;
+}
+
 .agenda-calendar .rdp-chevron {
+  width: 15px;
+  height: 15px;
   fill: currentColor;
 }

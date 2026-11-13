@@ -94,6 +94,7 @@ src/
       AgendaPage.tsx                data + Timeline composition
       AgendaHeader.tsx              page header and window stats
       AgendaToolbar.tsx             panel toolbar: search, window, jump, today
+      AgendaDatePicker.tsx          jump-to-date popover and calendar
       AgendaFooter.tsx              panel footer: counts and key help
       AgendaEmptyState.tsx          query/window empty copy
       AgendaSkeleton.tsx            loading placeholder

@@ -3,11 +3,11 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { AgendaDatePicker } from './AgendaDatePicker'
 
-function renderPicker() {
+function renderPicker(value = '2026-11-10') {
   const onChange = vi.fn()
   render(
     <AgendaDatePicker
-      value="2026-11-10"
+      value={value}
       min="2026-11-10"
       max="2026-12-24"
       onChange={onChange}
@@ -46,7 +46,7 @@ describe('AgendaDatePicker', () => {
   })
 
   it('jumps back to the first selectable day from the Today shortcut', async () => {
-    const { onChange, user } = renderPicker()
+    const { onChange, user } = renderPicker('2026-11-20')
 
     await user.click(screen.getByRole('button', { name: /jump to date/i }))
     const dialog = await screen.findByRole('dialog', { name: /choose a date/i })
@@ -54,5 +54,15 @@ describe('AgendaDatePicker', () => {
 
     expect(onChange).toHaveBeenCalledWith('2026-11-10')
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('hides the Today shortcut once today is selected', async () => {
+    const { user } = renderPicker()
+
+    await user.click(screen.getByRole('button', { name: /jump to date/i }))
+    const dialog = await screen.findByRole('dialog', { name: /choose a date/i })
+
+    expect(within(dialog).queryByRole('button', { name: 'Today' })).not.toBeInTheDocument()
+    expect(within(dialog).getByText('Next 45 days')).toBeInTheDocument()
   })
 })

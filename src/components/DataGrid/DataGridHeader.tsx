@@ -30,6 +30,8 @@ export function DataGridHeader<TData>({
         <tr key={headerGroup.id}>
           {headerGroup.headers.map((header) => {
             const sorted = header.column.getIsSorted()
+            const filterValue = header.column.getFilterValue()
+            const filtered = filterValue !== undefined && filterValue !== ''
             const align = header.column.columnDef.meta?.align
             return (
               <th
@@ -58,6 +60,13 @@ export function DataGridHeader<TData>({
                     <span className="truncate">
                       {flexRender(header.column.columnDef.header, header.getContext())}
                     </span>
+                    {filtered ? (
+                      <span
+                        aria-hidden="true"
+                        title="Filtered"
+                        className="size-1.5 shrink-0 rounded-full bg-accent"
+                      />
+                    ) : null}
                     {header.column.getCanSort() ? <SortIcon direction={sorted} /> : null}
                   </button>
                 )}
