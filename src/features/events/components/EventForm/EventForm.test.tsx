@@ -154,7 +154,7 @@ describe('EventForm', () => {
     renderForm()
 
     await user.click(screen.getByRole('button', { name: 'Open time picker' }))
-    const hourList = await screen.findByRole('listbox', { name: 'Hour' })
+    const hourList = await screen.findByRole('listbox', { name: 'Hours' })
 
     // One tab stop per list, and the selected hour owns it on open.
     const selectedHour = within(hourList).getByRole('option', { selected: true })
@@ -167,11 +167,26 @@ describe('EventForm', () => {
     expect(within(hourList).getByRole('option', { selected: true })).toHaveTextContent('10')
     expect(within(hourList).getByRole('option', { selected: true })).toHaveFocus()
 
-    const minuteList = screen.getByRole('listbox', { name: 'Minute' })
+    const minuteList = screen.getByRole('listbox', { name: 'Minutes' })
     within(minuteList).getByRole('option', { selected: true }).focus()
     await user.keyboard('{End}')
 
     expect(screen.getByLabelText(/Start time/)).toHaveValue('10:55')
     expect(within(minuteList).getByRole('option', { selected: true })).toHaveTextContent('55')
+  })
+
+  it('keeps the hour list reachable when the time field is empty', async () => {
+    const user = userEvent.setup()
+    renderForm()
+
+    fireEvent.change(screen.getByLabelText(/Start time/), { target: { value: '' } })
+    await user.click(screen.getByRole('button', { name: 'Open time picker' }))
+
+    const hourList = await screen.findByRole('listbox', { name: 'Hours' })
+    expect(within(hourList).queryByRole('option', { selected: true })).not.toBeInTheDocument()
+
+    const options = within(hourList).getAllByRole('option')
+    expect(options.filter((option) => option.tabIndex === 0)).toEqual([options[0]])
+    expect(options[0]).toHaveFocus()
   })
 })
