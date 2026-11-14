@@ -148,4 +148,30 @@ describe('EventForm', () => {
     expect(screen.queryByRole('dialog', { name: 'Choose start time' })).not.toBeInTheDocument()
     expect(screen.getByLabelText(/Start time/)).toHaveValue('14:00')
   })
+
+  it('moves the hour and minute listboxes with the arrow keys', async () => {
+    const user = userEvent.setup()
+    renderForm()
+
+    await user.click(screen.getByRole('button', { name: 'Open time picker' }))
+    const hourList = await screen.findByRole('listbox', { name: 'Hour' })
+
+    // One tab stop per list, and the selected hour owns it on open.
+    const selectedHour = within(hourList).getByRole('option', { selected: true })
+    expect(selectedHour).toHaveTextContent('09')
+    expect(selectedHour).toHaveFocus()
+    expect(within(hourList).getAllByRole('option').filter((o) => o.tabIndex === 0)).toHaveLength(1)
+
+    await user.keyboard('{ArrowDown}')
+    expect(screen.getByLabelText(/Start time/)).toHaveValue('10:00')
+    expect(within(hourList).getByRole('option', { selected: true })).toHaveTextContent('10')
+    expect(within(hourList).getByRole('option', { selected: true })).toHaveFocus()
+
+    const minuteList = screen.getByRole('listbox', { name: 'Minute' })
+    within(minuteList).getByRole('option', { selected: true }).focus()
+    await user.keyboard('{End}')
+
+    expect(screen.getByLabelText(/Start time/)).toHaveValue('10:55')
+    expect(within(minuteList).getByRole('option', { selected: true })).toHaveTextContent('55')
+  })
 })

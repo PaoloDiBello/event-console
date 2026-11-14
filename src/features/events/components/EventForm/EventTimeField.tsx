@@ -1,6 +1,6 @@
 import * as Popover from '@radix-ui/react-popover'
 import { Check, Clock } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { type KeyboardEvent as ReactKeyboardEvent, useEffect, useRef, useState } from 'react'
 import type { ControllerRenderProps } from 'react-hook-form'
 import { buttonClass } from '@/components/ui/buttonStyles'
 import { cn } from '@/shared/lib/cn'
@@ -18,6 +18,45 @@ function getNowTime(): string {
   const finalHour = m === 60 ? (h + 1) % 24 : h
   const finalMinute = m === 60 ? 0 : m
   return `${String(finalHour).padStart(2, '0')}:${String(finalMinute).padStart(2, '0')}`
+}
+
+/**
+ * A listbox keeps exactly one tab stop and moves its selection with the arrow
+ * keys. Both columns are fixed arrays, so the next option is an index lookup;
+ * the matching button is focused directly so the roving tab stop follows the
+ * value without adding a tab stop per option.
+ */
+function moveSelection(
+  event: ReactKeyboardEvent<HTMLButtonElement>,
+  list: HTMLDivElement | null,
+  options: readonly string[],
+  current: string,
+  select: (value: string) => void,
+) {
+  const index = options.indexOf(current)
+  let next: string | undefined
+
+  switch (event.key) {
+    case 'ArrowDown':
+      next = options[Math.min(index + 1, options.length - 1)]
+      break
+    case 'ArrowUp':
+      next = options[Math.max(index - 1, 0)]
+      break
+    case 'Home':
+      next = options[0]
+      break
+    case 'End':
+      next = options[options.length - 1]
+      break
+    default:
+      return
+  }
+
+  event.preventDefault()
+  if (next === undefined) return
+  select(next)
+  list?.querySelector<HTMLElement>(`[data-value="${next}"]`)?.focus()
 }
 
 interface EventTimeFieldProps {
@@ -111,6 +150,14 @@ export function EventTimeField({ field, hasError }: EventTimeFieldProps) {
             collisionPadding={8}
             aria-label="Choose start time"
             className="scrollbar-thin z-50 max-h-[var(--radix-popover-content-available-height)] w-64 overflow-y-auto overscroll-contain rounded-lg border border-line-strong bg-surface p-3 shadow-2xl shadow-black/50 outline-none data-[state=open]:animate-[content-in_150ms_ease-out]"
+            onOpenAutoFocus={(event) => {
+              // Land on the current hour instead of the first quick preset, so
+              // the arrow keys are immediately useful.
+              event.preventDefault()
+              hourListRef.current
+                ?.querySelector<HTMLElement>('[aria-selected="true"]')
+                ?.focus()
+            }}
           >
             <div className="flex items-center justify-between border-b border-line pb-2">
               <span className="font-mono text-[10px] tracking-wider text-faint uppercase">
@@ -126,7 +173,7 @@ export function EventTimeField({ field, hasError }: EventTimeFieldProps) {
               <span className="font-mono text-[9px] tracking-wider text-faint uppercase">
                 Quick times
               </span>
-              <div className="mt-1 grid grid-cols-4 gap-1">
+              <div role="group" aria-label="Quick times" className="mt-1 grid grid-cols-4 gap-1">
                 {PRESETS.map((preset) => (
                   <button
                     key={preset}
@@ -153,6 +200,8 @@ export function EventTimeField({ field, hasError }: EventTimeFieldProps) {
                 </span>
                 <div
                   ref={hourListRef}
+                  role="listbox"
+                  aria-label="Hour"
                   className="scrollbar-thin mt-0.5 max-h-24 overflow-y-auto space-y-0.5 pr-1"
                 >
                   {HOURS.map((hour) => {
@@ -161,8 +210,15 @@ export function EventTimeField({ field, hasError }: EventTimeFieldProps) {
                       <button
                         key={hour}
                         type="button"
+                        role="option"
+                        aria-selected={isSelected}
+                        tabIndex={isSelected ? 0 : -1}
+                        data-value={hour}
                         data-selected={isSelected}
                         onClick={() => selectHour(hour)}
+                        onKeyDown={(event) =>
+                          moveSelection(event, hourListRef.current, HOURS, currentHour, selectHour)
+                        }
                         className={cn(
                           'w-full rounded-xs py-1 text-center font-mono text-xs transition-colors',
                           isSelected
@@ -183,6 +239,8 @@ export function EventTimeField({ field, hasError }: EventTimeFieldProps) {
                 </span>
                 <div
                   ref={minuteListRef}
+                  role="listbox"
+                  aria-label="Minute"
                   className="scrollbar-thin mt-0.5 max-h-24 overflow-y-auto space-y-0.5 pr-1"
                 >
                   {MINUTES.map((minute) => {
@@ -191,8 +249,21 @@ export function EventTimeField({ field, hasError }: EventTimeFieldProps) {
                       <button
                         key={minute}
                         type="button"
+                        role="option"
+                        aria-selected={isSelected}
+                        tabIndex={isSelected ? 0 : -1}
+                        data-value={minute}
                         data-selected={isSelected}
                         onClick={() => selectMinute(minute)}
+                        onKeyDown={(event) =>
+                          moveSelection(
+                            event,
+                            minuteListRef.current,
+                            MINUTES,
+                            currentMinute,
+                            selectMinute,
+                          )
+                        }
                         className={cn(
                           'w-full rounded-xs py-1 text-center font-mono text-xs transition-colors',
                           isSelected
