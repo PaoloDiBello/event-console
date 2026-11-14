@@ -6,12 +6,23 @@ interface FieldProps {
   htmlFor: string
   error?: string
   hint?: string
+  /** Hints are quiet by default; `warning` is for a hint the user should act on. */
+  tone?: 'warning'
   required?: boolean
   className?: string
   children: ReactNode
 }
 
-export function Field({ label, htmlFor, error, hint, required, className, children }: FieldProps) {
+export function Field({
+  label,
+  htmlFor,
+  error,
+  hint,
+  tone,
+  required,
+  className,
+  children,
+}: FieldProps) {
   return (
     <div className={cn('min-w-0 space-y-1.5', className)}>
       <label
@@ -33,7 +44,13 @@ export function Field({ label, htmlFor, error, hint, required, className, childr
           {error}
         </p>
       ) : hint ? (
-        <p id={`${htmlFor}-hint`} className="text-[11px] leading-snug text-faint">
+        <p
+          id={`${htmlFor}-hint`}
+          className={cn(
+            'text-[11px] leading-snug',
+            tone === 'warning' ? 'text-amber' : 'text-faint',
+          )}
+        >
           {hint}
         </p>
       ) : null}

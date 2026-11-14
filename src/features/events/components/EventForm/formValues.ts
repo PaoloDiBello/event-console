@@ -21,6 +21,28 @@ export function toFormValues(event?: EventRecord | null): EventFormValues {
   }
 }
 
+export interface EndEstimate {
+  /** Ready to render: `Ends 11:00` or `Ends 01:30 (next day)`. */
+  label: string
+  /** The event runs past midnight, so it no longer ends on its own day. */
+  spills: boolean
+}
+
+/**
+ * What the start time plus the duration add up to, so the form can show the
+ * end time instead of leaving the user to do the arithmetic. Returns null for
+ * an incomplete time, which is what the field holds while it is being typed.
+ */
+export function describeEnd(startTime: string, duration: string): EndEstimate | null {
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(startTime)) return null
+  const end = parseTimeToMinute(startTime) + Number(duration)
+  if (!Number.isFinite(end)) return null
+  return {
+    label: `Ends ${formatMinute(end % 1440)}${end >= 1440 ? ' (next day)' : ''}`,
+    spills: end >= 1440,
+  }
+}
+
 /**
  * Map validated form values onto the domain draft. This is a pure function so
  * the trim/default rules can be tested without mounting the dialog.

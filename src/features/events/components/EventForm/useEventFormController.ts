@@ -36,7 +36,9 @@ export function useEventFormController({
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
     defaultValues: toFormValues(event),
-    mode: 'onSubmit',
+    // Validate a field once it is left, so a wrong value is caught while the
+    // user is still next to it instead of all at once on submit.
+    mode: 'onTouched',
     reValidateMode: 'onChange',
     // The requirement, straight from react-hook-form: on a failed submit, focus
     // moves to the first field whose validation failed.

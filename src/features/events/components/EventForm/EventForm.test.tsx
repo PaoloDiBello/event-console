@@ -175,6 +175,22 @@ describe('EventForm', () => {
     expect(within(minuteList).getByRole('option', { selected: true })).toHaveTextContent('55')
   })
 
+  it('reports a missing title as soon as the field is left', async () => {
+    const user = userEvent.setup()
+    renderForm()
+
+    await user.click(screen.getByLabelText(/Title/))
+    await user.tab()
+
+    expect(await screen.findByText('Title is required')).toBeInTheDocument()
+  })
+
+  it('previews the end time from the start time and duration', () => {
+    renderForm()
+
+    expect(screen.getByText('Ends 10:00')).toBeInTheDocument()
+  })
+
   it('keeps the hour list reachable when the time field is empty', async () => {
     const user = userEvent.setup()
     renderForm()

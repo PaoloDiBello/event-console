@@ -1,6 +1,6 @@
 import { ChevronDown } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { Controller, type UseFormReturn } from 'react-hook-form'
+import { Controller, type UseFormReturn, useWatch } from 'react-hook-form'
 import {
   EVENT_CATEGORIES,
   EVENT_PRIORITIES,
@@ -11,6 +11,7 @@ import {
 import { EventDateField } from './EventDateField'
 import { EventTimeField } from './EventTimeField'
 import { Field } from './Field'
+import { describeEnd } from './formValues'
 import { DURATION_OPTIONS, type EventFormValues } from './schema'
 import { inputClass, selectClass } from './styles'
 
@@ -51,6 +52,10 @@ export function EventFormFields({ form }: EventFormFieldsProps) {
     formState: { errors },
   } = form
 
+  const startTime = useWatch({ control, name: 'startTime' })
+  const durationMin = useWatch({ control, name: 'durationMin' })
+  const end = describeEnd(startTime, durationMin)
+
   return (
     <div className="grid gap-4 px-5 py-5 sm:grid-cols-2">
       <Field
@@ -69,6 +74,7 @@ export function EventFormFields({ form }: EventFormFieldsProps) {
               id="title"
               type="text"
               autoComplete="off"
+              autoCapitalize="sentences"
               placeholder="e.g. Deploy billing-api v3.2.0 to production"
               aria-required="true"
               {...fieldA11y('title', Boolean(errors.title))}
@@ -94,7 +100,13 @@ export function EventFormFields({ form }: EventFormFieldsProps) {
         />
       </Field>
 
-      <Field label="Start time" htmlFor="startTime" error={errors.startTime?.message}>
+      <Field
+        label="Start time"
+        htmlFor="startTime"
+        error={errors.startTime?.message}
+        hint={end ? end.label : '24-hour time, e.g. 09:30'}
+        tone={end?.spills ? 'warning' : undefined}
+      >
         <Controller
           control={control}
           name="startTime"
@@ -205,7 +217,8 @@ export function EventFormFields({ form }: EventFormFieldsProps) {
               {...field}
               id="owner"
               type="text"
-              autoComplete="off"
+              autoComplete="name"
+              autoCapitalize="words"
               placeholder="Unassigned"
               {...fieldA11y('owner', Boolean(errors.owner))}
               className={inputClass}
@@ -224,6 +237,7 @@ export function EventFormFields({ form }: EventFormFieldsProps) {
               id="location"
               type="text"
               autoComplete="off"
+              autoCapitalize="words"
               placeholder="Remote"
               {...fieldA11y('location', Boolean(errors.location))}
               className={inputClass}
@@ -246,6 +260,7 @@ export function EventFormFields({ form }: EventFormFieldsProps) {
               {...field}
               id="notes"
               rows={2}
+              autoCapitalize="sentences"
               placeholder="Optional context for the attendees…"
               {...fieldA11y('notes', Boolean(errors.notes))}
               className={`${inputClass} h-auto resize-y py-2`}

@@ -181,7 +181,7 @@ export function EventTimeField({ field, hasError }: EventTimeFieldProps) {
         spellCheck={false}
         aria-required="true"
         aria-invalid={hasError}
-        aria-describedby={hasError ? 'startTime-error' : undefined}
+        aria-describedby={hasError ? 'startTime-error' : 'startTime-hint'}
         onKeyDown={(event) => {
           if ((event.altKey && event.key === 'ArrowDown') || event.key === 'F4') {
             event.preventDefault()

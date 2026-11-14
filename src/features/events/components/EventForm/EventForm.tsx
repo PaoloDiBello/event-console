@@ -47,9 +47,11 @@ export function EventForm({
     >
       <Dialog.Portal>
         <Dialog.Overlay className="dialog-overlay fixed inset-0 z-40 bg-black/65 backdrop-blur-[3px]" />
-        <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center p-4">
+        {/* Phones get a bottom sheet: full width, hugging the bottom edge, so
+            the pinned footer lands in the thumb zone instead of mid-screen. */}
+        <div className="pointer-events-none fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
           <Dialog.Content
-            className="dialog-content pointer-events-auto flex max-h-[calc(100dvh-2rem)] w-full max-w-[720px] flex-col overflow-hidden rounded-lg border border-line-strong bg-surface shadow-2xl shadow-black/70"
+            className="dialog-content pointer-events-auto flex max-h-[100dvh] w-full max-w-[720px] flex-col overflow-hidden rounded-t-xl border border-line-strong bg-surface shadow-2xl shadow-black/70 sm:max-h-[calc(100dvh-2rem)] sm:rounded-lg"
             aria-describedby="event-form-description"
             onOpenAutoFocus={(event) => {
               // Skip the close button and land on the first real field.
