@@ -26,6 +26,7 @@ describe('ShortcutsDialog', () => {
 
     expect(within(dialog).getByText('New event')).toBeInTheDocument()
     expect(within(dialog).getByText('Focus search')).toBeInTheDocument()
+    expect(within(dialog).getByText('Move between rows')).toBeInTheDocument()
     expect(within(dialog).getByText('Move between events')).toBeInTheDocument()
   })
 

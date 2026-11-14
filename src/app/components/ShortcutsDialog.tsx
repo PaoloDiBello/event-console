@@ -28,6 +28,9 @@ const GROUPS: { title: string; shortcuts: Shortcut[] }[] = [
       { keys: ['/'], label: 'Focus search' },
       { keys: ['F'], label: 'Focus the first column filter' },
       { keys: ['Esc'], label: 'Clear search, or leave the field' },
+      { keys: ['↑', '↓'], label: 'Move between rows' },
+      { keys: ['Home', 'End'], label: 'First or last row on the page' },
+      { keys: ['↵'], label: 'Edit the focused event' },
     ],
   },
   {

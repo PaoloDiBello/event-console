@@ -193,13 +193,13 @@ export function DataGrid<TData>({
         hint={
           onRowActivate ? (
             <>
-              <Kbd className="inline-flex h-4 min-w-4 px-1">↑</Kbd>
-              <Kbd className="inline-flex h-4 min-w-4 px-1">↓</Kbd>
+              <Kbd className="inline-flex size-4 items-center justify-center p-0">↑</Kbd>
+              <Kbd className="inline-flex size-4 items-center justify-center p-0">↓</Kbd>
               <span>move</span>
               <span aria-hidden="true" className="text-line-strong">
                 /
               </span>
-              <Kbd className="inline-flex h-4 min-w-4 px-1">↵</Kbd>
+              <Kbd className="inline-flex size-4 items-center justify-center p-0">↵</Kbd>
               <span>open</span>
             </>
           ) : undefined

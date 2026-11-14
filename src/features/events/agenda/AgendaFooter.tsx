@@ -25,19 +25,19 @@ export function AgendaFooter({ total, dayCount }: AgendaFooterProps) {
       </p>
 
       <div className="ml-auto hidden items-center gap-1.5 text-[10px] text-faint lg:flex">
-        <Kbd className="inline-flex h-5 min-w-5 px-1">↑</Kbd>
-        <Kbd className="inline-flex h-5 min-w-5 px-1">↓</Kbd>
+        <Kbd className="inline-flex size-4 items-center justify-center p-0">↑</Kbd>
+        <Kbd className="inline-flex size-4 items-center justify-center p-0">↓</Kbd>
         <span>move</span>
         <span aria-hidden="true" className="mx-1 text-line-strong">
           /
         </span>
-        <Kbd className="inline-flex h-5 min-w-5 px-1">←</Kbd>
-        <Kbd className="inline-flex h-5 min-w-5 px-1">→</Kbd>
+        <Kbd className="inline-flex size-4 items-center justify-center p-0">←</Kbd>
+        <Kbd className="inline-flex size-4 items-center justify-center p-0">→</Kbd>
         <span>day</span>
         <span aria-hidden="true" className="mx-1 text-line-strong">
           /
         </span>
-        <Kbd className="inline-flex h-5 min-w-5 px-1">↵</Kbd>
+        <Kbd className="inline-flex size-4 items-center justify-center p-0">↵</Kbd>
         <span>edit</span>
       </div>
     </div>
