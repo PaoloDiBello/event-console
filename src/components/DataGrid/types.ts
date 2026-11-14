@@ -79,6 +79,12 @@ export interface DataGridProps<TData> {
   emptyTitle?: string
   emptyHint?: string
   getRowClassName?: (row: TData) => string
+  /**
+   * Makes rows a control: clicking a row or pressing Enter/Space on it calls
+   * this. Rows then become the grid's keyboard surface (roving tabindex, arrow
+   * keys), so an action button inside a cell should not also be a tab stop.
+   */
+  onRowActivate?: (row: TData) => void
   /** Row to reveal (e.g. the event just created): jumps to its page and scrolls it into view. */
   focusRowId?: string | null
   toolbarActions?: ReactNode

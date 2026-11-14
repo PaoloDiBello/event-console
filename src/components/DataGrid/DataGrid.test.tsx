@@ -557,4 +557,50 @@ describe('DataGrid', () => {
       screen.getByRole('button', { name: `Remove When filter: ${formatGridDate(today)}` }),
     ).toBeInTheDocument()
   })
+
+  it('opens a row on click and on Enter', async () => {
+    const user = userEvent.setup()
+    const onRowActivate = vi.fn()
+    renderGrid({ onRowActivate })
+
+    await user.click(screen.getByText('Row 01'))
+    expect(onRowActivate).toHaveBeenCalledWith(rows[1])
+
+    const firstRow = dataRows()[0]!
+    firstRow.focus()
+    await user.keyboard('{Enter}')
+
+    expect(onRowActivate).toHaveBeenLastCalledWith(rows[0])
+  })
+
+  it('keeps one row in the tab order and moves it with the arrow keys', async () => {
+    const user = userEvent.setup()
+    renderGrid({ onRowActivate: vi.fn() })
+
+    const rowEls = dataRows()
+    expect(rowEls[0]).toHaveAttribute('tabindex', '0')
+    expect(rowEls[1]).toHaveAttribute('tabindex', '-1')
+
+    rowEls[0]!.focus()
+    await user.keyboard('{ArrowDown}')
+
+    await waitFor(() => expect(rowEls[1]).toHaveFocus())
+    expect(rowEls[0]).toHaveAttribute('tabindex', '-1')
+    expect(rowEls[1]).toHaveAttribute('tabindex', '0')
+
+    await user.keyboard('{End}')
+    await waitFor(() => expect(rowEls[9]).toHaveFocus())
+
+    await user.keyboard('{ArrowDown}')
+    expect(rowEls[9]).toHaveFocus()
+
+    await user.keyboard('{Home}')
+    await waitFor(() => expect(rowEls[0]).toHaveFocus())
+  })
+
+  it('leaves rows out of the tab order when they are not activatable', () => {
+    renderGrid()
+
+    expect(dataRows()[0]).not.toHaveAttribute('tabindex')
+  })
 })

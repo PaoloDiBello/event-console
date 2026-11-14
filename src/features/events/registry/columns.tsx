@@ -161,12 +161,18 @@ export function createEventColumns(onEdit: (event: EventRecord) => void): DataGr
       enableSorting: false,
       enableHiding: false,
       meta: { width: 44, align: 'right' },
+      // The row itself opens the editor; this is the visible cue for that,
+      // so it stays out of the tab order to avoid a second stop per row.
       cell: ({ row }) => (
         <button
           type="button"
-          onClick={() => onEdit(row.original)}
+          tabIndex={-1}
+          onClick={(event) => {
+            event.stopPropagation()
+            onEdit(row.original)
+          }}
           aria-label={`Edit ${row.original.title}`}
-          className="inline-flex size-7 items-center justify-center rounded-xs border border-transparent text-faint opacity-100 transition-all hover:border-line-strong hover:bg-canvas hover:text-accent focus-visible:opacity-100 md:opacity-0 md:group-hover:opacity-100"
+          className="inline-flex size-7 items-center justify-center rounded-xs border border-transparent text-faint/70 transition-colors hover:border-line-strong hover:bg-canvas hover:text-accent focus-visible:text-accent"
         >
           <Pencil aria-hidden="true" className="size-3.5" />
         </button>

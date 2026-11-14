@@ -1,3 +1,5 @@
+import { ChevronDown } from 'lucide-react'
+import type { ReactNode } from 'react'
 import { Controller, type UseFormReturn } from 'react-hook-form'
 import {
   EVENT_CATEGORIES,
@@ -23,6 +25,22 @@ function fieldA11y(name: string, hasError: boolean, hintId?: string) {
     'aria-invalid': hasError,
     'aria-describedby': hasError ? `${name}-error` : hintId,
   }
+}
+
+/**
+ * A native select with the browser chrome removed still needs a visible
+ * chevron, otherwise it reads as a text input next to the real ones.
+ */
+function SelectShell({ children }: { children: ReactNode }) {
+  return (
+    <div className="relative">
+      {children}
+      <ChevronDown
+        aria-hidden="true"
+        className="pointer-events-none absolute top-1/2 right-2.5 size-3.5 -translate-y-1/2 text-faint"
+      />
+    </div>
+  )
 }
 
 export function EventFormFields({ form }: EventFormFieldsProps) {
@@ -103,18 +121,20 @@ export function EventFormFields({ form }: EventFormFieldsProps) {
           control={control}
           name="durationMin"
           render={({ field }) => (
-            <select
-              {...field}
-              id="durationMin"
-              className={selectClass}
-              {...fieldA11y('durationMin', Boolean(errors.durationMin))}
-            >
-              {DURATION_OPTIONS.map((minutes) => (
-                <option key={minutes} value={minutes}>
-                  {minutes} minutes
-                </option>
-              ))}
-            </select>
+            <SelectShell>
+              <select
+                {...field}
+                id="durationMin"
+                className={selectClass}
+                {...fieldA11y('durationMin', Boolean(errors.durationMin))}
+              >
+                {DURATION_OPTIONS.map((minutes) => (
+                  <option key={minutes} value={minutes}>
+                    {minutes} minutes
+                  </option>
+                ))}
+              </select>
+            </SelectShell>
           )}
         />
       </Field>
@@ -124,18 +144,20 @@ export function EventFormFields({ form }: EventFormFieldsProps) {
           control={control}
           name="category"
           render={({ field }) => (
-            <select
-              {...field}
-              id="category"
-              className={selectClass}
-              {...fieldA11y('category', Boolean(errors.category))}
-            >
-              {EVENT_CATEGORIES.map((category) => (
-                <option key={category} value={category} className="capitalize">
-                  {category}
-                </option>
-              ))}
-            </select>
+            <SelectShell>
+              <select
+                {...field}
+                id="category"
+                className={`${selectClass} capitalize`}
+                {...fieldA11y('category', Boolean(errors.category))}
+              >
+                {EVENT_CATEGORIES.map((category) => (
+                  <option key={category} value={category} className="capitalize">
+                    {category}
+                  </option>
+                ))}
+              </select>
+            </SelectShell>
           )}
         />
       </Field>
@@ -145,18 +167,20 @@ export function EventFormFields({ form }: EventFormFieldsProps) {
           control={control}
           name="status"
           render={({ field }) => (
-            <select
-              {...field}
-              id="status"
-              className={selectClass}
-              {...fieldA11y('status', Boolean(errors.status))}
-            >
-              {EVENT_STATUSES.map((status) => (
-                <option key={status} value={status}>
-                  {STATUS_LABEL[status]}
-                </option>
-              ))}
-            </select>
+            <SelectShell>
+              <select
+                {...field}
+                id="status"
+                className={selectClass}
+                {...fieldA11y('status', Boolean(errors.status))}
+              >
+                {EVENT_STATUSES.map((status) => (
+                  <option key={status} value={status}>
+                    {STATUS_LABEL[status]}
+                  </option>
+                ))}
+              </select>
+            </SelectShell>
           )}
         />
       </Field>
@@ -166,18 +190,20 @@ export function EventFormFields({ form }: EventFormFieldsProps) {
           control={control}
           name="priority"
           render={({ field }) => (
-            <select
-              {...field}
-              id="priority"
-              className={selectClass}
-              {...fieldA11y('priority', Boolean(errors.priority))}
-            >
-              {EVENT_PRIORITIES.map((priority) => (
-                <option key={priority} value={priority}>
-                  {PRIORITY_LABEL[priority]}
-                </option>
-              ))}
-            </select>
+            <SelectShell>
+              <select
+                {...field}
+                id="priority"
+                className={selectClass}
+                {...fieldA11y('priority', Boolean(errors.priority))}
+              >
+                {EVENT_PRIORITIES.map((priority) => (
+                  <option key={priority} value={priority}>
+                    {PRIORITY_LABEL[priority]}
+                  </option>
+                ))}
+              </select>
+            </SelectShell>
           )}
         />
       </Field>

@@ -24,7 +24,7 @@ npm run dev        # http://localhost:5173
 
 ![Data grid with 100,000 rows](docs/screenshots/grid.png)
 
-*The 100,000-row registry: full-set counts, per-column filters, and a page of 50 virtualized rows.*
+*The 100,000-row registry: full-set counts, per-column filters, and a page of 50 virtualized rows that open on click or Enter.*
 
 ![Timeline grouped by day](docs/screenshots/timeline.png)
 
@@ -44,7 +44,7 @@ Zod · date-fns · Vitest + Testing Library.
 
 | Component | Responsibility |
 | --- | --- |
-| `src/components/DataGrid` | Generic table: configurable columns, visibility, per-column text/select/date filters, global search, sorting, pagination, virtualized rows, loading/empty/error states, row reveal. |
+| `src/components/DataGrid` | Generic table: configurable columns, visibility, per-column text/select/date filters, global search, sorting, pagination, virtualized rows, row activation with a roving tab stop, loading/empty/error states, row reveal. |
 | `src/components/Timeline` | Generic grouped timeline: variable-height day groups, virtualization, roving `tabindex`, arrow-key navigation, live announcements. |
 | `src/features/events/components/EventForm` | Event-specific create/edit dialog: validation, focus management, dirty-state discard confirmation, save error region. |
 
@@ -145,6 +145,9 @@ the same slot the grid uses for search and the column menu. `Button`,
 `SearchField`, `Stat` and the classes in `components/ui/surfaces.ts` keep the
 control heights, radii and states identical across both views.
 
+On a phone the header drops its explanatory paragraph and the two maintenance
+actions collapse to icons, so the panel — the actual work — keeps the screen.
+
 Filtered results stay explainable: the grid footer reads “filtered from
 100,000” whenever search or column filters narrow the set, and the agenda keeps
 its own total in the same footer slot.
@@ -226,6 +229,11 @@ mutations only pay for the sort/filter pass.
   “row 10,352” is still announced as row 10,352.
 - **Live counts:** the result count (“100,001 rows match. Showing 10,301 to
   10,350.”) is a polite status region.
+- **Rows are the control:** every row opens the editor — click it, or focus it
+  and press Enter/Space. The page of rows shares one tab stop, moved with ↑/↓,
+  Home and End, so a 50-row page does not add 50 tab stops. The pencil at the
+  end of each row is the visible cue for that action and stays out of the tab
+  order, and the footer spells the model out (`↑ ↓ move / ↵ open`).
 - **Timeline:** roving tabindex, `aria-label` per item with the event title and
   “Event n of m”, day headings, and the live announcement described above. The
   keyboard help text is wired up with `aria-describedby`.
@@ -269,7 +277,7 @@ mutations only pay for the sort/filter pass.
 ## Tests and quality checks
 
 ```bash
-npm test          # 86 tests, 15 files
+npm test          # 89 tests, 15 files
 npm run build     # tsc -b (strict) + vite build
 npm run lint      # oxlint
 ```

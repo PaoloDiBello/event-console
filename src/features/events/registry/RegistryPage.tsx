@@ -123,6 +123,7 @@ export function RegistryPage({ onEdit, highlightedId }: RegistryPageProps) {
           onColumnFiltersChange={setColumnFilters}
           onViewStateChange={handleViewStateChange}
           initialColumnVisibility={{ location: false, notes: false }}
+          onRowActivate={onEdit}
           focusRowId={highlightedId}
           emptyTitle="No events in the registry"
           emptyHint="Load the dataset, or add the first event with the New event button."

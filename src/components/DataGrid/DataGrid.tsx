@@ -1,5 +1,6 @@
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { Kbd } from '@/components/ui/Kbd'
 import { panelClass } from '@/components/ui/surfaces'
 import { formatCount, pluralize } from '@/shared/lib/format'
 import { DataGridEmpty } from './DataGridEmpty'
@@ -37,6 +38,7 @@ export function DataGrid<TData>({
   emptyTitle = 'Nothing here yet',
   emptyHint = 'Rows will appear here once data is available.',
   getRowClassName,
+  onRowActivate,
   focusRowId,
   toolbarActions,
   rowHeight = DEFAULT_ROW_HEIGHT,
@@ -81,6 +83,33 @@ export function DataGrid<TData>({
 
   useGridScrollReset({ scrollRef, resetKey: grid.resetKey, skipRef: skipScrollResetRef })
   useDataGridShortcuts(searchRef, scrollRef)
+
+  // One tab stop for the whole page of rows, moved with the arrow keys. A new
+  // page, sort or filter invalidates the old position, so it starts at the top.
+  const [activeRowIndex, setActiveRowIndex] = useState(0)
+  useEffect(() => {
+    setActiveRowIndex(0)
+  }, [grid.resetKey])
+
+  const focusRowAt = useCallback(
+    (index: number) => {
+      const count = grid.rows.length
+      if (count === 0) return
+      const next = Math.max(0, Math.min(count - 1, index))
+      setActiveRowIndex(next)
+      // The target may be outside the rendered window: move the list first,
+      // then focus the node once it exists. `preventScroll` keeps the two from
+      // fighting over the scroll offset.
+      rowVirtualizer.scrollToIndex(next, { align: 'auto' })
+      scrollRef.current?.dispatchEvent(new Event('scroll'))
+      requestAnimationFrame(() => {
+        scrollRef.current
+          ?.querySelector<HTMLElement>(`[data-row-index="${next}"]`)
+          ?.focus({ preventScroll: true })
+      })
+    },
+    [grid.rows.length, rowVirtualizer],
+  )
 
   const virtualRows = rowVirtualizer.getVirtualItems()
   const paddingTop = virtualRows.length > 0 ? virtualRows[0]!.start : 0
@@ -130,6 +159,9 @@ export function DataGrid<TData>({
               pageIndex={grid.pagination.pageIndex}
               pageSize={grid.pagination.pageSize}
               getRowClassName={getRowClassName}
+              activeRowIndex={activeRowIndex}
+              onRowFocus={focusRowAt}
+              onRowActivate={onRowActivate}
               onSort={grid.sortByColumn}
               onFilterChange={grid.filterByColumn}
               emptyState={
@@ -158,6 +190,20 @@ export function DataGrid<TData>({
         pageSizeOptions={pageSizeOptions}
         onPageChange={grid.setPage}
         onPageSizeChange={grid.setPageSize}
+        hint={
+          onRowActivate ? (
+            <>
+              <Kbd className="inline-flex h-4 min-w-4 px-1">↑</Kbd>
+              <Kbd className="inline-flex h-4 min-w-4 px-1">↓</Kbd>
+              <span>move</span>
+              <span aria-hidden="true" className="text-line-strong">
+                /
+              </span>
+              <Kbd className="inline-flex h-4 min-w-4 px-1">↵</Kbd>
+              <span>open</span>
+            </>
+          ) : undefined
+        }
       />
 
       {/* Screen readers get the result count without having to hunt for it. */}

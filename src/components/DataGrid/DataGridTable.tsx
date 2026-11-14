@@ -22,6 +22,9 @@ interface DataGridTableProps<TData> {
   pageSize: number
   emptyState: ReactNode
   getRowClassName?: (row: TData) => string
+  activeRowIndex: number
+  onRowFocus: (index: number) => void
+  onRowActivate?: (row: TData) => void
   onSort: (column: Column<TData, unknown>, event: unknown) => void
   onFilterChange: (column: Column<TData, unknown>, value: string | undefined) => void
 }
@@ -43,6 +46,9 @@ export function DataGridTable<TData>({
   pageSize,
   emptyState,
   getRowClassName,
+  activeRowIndex,
+  onRowFocus,
+  onRowActivate,
   onSort,
   onFilterChange,
 }: DataGridTableProps<TData>) {
@@ -92,6 +98,9 @@ export function DataGridTable<TData>({
         isLoading={isLoading}
         emptyState={emptyState}
         getRowClassName={getRowClassName}
+        activeRowIndex={activeRowIndex}
+        onRowFocus={onRowFocus}
+        onRowActivate={onRowActivate}
       />
     </table>
   )

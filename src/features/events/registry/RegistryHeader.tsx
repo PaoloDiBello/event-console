@@ -54,20 +54,26 @@ export function RegistryHeader({
               title={atRiskActive ? 'Show every status again' : 'Show only at-risk events'}
             />
           </div>
-          <Button onClick={onReload} disabled={status === 'loading'}>
+          <Button
+            onClick={onReload}
+            disabled={status === 'loading'}
+            aria-label="Reload the dataset"
+            title="Reload the dataset"
+          >
             <RefreshCw
               aria-hidden="true"
               className={status === 'loading' ? 'size-3.5 animate-spin' : 'size-3.5'}
             />
-            Reload
+            <span className="hidden sm:inline">Reload</span>
           </Button>
           <Button
             onClick={onSimulateError}
+            aria-label="Simulate a load error"
             title="Demonstrates the DataGrid error state"
             className="bg-transparent text-faint hover:border-rose/30 hover:bg-transparent hover:text-rose"
           >
             <Gauge aria-hidden="true" className="size-3.5" />
-            Simulate error
+            <span className="hidden sm:inline">Simulate error</span>
           </Button>
         </>
       }

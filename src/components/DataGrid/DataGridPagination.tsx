@@ -22,6 +22,8 @@ interface DataGridPaginationProps {
   pageSizeOptions: readonly number[]
   onPageChange: (pageIndex: number) => void
   onPageSizeChange: (pageSize: number) => void
+  /** Optional key help, e.g. the row navigation model. Hidden on narrow screens. */
+  hint?: ReactNode
   itemLabel?: string
 }
 
@@ -63,6 +65,7 @@ export function DataGridPagination({
   pageSizeOptions,
   onPageChange,
   onPageSizeChange,
+  hint,
   itemLabel = 'rows',
 }: DataGridPaginationProps) {
   const firstRow = totalRows === 0 ? 0 : pageIndex * pageSize + 1
@@ -81,6 +84,10 @@ export function DataGridPagination({
         <p className="text-faint">
           filtered from <span className="font-mono">{formatCount(sourceRows)}</span>
         </p>
+      ) : null}
+
+      {hint ? (
+        <div className="hidden items-center gap-1.5 text-[10px] text-faint lg:flex">{hint}</div>
       ) : null}
 
       <DataGridPageSize

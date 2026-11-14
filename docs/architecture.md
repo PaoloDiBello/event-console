@@ -118,7 +118,7 @@ src/
       DataGridDateFilter.tsx        date filter trigger + shared calendar
       DataGridFilterClear.tsx       inline clear affordance
       filterControlStyles.ts        idle/active/focus control classes
-      DataGridBody.tsx              skeleton/empty/virtual rows
+      DataGridBody.tsx              skeleton/empty/virtual rows + row keyboard model
       DataGridToolbar.tsx           toolbar composition
       DataGridSearch.tsx            global search control
       DataGridColumnMenu.tsx        visibility menu
