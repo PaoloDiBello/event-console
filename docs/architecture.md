@@ -85,8 +85,9 @@ src/
         styles.ts                   shared input/select classes
         index.ts                    public form API
     registry/                       "records" lens
-      RegistryPage.tsx              data + DataGrid composition
-      RegistryHeader.tsx            page header, stats, reload/error actions
+      RegistryPage.tsx              data + DataGrid composition, URL-backed view
+      RegistryHeader.tsx            page header, quick-filter stats, actions
+      registryView.ts               shareable view <-> URL (read, validate, write)
       useRegistryStats.ts           one-pass header counters
       columns.tsx                   event columns and fast sort keys
       index.ts                      public page API
@@ -191,6 +192,20 @@ Large components were split along state ownership, not visual size:
 
 This keeps the composition readable while avoiding a forest of one-line
 components. A file boundary exists where a unit has a distinct reason to change.
+
+## Shareable view state
+
+The registry's applied view — query, column filters, sort, page, page size — is
+the unit worth sharing. `features/events/registry/registryView.ts` is the only
+module that knows the URL vocabulary. It validates every value against the
+filterable columns and the domain enums before returning state, and omits the
+default view so `/grid` stays canonical.
+
+`DataGrid` remains uncontrolled by default. `RegistryPage` passes `columnFilters`
+plus `onColumnFiltersChange` only because the At-risk metric must set a filter
+from outside the grid; `onViewStateChange` mirrors search/sort/paging. The page
+writes with `replace`, so filtering never fills the history stack, and an
+external URL change (nav click, Back) re-seeds the grid through a remount key.
 
 ## One visual system
 

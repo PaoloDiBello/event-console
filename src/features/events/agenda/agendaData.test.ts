@@ -52,6 +52,25 @@ describe('buildTimeline', () => {
     expect(result.groups[0]!.items[0]!.id).toBe('inside')
   })
 
+  it('narrows to at-risk events without shrinking the at-risk count', () => {
+    const events = [
+      event({ id: 'risk', date: today, title: 'Risk', status: 'at_risk' }),
+      event({ id: 'calm', date: today, title: 'Calm' }),
+      event({ id: 'also-risk', date: shiftIsoDay(today, 1), title: 'Also risk', status: 'at_risk' }),
+    ]
+
+    const all = buildTimeline(events, 7, '')
+    const narrowed = buildTimeline(events, 7, '', true)
+
+    expect(all.total).toBe(3)
+    expect(narrowed.total).toBe(2)
+    expect(narrowed.atRisk).toBe(2)
+    expect(narrowed.groups.flatMap((group) => group.items).map((item) => item.id)).toEqual([
+      'risk',
+      'also-risk',
+    ])
+  })
+
   it('searches the precomputed haystack and returns no groups when nothing matches', () => {
     const events = [
       event({ id: 'a', date: today, title: 'Deploy billing', search: 'deploy billing production' }),

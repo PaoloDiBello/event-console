@@ -26,6 +26,7 @@ export function buildTimeline(
   events: EventRecord[],
   days: number,
   query: string,
+  atRiskOnly = false,
 ): TimelineData {
   const start = todayIso()
   const end = shiftIsoDay(start, days)
@@ -39,8 +40,12 @@ export function buildTimeline(
     if (event.date < start || event.date >= end) continue
     if (!matchesNormalizedSearch(event, needle)) continue
 
-    total += 1
+    // The at-risk count stays the size of the whole matching window so the
+    // metric does not shrink when its own filter is pressed.
     if (event.status === 'at_risk') atRisk += 1
+    if (atRiskOnly && event.status !== 'at_risk') continue
+
+    total += 1
 
     const bucket = byDay.get(event.date)
     if (bucket) bucket.push(event)

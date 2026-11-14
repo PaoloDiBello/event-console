@@ -20,12 +20,16 @@ export function AgendaPage({ onEdit }: AgendaPageProps) {
   const { events, isLoading } = useEventFeed()
   const [scope, setScope] = useState<TimelineScope>(45)
   const [query, setQuery] = useState('')
+  const [atRiskOnly, setAtRiskOnly] = useState(false)
   const today = useMemo(() => todayIso(), [])
   const [selectedDate, setSelectedDate] = useState(today)
   const [jumpRequest, setJumpRequest] = useState<{ day: string; id: number } | null>(null)
   const maxJumpDate = shiftIsoDay(today, TIMELINE_SCOPES[TIMELINE_SCOPES.length - 1]! - 1)
 
-  const data = useMemo(() => buildTimeline(events, scope, query), [events, scope, query])
+  const data = useMemo(
+    () => buildTimeline(events, scope, query, atRiskOnly),
+    [events, scope, query, atRiskOnly],
+  )
 
   const handleScopeChange = (nextScope: TimelineScope) => {
     setScope(nextScope)
@@ -53,7 +57,10 @@ export function AgendaPage({ onEdit }: AgendaPageProps) {
     [],
   )
   const renderItem = useCallback((event: EventRecord) => <AgendaEventCard event={event} />, [])
-  const clearQuery = useCallback(() => setQuery(''), [])
+  const clearFilters = useCallback(() => {
+    setQuery('')
+    setAtRiskOnly(false)
+  }, [])
 
   const toolbar = (
     <AgendaToolbar
@@ -71,7 +78,13 @@ export function AgendaPage({ onEdit }: AgendaPageProps) {
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
-      <AgendaHeader scope={scope} total={data.total} atRisk={data.atRisk} />
+      <AgendaHeader
+        scope={scope}
+        total={data.total}
+        atRisk={data.atRisk}
+        atRiskActive={atRiskOnly}
+        onToggleAtRisk={() => setAtRiskOnly((current) => !current)}
+      />
 
       <div className="min-h-0 flex-1">
         {isLoading ? (
@@ -84,10 +97,16 @@ export function AgendaPage({ onEdit }: AgendaPageProps) {
             renderItem={renderItem}
             onItemActivate={onEdit}
             ariaLabel={`Upcoming events, next ${scope} days, grouped by day`}
-            emptyState={<AgendaEmptyState query={query} onClearQuery={clearQuery} />}
+            emptyState={
+              <AgendaEmptyState
+                query={query}
+                atRiskOnly={atRiskOnly}
+                onClearFilters={clearFilters}
+              />
+            }
             toolbar={toolbar}
             footer={<AgendaFooter total={data.total} dayCount={data.groups.length} />}
-            resetKey={`${scope}|${query}`}
+            resetKey={`${scope}|${query}|${atRiskOnly}`}
             jumpToDay={jumpRequest?.day}
             jumpRequestId={jumpRequest?.id}
           />

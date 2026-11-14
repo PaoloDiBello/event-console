@@ -1,4 +1,11 @@
-import type { ColumnDef, FilterFn, RowData, SortingState, VisibilityState } from '@tanstack/react-table'
+import type {
+  ColumnDef,
+  ColumnFiltersState,
+  FilterFn,
+  RowData,
+  SortingState,
+  VisibilityState,
+} from '@tanstack/react-table'
 import type { ReactNode } from 'react'
 
 /**
@@ -29,6 +36,18 @@ declare module '@tanstack/react-table' {
 
 export type DataGridColumn<TData> = ColumnDef<TData, unknown>
 
+/** Sizes offered by the footer menu, shared with anything that parses a URL. */
+export const DEFAULT_PAGE_SIZE_OPTIONS = [25, 50, 100, 250] as const
+
+/** The applied view, reported after every change so a page can mirror it. */
+export interface DataGridViewState {
+  globalFilter: string
+  columnFilters: ColumnFiltersState
+  sorting: SortingState
+  pageIndex: number
+  pageSize: number
+}
+
 export interface DataGridProps<TData> {
   data: TData[]
   columns: DataGridColumn<TData>[]
@@ -43,6 +62,18 @@ export interface DataGridProps<TData> {
   searchPlaceholder?: string
   initialSorting?: SortingState
   initialPageSize?: number
+  initialPageIndex?: number
+  /** Seed the applied query, e.g. from a URL or a saved view. */
+  initialGlobalFilter?: string
+  /**
+   * Controlled column filters. Omit to let the grid own them; supply both props
+   * when the page needs to set a filter from outside the grid, such as a
+   * quick-filter metric.
+   */
+  columnFilters?: ColumnFiltersState
+  onColumnFiltersChange?: (filters: ColumnFiltersState) => void
+  /** Called after every applied change so the page can persist the view. */
+  onViewStateChange?: (state: DataGridViewState) => void
   initialColumnVisibility?: VisibilityState
   pageSizeOptions?: readonly number[]
   emptyTitle?: string

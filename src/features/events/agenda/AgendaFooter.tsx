@@ -13,9 +13,15 @@ export function AgendaFooter({ total, dayCount }: AgendaFooterProps) {
     <div className={footerClass}>
       <p className="tnum">
         <span className="font-mono text-ink">{formatCount(total)}</span>{' '}
-        {pluralize(total, 'event')} in{' '}
-        <span className="font-mono text-ink">{formatCount(dayCount)}</span>{' '}
-        {pluralize(dayCount, 'day')}
+        {pluralize(total, 'event')}
+        {total > 0 ? (
+          <>
+            {' '}
+            across{' '}
+            <span className="font-mono text-ink">{formatCount(dayCount)}</span>{' '}
+            {pluralize(dayCount, 'day')}
+          </>
+        ) : null}
       </p>
 
       <div className="ml-auto hidden items-center gap-1.5 text-[10px] text-faint lg:flex">

@@ -1,4 +1,5 @@
 import {
+  functionalUpdate,
   getCoreRowModel,
   useReactTable,
   type Column,
@@ -6,13 +7,14 @@ import {
   type FilterFn,
   type PaginationState,
   type SortingState,
+  type Updater,
   type VisibilityState,
 } from '@tanstack/react-table'
 import { useCallback, useEffect, useMemo, useState, useTransition } from 'react'
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
 import { buildRows } from '../model'
 import { activeFilterCount, filterChips } from '../utils'
-import type { DataGridColumn } from '../types'
+import type { DataGridColumn, DataGridViewState } from '../types'
 
 /** Long enough to swallow a burst of keystrokes, short enough to feel live. */
 const SEARCH_DEBOUNCE_MS = 200
@@ -24,6 +26,11 @@ interface DataGridControllerOptions<TData> {
   globalFilterFn?: FilterFn<TData>
   initialSorting?: SortingState
   initialPageSize: number
+  initialPageIndex?: number
+  initialGlobalFilter?: string
+  columnFilters?: ColumnFiltersState
+  onColumnFiltersChange?: (filters: ColumnFiltersState) => void
+  onViewStateChange?: (state: DataGridViewState) => void
   initialColumnVisibility?: VisibilityState
 }
 
@@ -41,21 +48,40 @@ export function useDataGridController<TData>({
   globalFilterFn,
   initialSorting,
   initialPageSize,
+  initialPageIndex = 0,
+  initialGlobalFilter = '',
+  columnFilters: controlledColumnFilters,
+  onColumnFiltersChange,
+  onViewStateChange,
   initialColumnVisibility,
 }: DataGridControllerOptions<TData>) {
   const [sorting, setSorting] = useState<SortingState>(initialSorting ?? [])
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-  const [globalFilter, setGlobalFilter] = useState('')
+  const [internalColumnFilters, setInternalColumnFilters] = useState<ColumnFiltersState>(
+    controlledColumnFilters ?? [],
+  )
+  const columnFilters = controlledColumnFilters ?? internalColumnFilters
+  const [globalFilter, setGlobalFilter] = useState(initialGlobalFilter)
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
     initialColumnVisibility ?? {},
   )
   const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
+    pageIndex: initialPageIndex,
     pageSize: initialPageSize,
   })
 
+  // TanStack hands setters an updater, not always a value. Resolve it against
+  // the filters the parent currently sees, then hand the result back.
+  const setColumnFilters = useCallback(
+    (updater: Updater<ColumnFiltersState>) => {
+      const next = functionalUpdate(updater, columnFilters)
+      if (controlledColumnFilters === undefined) setInternalColumnFilters(next)
+      onColumnFiltersChange?.(next)
+    },
+    [columnFilters, controlledColumnFilters, onColumnFiltersChange],
+  )
+
   // The input is urgent; the applied query waits for a pause in typing.
-  const [search, setSearchState] = useState('')
+  const [search, setSearchState] = useState(initialGlobalFilter)
   const debouncedSearch = useDebouncedValue(search, SEARCH_DEBOUNCE_MS)
   const [isPending, startTransition] = useTransition()
 
@@ -154,6 +180,25 @@ export function useDataGridController<TData>({
     [visibleColumns],
   )
 
+  // Report the applied view after every change. The page uses this to mirror
+  // the view into the URL, so a refresh or a shared link lands on the same rows.
+  useEffect(() => {
+    onViewStateChange?.({
+      globalFilter,
+      columnFilters,
+      sorting,
+      pageIndex: pagination.pageIndex,
+      pageSize: pagination.pageSize,
+    })
+  }, [
+    globalFilter,
+    columnFilters,
+    sorting,
+    pagination.pageIndex,
+    pagination.pageSize,
+    onViewStateChange,
+  ])
+
   const clearSearch = useCallback(() => {
     setSearch('')
     setGlobalFilter('')
@@ -163,14 +208,14 @@ export function useDataGridController<TData>({
   const clearColumnFilters = useCallback(() => {
     setColumnFilters([])
     resetPage()
-  }, [resetPage])
+  }, [resetPage, setColumnFilters])
 
   const removeColumnFilter = useCallback(
     (columnId: string) => {
       setColumnFilters((current) => current.filter((filter) => filter.id !== columnId))
       resetPage()
     },
-    [resetPage],
+    [resetPage, setColumnFilters],
   )
 
   // Only the empty state resets both: the toolbar keeps search and filters
@@ -180,7 +225,7 @@ export function useDataGridController<TData>({
     setGlobalFilter('')
     setColumnFilters([])
     resetPage()
-  }, [resetPage, setSearch])
+  }, [resetPage, setSearch, setColumnFilters])
 
   const sortByColumn = useCallback(
     (column: Column<TData, unknown>, event: unknown) => {

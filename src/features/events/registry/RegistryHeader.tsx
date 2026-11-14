@@ -10,6 +10,10 @@ interface RegistryHeaderProps {
   status: LoadStatus
   nextWindow: number
   atRisk: number
+  /** True when the registry is currently narrowed to at-risk events. */
+  atRiskActive: boolean
+  onToggleAtRisk: () => void
+  onOpenAgenda: () => void
   onReload: () => void
   onSimulateError: () => void
 }
@@ -18,6 +22,9 @@ export function RegistryHeader({
   status,
   nextWindow,
   atRisk,
+  atRiskActive,
+  onToggleAtRisk,
+  onOpenAgenda,
   onReload,
   onSimulateError,
 }: RegistryHeaderProps) {
@@ -34,12 +41,17 @@ export function RegistryHeader({
               label={`Next ${AGENDA_WINDOW_DAYS} days`}
               value={formatCount(nextWindow)}
               tone="text-sky"
+              onClick={onOpenAgenda}
+              title={`Open the ${AGENDA_WINDOW_DAYS}-day agenda`}
             />
             <Stat
               icon={<AlertTriangle aria-hidden="true" className="size-4" />}
               label="At risk"
               value={formatCount(atRisk)}
               tone="text-rose"
+              active={atRiskActive}
+              onClick={onToggleAtRisk}
+              title={atRiskActive ? 'Show every status again' : 'Show only at-risk events'}
             />
           </div>
           <Button onClick={onReload} disabled={status === 'loading'}>

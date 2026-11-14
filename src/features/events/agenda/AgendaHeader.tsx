@@ -8,9 +8,18 @@ interface AgendaHeaderProps {
   scope: TimelineScope
   total: number
   atRisk: number
+  /** True when the agenda is narrowed to at-risk events. */
+  atRiskActive: boolean
+  onToggleAtRisk: () => void
 }
 
-export function AgendaHeader({ scope, total, atRisk }: AgendaHeaderProps) {
+export function AgendaHeader({
+  scope,
+  total,
+  atRisk,
+  atRiskActive,
+  onToggleAtRisk,
+}: AgendaHeaderProps) {
   return (
     <PageHeader
       title="Agenda"
@@ -29,6 +38,9 @@ export function AgendaHeader({ scope, total, atRisk }: AgendaHeaderProps) {
             label="At risk"
             value={formatCount(atRisk)}
             tone="text-rose"
+            active={atRiskActive}
+            onClick={onToggleAtRisk}
+            title={atRiskActive ? 'Show every status again' : 'Show only at-risk events'}
           />
         </div>
       }

@@ -4,6 +4,7 @@ import userEvent, { type UserEvent } from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { formatGridDate, todayIso } from '@/shared/lib/dates'
 import { DataGrid } from './DataGrid'
+import type { DataGridProps } from './types'
 
 // Render every row of the current page instead of measuring a scroll viewport;
 // the keyboard/filter logic is what these tests are about, and jsdom has no layout.
@@ -64,7 +65,7 @@ const columns: ColumnDef<Row>[] = [
   },
 ]
 
-function renderGrid(focusRowId?: string) {
+function renderGrid(overrides: Partial<DataGridProps<Row>> = {}) {
   return render(
     <DataGrid
       data={rows}
@@ -72,7 +73,7 @@ function renderGrid(focusRowId?: string) {
       getRowId={(row) => row.id}
       caption="Test rows"
       initialPageSize={10}
-      focusRowId={focusRowId}
+      {...overrides}
     />,
   )
 }
@@ -173,6 +174,51 @@ describe('DataGrid', () => {
     await waitFor(() =>
       expect(screen.getByRole('status')).toHaveTextContent('23 rows match. Showing 1 to 23.'),
     )
+  })
+
+  it('seeds the search and page from props', async () => {
+    renderGrid({ initialGlobalFilter: 'Row 07', initialPageIndex: 0 })
+
+    expect(screen.getByRole('searchbox', { name: 'Search all columns' })).toHaveValue('Row 07')
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('1 row match.'))
+  })
+
+  it('opens on a seeded page', () => {
+    renderGrid({ initialPageIndex: 1 })
+
+    expect(screen.getByText('Row 10')).toBeInTheDocument()
+    expect(screen.queryByText('Row 00')).not.toBeInTheDocument()
+  })
+
+  it('applies controlled filters and reports removals', async () => {
+    const user = userEvent.setup()
+    const onColumnFiltersChange = vi.fn()
+    renderGrid({
+      columnFilters: [{ id: 'status', value: 'on' }],
+      onColumnFiltersChange,
+    })
+
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('12 rows match.'))
+    expect(statusFilter()).toHaveAccessibleName('Filter by Status, currently On')
+
+    await user.click(screen.getByRole('button', { name: 'Remove Status filter: On' }))
+
+    expect(onColumnFiltersChange).toHaveBeenCalledWith([])
+  })
+
+  it('reports the applied view after a change', async () => {
+    const user = userEvent.setup()
+    const onViewStateChange = vi.fn()
+    renderGrid({ onViewStateChange })
+
+    await waitFor(() => expect(onViewStateChange).toHaveBeenCalled())
+
+    await user.click(screen.getByRole('button', { name: 'Next page' }))
+
+    await waitFor(() => {
+      const last = onViewStateChange.mock.calls.at(-1)?.[0]
+      expect(last).toMatchObject({ pageIndex: 1, pageSize: 10 })
+    })
   })
 
   it('clears an active search with Escape', async () => {
@@ -372,7 +418,7 @@ describe('DataGrid', () => {
   })
 
   it('jumps to the page that contains a revealed row', async () => {
-    renderGrid('r22')
+    renderGrid({ focusRowId: 'r22' })
 
     expect(await screen.findByText('Row 22')).toBeInTheDocument()
     expect(screen.getByRole('textbox', { name: /Page number/ })).toHaveValue('3')

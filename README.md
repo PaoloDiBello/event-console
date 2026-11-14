@@ -116,6 +116,16 @@ or an ISO timestamp key, so the same sort is a plain comparison. Formatting
   views cannot drift.
 - Loads include a small artificial latency (and a “Simulate error” action) so
   the loading/error/retry states are demonstrable.
+- The registry view is **shareable**: search, column filters, sort, page and page
+  size round-trip through the URL (`/grid?q=deploy&status=at_risk&sort=title:asc&page=2&size=25`).
+  The default view stays out of the URL, and a hand-edited link is validated
+  before it reaches the grid — unknown columns, values and page sizes are
+  dropped instead of trusted. External URL changes (nav click, Back) re-seed the
+  grid; the page's own writes use `replace` so filtering never floods history.
+- The header metrics are live: **At risk** toggles the registry's status quick
+  filter and narrows the agenda to at-risk events, while **Next 45 days** opens
+  the agenda window it counts. The number, the pressed card, the chip and the
+  filter row therefore always agree.
 
 ### One data set, two views
 
@@ -259,7 +269,7 @@ mutations only pay for the sort/filter pass.
 ## Tests and quality checks
 
 ```bash
-npm test          # 71 tests, 13 files
+npm test          # 86 tests, 15 files
 npm run build     # tsc -b (strict) + vite build
 npm run lint      # oxlint
 ```
@@ -267,9 +277,10 @@ npm run lint      # oxlint
 Coverage includes dataset determinism, search-text construction, store
 create/update, grid sorting / filtering / pagination (including typed page jumps
 and clamping) / focus-row reveal / filter-row clearing / the select and
-date-filter menus, timeline grouping / windowing / keyboard navigation /
-announcements, the shortcut cheatsheet, and form validation, draft mapping plus
-the discard flow.
+date-filter menus / seeded and controlled filter state, URL view round-tripping
+and validation, the quick-filter metrics, timeline grouping / windowing /
+keyboard navigation / announcements, the shortcut cheatsheet, and form
+validation, draft mapping plus the discard flow.
 
 ## Trade-offs and limitations
 
@@ -306,7 +317,7 @@ src/
     model/                   types, seeded generator, search text, tests
     store/                   Zustand events store, useEventFeed, tests
     components/              EventLabels, EventForm (controller/fields/footer/schema/values)
-    registry/                RegistryPage, header/stats, columns
+    registry/                RegistryPage, header/stats, columns, URL view
     agenda/                  AgendaPage, header, toolbar/footer, card, empty/skeleton, data
   components/
     DataGrid/                composition, hooks/, table/header/body, toolbar, model/

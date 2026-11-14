@@ -11,10 +11,9 @@ import { useDataGridController } from './hooks/useDataGridController'
 import { useDataGridShortcuts } from './hooks/useDataGridShortcuts'
 import { useGridScrollReset } from './hooks/useGridScrollReset'
 import { useRowReveal } from './hooks/useRowReveal'
-import type { DataGridProps } from './types'
+import { DEFAULT_PAGE_SIZE_OPTIONS, type DataGridProps } from './types'
 
 const DEFAULT_ROW_HEIGHT = 44
-const PAGE_SIZE_OPTIONS = [25, 50, 100, 250] as const
 
 export function DataGrid<TData>({
   data,
@@ -28,8 +27,13 @@ export function DataGrid<TData>({
   searchPlaceholder,
   initialSorting,
   initialPageSize = 50,
+  initialPageIndex,
+  initialGlobalFilter,
+  columnFilters,
+  onColumnFiltersChange,
+  onViewStateChange,
   initialColumnVisibility,
-  pageSizeOptions = PAGE_SIZE_OPTIONS,
+  pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS,
   emptyTitle = 'Nothing here yet',
   emptyHint = 'Rows will appear here once data is available.',
   getRowClassName,
@@ -47,6 +51,11 @@ export function DataGrid<TData>({
     globalFilterFn,
     initialSorting,
     initialPageSize,
+    initialPageIndex,
+    initialGlobalFilter,
+    columnFilters,
+    onColumnFiltersChange,
+    onViewStateChange,
     initialColumnVisibility,
   })
 
