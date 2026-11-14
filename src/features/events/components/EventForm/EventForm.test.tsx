@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { todayIso } from '@/shared/lib/dates'
@@ -117,5 +117,22 @@ describe('EventForm', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('The events service is unavailable.')
     expect(screen.getByRole('dialog')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Create event' })).toBeEnabled()
+  })
+
+  it('opens the calendar popover and picks a date from it', async () => {
+    const user = userEvent.setup()
+    renderForm()
+
+    const openCalendarBtn = screen.getByRole('button', { name: 'Open calendar' })
+    await user.click(openCalendarBtn)
+
+    const calendarDialog = await screen.findByRole('dialog', { name: 'Choose event date' })
+    expect(calendarDialog).toBeInTheDocument()
+
+    const todayBtn = within(calendarDialog).getByRole('button', { name: 'Today' })
+    await user.click(todayBtn)
+
+    expect(screen.queryByRole('dialog', { name: 'Choose event date' })).not.toBeInTheDocument()
+    expect(screen.getByLabelText(/Date/)).toHaveValue(todayIso())
   })
 })

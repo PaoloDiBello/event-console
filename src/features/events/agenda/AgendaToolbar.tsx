@@ -1,4 +1,4 @@
-import { CalendarCheck } from 'lucide-react'
+import { CalendarCheck, ChevronLeft, ChevronRight } from 'lucide-react'
 import { buttonClass } from '@/components/ui/buttonStyles'
 import { SearchField } from '@/components/ui/SearchField'
 import {
@@ -8,6 +8,7 @@ import {
   toolbarClass,
 } from '@/components/ui/surfaces'
 import { cn } from '@/shared/lib/cn'
+import { shiftIsoDay } from '@/shared/lib/dates'
 import { AgendaDatePicker } from './AgendaDatePicker'
 import { TIMELINE_SCOPES, type TimelineScope } from './agendaData'
 
@@ -77,12 +78,44 @@ export function AgendaToolbar({
           </div>
         </div>
 
-        <AgendaDatePicker
-          value={jumpDate}
-          min={jumpMin}
-          max={jumpMax}
-          onChange={onJumpDateChange}
-        />
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            disabled={jumpDate <= jumpMin}
+            onClick={() => onJumpDateChange(shiftIsoDay(jumpDate, -1))}
+            aria-label="Previous day"
+            title="Previous day"
+            className={buttonClass({
+              variant: 'secondary',
+              size: 'md',
+              className: 'size-9 p-0 justify-center disabled:opacity-30',
+            })}
+          >
+            <ChevronLeft aria-hidden="true" className="size-4" />
+          </button>
+
+          <AgendaDatePicker
+            value={jumpDate}
+            min={jumpMin}
+            max={jumpMax}
+            onChange={onJumpDateChange}
+          />
+
+          <button
+            type="button"
+            disabled={jumpDate >= jumpMax}
+            onClick={() => onJumpDateChange(shiftIsoDay(jumpDate, 1))}
+            aria-label="Next day"
+            title="Next day"
+            className={buttonClass({
+              variant: 'secondary',
+              size: 'md',
+              className: 'size-9 p-0 justify-center disabled:opacity-30',
+            })}
+          >
+            <ChevronRight aria-hidden="true" className="size-4" />
+          </button>
+        </div>
 
         {jumpDate !== today ? (
           <button

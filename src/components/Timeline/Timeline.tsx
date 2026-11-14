@@ -1,5 +1,5 @@
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { CalendarDays, CalendarRange } from 'lucide-react'
+import { CalendarDays, CalendarRange, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useEffect, useId, useRef } from 'react'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { panelClass } from '@/components/ui/surfaces'
@@ -110,6 +110,23 @@ export function Timeline<TItem>({
     onItemActivate,
   })
 
+  const activeGroupIndex = activeGroup
+    ? groups.findIndex((candidate) => candidate.key === activeGroup.key)
+    : -1
+
+  const scrollToGroup = (targetGroupIndex: number) => {
+    if (targetGroupIndex < 0 || targetGroupIndex >= groups.length) return
+    const target = groups[targetGroupIndex]
+    if (!target) return
+    const index = indexByKey.get(`g:${target.key}`)
+    if (index === undefined) return
+    virtualizer.scrollToIndex(index, { align: 'start' })
+    const firstItem = firstItemIndexByGroup.get(targetGroupIndex)
+    if (firstItem !== undefined) {
+      focusRow(firstItem)
+    }
+  }
+
   const empty = flatRows.length === 0
   const activate = (row: TimelineItemRowData<TItem>) => {
     setActiveKey(row.key)
@@ -137,13 +154,12 @@ export function Timeline<TItem>({
       >
         {showActiveGroup && activeGroup ? (
           <div
-            aria-hidden="true"
             data-timeline-sticky-day={activeGroup.key}
             className="pointer-events-none sticky top-0 z-20 h-0"
           >
             <div
               className={cn(
-                '-mx-3 flex items-center gap-2 border-b border-line/80 bg-surface/95 px-3 py-2',
+                '-mx-3 pointer-events-auto flex items-center gap-2 border-b border-line/80 bg-surface/95 px-3 py-2',
                 'shadow-lg shadow-black/25 backdrop-blur',
               )}
             >
@@ -152,6 +168,30 @@ export function Timeline<TItem>({
               <span className="ml-auto shrink-0 font-mono text-[10px] tracking-wide text-faint">
                 {formatCount(activeGroup.items.length)} {pluralize(activeGroup.items.length, 'event')}
               </span>
+              {groups.length > 1 ? (
+                <div className="ml-1 flex items-center gap-1">
+                  <button
+                    type="button"
+                    disabled={activeGroupIndex <= 0}
+                    onClick={() => scrollToGroup(activeGroupIndex - 1)}
+                    aria-label={`Previous day from ${activeGroup.label}`}
+                    title="Previous day"
+                    className="inline-flex size-6 items-center justify-center rounded-xs border border-line bg-canvas text-faint transition-colors hover:border-line-strong hover:bg-raised hover:text-ink disabled:pointer-events-none disabled:opacity-25"
+                  >
+                    <ChevronLeft aria-hidden="true" className="size-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    disabled={activeGroupIndex >= groups.length - 1}
+                    onClick={() => scrollToGroup(activeGroupIndex + 1)}
+                    aria-label={`Next day from ${activeGroup.label}`}
+                    title="Next day"
+                    className="inline-flex size-6 items-center justify-center rounded-xs border border-line bg-canvas text-faint transition-colors hover:border-line-strong hover:bg-raised hover:text-ink disabled:pointer-events-none disabled:opacity-25"
+                  >
+                    <ChevronRight aria-hidden="true" className="size-3.5" />
+                  </button>
+                </div>
+              ) : null}
             </div>
           </div>
         ) : null}
@@ -177,7 +217,13 @@ export function Timeline<TItem>({
                   className="absolute inset-x-0 top-0"
                 >
                   {row.kind === 'group' ? (
-                    <TimelineGroupRow group={row.group} height={groupHeight} />
+                    <TimelineGroupRow
+                      group={row.group}
+                      height={groupHeight}
+                      groupIndex={row.groupIndex}
+                      groupCount={groups.length}
+                      onNavigateGroup={scrollToGroup}
+                    />
                   ) : (
                     <TimelineItemRow
                       row={row}

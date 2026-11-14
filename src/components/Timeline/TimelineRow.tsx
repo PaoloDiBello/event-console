@@ -1,3 +1,4 @@
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { formatCount, pluralize } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/cn'
 import type { ReactNode } from 'react'
@@ -7,17 +8,52 @@ import type { TimelineGroup } from './types'
 interface TimelineGroupRowProps<TItem> {
   group: TimelineGroup<TItem>
   height: number
+  groupIndex?: number
+  groupCount?: number
+  onNavigateGroup?: (index: number) => void
 }
 
-export function TimelineGroupRow<TItem>({ group, height }: TimelineGroupRowProps<TItem>) {
+export function TimelineGroupRow<TItem>({
+  group,
+  height,
+  groupIndex,
+  groupCount,
+  onNavigateGroup,
+}: TimelineGroupRowProps<TItem>) {
   return (
     <div style={{ height }} className="flex items-end pb-2">
-      <h3 className="flex w-full items-baseline gap-2.5 border-b border-line/80 pb-2">
-        <span className="text-sm font-semibold text-ink">{group.label}</span>
-        <span className="font-mono text-[10px] tracking-wide text-faint">
-          {formatCount(group.items.length)} {pluralize(group.items.length, 'event')}
-        </span>
-      </h3>
+      <div className="flex w-full items-center justify-between border-b border-line/80 pb-2">
+        <h3 className="flex items-baseline gap-2.5">
+          <span className="text-sm font-semibold text-ink">{group.label}</span>
+          <span className="font-mono text-[10px] tracking-wide text-faint">
+            {formatCount(group.items.length)} {pluralize(group.items.length, 'event')}
+          </span>
+        </h3>
+        {onNavigateGroup && groupCount !== undefined && groupIndex !== undefined ? (
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              disabled={groupIndex === 0}
+              onClick={() => onNavigateGroup(groupIndex - 1)}
+              aria-label={`Previous day from ${group.label}`}
+              title="Previous day"
+              className="inline-flex size-6 items-center justify-center rounded-xs border border-line bg-canvas text-faint transition-colors hover:border-line-strong hover:bg-raised hover:text-ink disabled:pointer-events-none disabled:opacity-25"
+            >
+              <ChevronLeft aria-hidden="true" className="size-3.5" />
+            </button>
+            <button
+              type="button"
+              disabled={groupIndex >= groupCount - 1}
+              onClick={() => onNavigateGroup(groupIndex + 1)}
+              aria-label={`Next day from ${group.label}`}
+              title="Next day"
+              className="inline-flex size-6 items-center justify-center rounded-xs border border-line bg-canvas text-faint transition-colors hover:border-line-strong hover:bg-raised hover:text-ink disabled:pointer-events-none disabled:opacity-25"
+            >
+              <ChevronRight aria-hidden="true" className="size-3.5" />
+            </button>
+          </div>
+        ) : null}
+      </div>
     </div>
   )
 }

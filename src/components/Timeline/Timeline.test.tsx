@@ -96,7 +96,7 @@ describe('Timeline', () => {
 
   it('keeps exactly one item in the tab order', () => {
     renderTimeline()
-    const items = screen.getAllByRole('button')
+    const items = Array.from(document.querySelectorAll<HTMLElement>('[data-timeline-item]'))
 
     expect(items).toHaveLength(3)
     expect(items.filter((item) => item.tabIndex === 0)).toHaveLength(1)
@@ -105,7 +105,7 @@ describe('Timeline', () => {
   it('moves between items with the arrow keys and announces each move', async () => {
     const user = userEvent.setup()
     renderTimeline()
-    const items = screen.getAllByRole('button')
+    const items = Array.from(document.querySelectorAll<HTMLElement>('[data-timeline-item]'))
 
     act(() => items[0]!.focus())
     expect(screen.getByRole('status')).toHaveTextContent('Today: Alpha, scheduled, 1 of 2')
@@ -132,9 +132,20 @@ describe('Timeline', () => {
     const user = userEvent.setup()
     const { onActivate } = renderTimeline()
 
-    act(() => screen.getAllByRole('button')[1]!.focus())
+    const items = Array.from(document.querySelectorAll<HTMLElement>('[data-timeline-item]'))
+    act(() => items[1]!.focus())
     await user.keyboard('{Enter}')
 
     expect(onActivate).toHaveBeenCalledWith(groups[0]!.items[1])
+  })
+
+  it('navigates between days using the day header arrow buttons', async () => {
+    const user = userEvent.setup()
+    renderTimeline()
+
+    const nextDayButton = screen.getByRole('button', { name: /Next day from Thursday, 29 October/i })
+    await user.click(nextDayButton)
+
+    expect(virtualizerState.scrollToIndex).toHaveBeenCalledWith(3, { align: 'start' })
   })
 })

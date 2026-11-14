@@ -8,6 +8,7 @@ import {
   PRIORITY_LABEL,
   STATUS_LABEL,
 } from '@/features/events/model'
+import { EventDateField } from './EventDateField'
 import { Field } from './Field'
 import { DURATION_OPTIONS, type EventFormValues } from './schema'
 import { inputClass, selectClass } from './styles'
@@ -81,20 +82,13 @@ export function EventFormFields({ form }: EventFormFieldsProps) {
         htmlFor="date"
         required
         error={errors.date?.message}
-        hint={!errors.date ? 'Local calendar day' : undefined}
+        hint={!errors.date ? 'Local calendar day (YYYY-MM-DD)' : undefined}
       >
         <Controller
           control={control}
           name="date"
           render={({ field }) => (
-            <input
-              {...field}
-              id="date"
-              type="date"
-              aria-required="true"
-              {...fieldA11y('date', Boolean(errors.date), 'date-hint')}
-              className={inputClass}
-            />
+            <EventDateField field={field} hasError={Boolean(errors.date)} />
           )}
         />
       </Field>
