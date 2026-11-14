@@ -277,7 +277,7 @@ mutations only pay for the sort/filter pass.
 ## Tests and quality checks
 
 ```bash
-npm test          # 94 tests, 16 files
+npm test          # 103 tests, 16 files
 npm run build     # tsc -b (strict) + vite build
 npm run lint      # oxlint
 ```
