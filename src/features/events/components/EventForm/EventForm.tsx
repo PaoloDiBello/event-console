@@ -49,7 +49,7 @@ export function EventForm({
         <Dialog.Overlay className="dialog-overlay fixed inset-0 z-40 bg-black/65 backdrop-blur-[3px]" />
         <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center p-4">
           <Dialog.Content
-            className="dialog-content pointer-events-auto max-h-[calc(100dvh-2rem)] w-full max-w-[720px] overflow-y-auto rounded-lg border border-line-strong bg-surface shadow-2xl shadow-black/70"
+            className="dialog-content pointer-events-auto flex max-h-[calc(100dvh-2rem)] w-full max-w-[720px] flex-col overflow-hidden rounded-lg border border-line-strong bg-surface shadow-2xl shadow-black/70"
             aria-describedby="event-form-description"
             onOpenAutoFocus={(event) => {
               // Skip the close button and land on the first real field.
@@ -64,7 +64,7 @@ export function EventForm({
               returnFocusTo.focus({ preventScroll: true })
             }}
           >
-            <div className="flex items-start gap-4 border-b border-line px-5 py-4">
+            <div className="flex shrink-0 items-start gap-4 border-b border-line px-5 py-4">
               <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-sm border border-accent/30 bg-accent/10">
                 <CalendarPlus aria-hidden="true" className="size-4 text-accent" />
               </span>
@@ -89,8 +89,11 @@ export function EventForm({
               </Dialog.Close>
             </div>
 
-            <form noValidate onSubmit={submit}>
-              <EventFormFields form={form} />
+            <form noValidate onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
+              {/* Only the fields scroll; the footer stays reachable on short screens. */}
+              <div className="scrollbar-thin min-h-0 flex-1 overflow-y-auto">
+                <EventFormFields form={form} />
+              </div>
               <EventFormFooter
                 mode={mode}
                 isSaving={isSaving}

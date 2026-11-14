@@ -27,7 +27,7 @@ export function EventFormFooter({
   onDiscard,
 }: EventFormFooterProps) {
   return (
-    <div className="border-t border-line bg-raised/40 px-5 py-3">
+    <div className="shrink-0 border-t border-line bg-raised/40 px-5 py-3">
       {saveError ? (
         <p
           role="alert"
