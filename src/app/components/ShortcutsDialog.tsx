@@ -54,7 +54,9 @@ export function ShortcutsDialog({ open, onOpenChange }: ShortcutsDialogProps) {
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="dialog-overlay fixed inset-0 z-40 bg-black/65 backdrop-blur-[3px]" />
-        <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center p-4">
+        {/* With viewport-fit=cover the backdrop reaches the screen edges, so the
+            panel keeps clear of the notch and the home indicator itself. */}
+        <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center pt-[max(1rem,env(safe-area-inset-top))] pr-[max(1rem,env(safe-area-inset-right))] pb-[max(1rem,env(safe-area-inset-bottom))] pl-[max(1rem,env(safe-area-inset-left))]">
           <Dialog.Content
             className="dialog-content pointer-events-auto max-h-[calc(100dvh-2rem)] w-full max-w-[560px] overflow-y-auto rounded-lg border border-line-strong bg-surface shadow-2xl shadow-black/70"
             aria-describedby="shortcuts-description"

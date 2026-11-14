@@ -8,6 +8,7 @@ import { useEventEditor } from '@/app/hooks/useEventEditor'
 import type { EventRecord } from '@/features/events/model'
 import { useEventStore } from '@/features/events/store'
 import { useGlobalKeydown } from '@/shared/hooks/useGlobalKeydown'
+import { useVisualViewport } from '@/shared/hooks/useVisualViewport'
 import { hasCommandModifier, isShortcutBlocked } from '@/shared/lib/keyboard'
 
 // Routes and the editor are split out so the initial shell does not download
@@ -48,6 +49,8 @@ export function App() {
     handleSubmit,
   } = useEventEditor()
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
+  // Keeps the phone sheet sized to the visible area when the keyboard opens.
+  useVisualViewport()
 
   useEffect(() => {
     void load()
@@ -70,7 +73,7 @@ export function App() {
   })
 
   return (
-    <div className="flex h-dvh flex-col overflow-hidden">
+    <div className="flex h-dvh flex-col overflow-hidden pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)]">
       <AppHeader onNewEvent={openCreate} onOpenShortcuts={() => setShortcutsOpen(true)} />
 
       <main className="mx-auto flex min-h-0 w-full max-w-[1600px] flex-1 flex-col px-3 py-4 sm:px-4">

@@ -53,10 +53,14 @@ export function EventForm({
       <Dialog.Portal>
         <Dialog.Overlay className="dialog-overlay fixed inset-0 z-40 bg-black/65 backdrop-blur-[3px]" />
         {/* Phones get a bottom sheet: full width, hugging the bottom edge, so
-            the pinned footer lands in the thumb zone instead of mid-screen. */}
-        <div className="pointer-events-none fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
+            the pinned footer lands in the thumb zone instead of mid-screen.
+            It is sized to the visual viewport, not the layout viewport, so the
+            keyboard pushing the visible area up takes the footer with it
+            instead of burying it; the side insets keep it clear of a notch in
+            landscape. Both fall back to the old behaviour when unavailable. */}
+        <div className="pointer-events-none fixed top-[var(--vv-offset-top,0px)] right-[env(safe-area-inset-right)] left-[env(safe-area-inset-left)] z-50 flex h-[var(--vv-height,100dvh)] items-end justify-center p-0 sm:items-center sm:p-4">
           <Dialog.Content
-            className="dialog-content pointer-events-auto flex max-h-[100dvh] w-full max-w-[720px] flex-col overflow-hidden rounded-t-xl border border-line-strong bg-surface shadow-2xl shadow-black/70 sm:max-h-[calc(100dvh-2rem)] sm:rounded-lg"
+            className="dialog-content pointer-events-auto flex max-h-full w-full max-w-[720px] flex-col overflow-hidden rounded-t-xl border border-line-strong bg-surface shadow-2xl shadow-black/70 sm:max-h-[calc(100dvh-2rem)] sm:rounded-lg"
             aria-describedby="event-form-description"
             onOpenAutoFocus={(event) => {
               // Skip the close button and land on the first real field.
@@ -71,7 +75,7 @@ export function EventForm({
               returnFocusTo.focus({ preventScroll: true })
             }}
           >
-            <div className="flex shrink-0 items-start gap-4 border-b border-line px-5 py-4">
+            <div className="flex shrink-0 items-start gap-4 border-b border-line px-5 pt-[max(1rem,env(safe-area-inset-top))] pb-4">
               <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-sm border border-accent/30 bg-accent/10">
                 <CalendarPlus aria-hidden="true" className="size-4 text-accent" />
               </span>
