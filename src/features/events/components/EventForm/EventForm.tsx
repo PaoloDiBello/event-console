@@ -15,6 +15,9 @@ export interface EventFormProps {
   onSubmit: (draft: EventDraft) => Promise<void> | void
   /** The control that opened the dialog: focus returns here on close. */
   returnFocusTo?: HTMLElement | null
+  /** Owners and locations already in the registry, suggested while typing. */
+  ownerSuggestions?: readonly string[]
+  locationSuggestions?: readonly string[]
 }
 
 export function EventForm({
@@ -24,6 +27,8 @@ export function EventForm({
   onOpenChange,
   onSubmit,
   returnFocusTo,
+  ownerSuggestions,
+  locationSuggestions,
 }: EventFormProps) {
   const {
     form,
@@ -94,7 +99,11 @@ export function EventForm({
             <form noValidate onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
               {/* Only the fields scroll; the footer stays reachable on short screens. */}
               <div className="scrollbar-thin min-h-0 flex-1 overflow-y-auto">
-                <EventFormFields form={form} />
+                <EventFormFields
+                  form={form}
+                  ownerSuggestions={ownerSuggestions}
+                  locationSuggestions={locationSuggestions}
+                />
               </div>
               <EventFormFooter
                 mode={mode}

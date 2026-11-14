@@ -5,9 +5,25 @@ import { todayIso } from '@/shared/lib/dates'
 import type { EventRecord } from '@/features/events/model'
 import { EventForm } from './EventForm'
 
-function renderForm(onSubmit = vi.fn().mockResolvedValue(undefined)) {
+interface SuggestionProps {
+  ownerSuggestions?: readonly string[]
+  locationSuggestions?: readonly string[]
+}
+
+function renderForm(
+  onSubmit = vi.fn().mockResolvedValue(undefined),
+  suggestions: SuggestionProps = {},
+) {
   const onOpenChange = vi.fn()
-  render(<EventForm open mode="create" onOpenChange={onOpenChange} onSubmit={onSubmit} />)
+  render(
+    <EventForm
+      open
+      mode="create"
+      onOpenChange={onOpenChange}
+      onSubmit={onSubmit}
+      {...suggestions}
+    />,
+  )
   return { onOpenChange, onSubmit }
 }
 
@@ -183,6 +199,37 @@ describe('EventForm', () => {
     await user.tab()
 
     expect(await screen.findByText('Title is required')).toBeInTheDocument()
+  })
+
+  it('suggests an existing owner while still accepting free text', async () => {
+    const user = userEvent.setup()
+    renderForm(undefined, {
+      ownerSuggestions: ['Mira Okafor', 'Nora Haddad'],
+      locationSuggestions: ['HQ · Room 4'],
+    })
+
+    const owner = screen.getByLabelText(/Owner/)
+    await user.type(owner, 'mir')
+
+    const listbox = await screen.findByRole('listbox', { name: 'Owner' })
+    expect(within(listbox).getAllByRole('option').map((option) => option.textContent)).toEqual([
+      'Mira Okafor',
+    ])
+    expect(owner).toHaveAttribute('aria-expanded', 'true')
+
+    await user.keyboard('{ArrowDown}')
+    expect(within(listbox).getByRole('option', { selected: true })).toHaveTextContent('Mira Okafor')
+    expect(owner).toHaveAttribute('aria-activedescendant', within(listbox).getByRole('option', { selected: true }).id)
+
+    await user.keyboard('{Enter}')
+    expect(owner).toHaveValue('Mira Okafor')
+    expect(screen.queryByRole('listbox', { name: 'Owner' })).not.toBeInTheDocument()
+
+    // Free text is still the value of record: nothing is forced on the user.
+    await user.clear(owner)
+    await user.type(owner, 'Zed Diallo')
+    expect(owner).toHaveValue('Zed Diallo')
+    expect(screen.queryByRole('listbox', { name: 'Owner' })).not.toBeInTheDocument()
   })
 
   it('previews the end time from the start time and duration', () => {

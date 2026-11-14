@@ -14,9 +14,13 @@ import { Field } from './Field'
 import { describeEnd } from './formValues'
 import { DURATION_OPTIONS, type EventFormValues } from './schema'
 import { inputClass, selectClass } from './styles'
+import { SuggestionField } from './SuggestionField'
 
 interface EventFormFieldsProps {
   form: UseFormReturn<EventFormValues>
+  /** Values already in the registry, offered while typing owner/location. */
+  ownerSuggestions?: readonly string[]
+  locationSuggestions?: readonly string[]
 }
 
 /**
@@ -46,7 +50,11 @@ function SelectShell({ children }: { children: ReactNode }) {
   )
 }
 
-export function EventFormFields({ form }: EventFormFieldsProps) {
+export function EventFormFields({
+  form,
+  ownerSuggestions = [],
+  locationSuggestions = [],
+}: EventFormFieldsProps) {
   const {
     control,
     formState: { errors },
@@ -213,15 +221,14 @@ export function EventFormFields({ form }: EventFormFieldsProps) {
           control={control}
           name="owner"
           render={({ field }) => (
-            <input
-              {...field}
+            <SuggestionField
               id="owner"
-              type="text"
-              autoComplete="name"
-              autoCapitalize="words"
+              label="Owner"
+              field={field}
+              suggestions={ownerSuggestions}
               placeholder="Unassigned"
-              {...fieldA11y('owner', Boolean(errors.owner))}
-              className={inputClass}
+              autoComplete="name"
+              hasError={Boolean(errors.owner)}
             />
           )}
         />
@@ -232,15 +239,13 @@ export function EventFormFields({ form }: EventFormFieldsProps) {
           control={control}
           name="location"
           render={({ field }) => (
-            <input
-              {...field}
+            <SuggestionField
               id="location"
-              type="text"
-              autoComplete="off"
-              autoCapitalize="words"
+              label="Location"
+              field={field}
+              suggestions={locationSuggestions}
               placeholder="Remote"
-              {...fieldA11y('location', Boolean(errors.location))}
-              className={inputClass}
+              hasError={Boolean(errors.location)}
             />
           )}
         />

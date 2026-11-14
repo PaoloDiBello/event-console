@@ -1,10 +1,11 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AppHeader } from '@/app/components/AppHeader'
 import { AppToast } from '@/app/components/AppToast'
 import { RouteFallback } from '@/app/components/RouteFallback'
 import { ShortcutsDialog } from '@/app/components/ShortcutsDialog'
 import { useEventEditor } from '@/app/hooks/useEventEditor'
+import type { EventRecord } from '@/features/events/model'
 import { useEventStore } from '@/features/events/store'
 import { useGlobalKeydown } from '@/shared/hooks/useGlobalKeydown'
 import { hasCommandModifier, isShortcutBlocked } from '@/shared/lib/keyboard'
@@ -23,8 +24,18 @@ const EventForm = lazy(() =>
   })),
 )
 
+/** Distinct owners or locations already in the registry, sorted for the form. */
+function distinctValues(events: readonly EventRecord[], key: 'owner' | 'location'): string[] {
+  const values = new Set<string>()
+  for (const event of events) values.add(event[key])
+  return [...values].sort((a, b) => a.localeCompare(b))
+}
+
 export function App() {
   const load = useEventStore((state) => state.load)
+  const events = useEventStore((state) => state.events)
+  const ownerSuggestions = useMemo(() => distinctValues(events, 'owner'), [events])
+  const locationSuggestions = useMemo(() => distinctValues(events, 'location'), [events])
   const {
     editor,
     editorMounted,
@@ -86,6 +97,8 @@ export function App() {
               if (!open) closeEditor()
             }}
             onSubmit={handleSubmit}
+            ownerSuggestions={ownerSuggestions}
+            locationSuggestions={locationSuggestions}
           />
         </Suspense>
       ) : null}
