@@ -9,7 +9,7 @@ import { inputClass } from './styles'
 
 const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'))
 const MINUTES = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, '0'))
-const PRESETS = ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00']
+const PRESETS = ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00']
 
 function getNowTime(): string {
   const now = new Date()
@@ -110,7 +110,7 @@ export function EventTimeField({ field, hasError }: EventTimeFieldProps) {
             sideOffset={6}
             collisionPadding={8}
             aria-label="Choose start time"
-            className="z-50 w-64 rounded-lg border border-line-strong bg-surface p-3 shadow-2xl shadow-black/50 outline-none data-[state=open]:animate-[content-in_150ms_ease-out]"
+            className="scrollbar-thin z-50 max-h-[var(--radix-popover-content-available-height)] w-64 overflow-y-auto overscroll-contain rounded-lg border border-line-strong bg-surface p-3 shadow-2xl shadow-black/50 outline-none data-[state=open]:animate-[content-in_150ms_ease-out]"
           >
             <div className="flex items-center justify-between border-b border-line pb-2">
               <span className="font-mono text-[10px] tracking-wider text-faint uppercase">
@@ -126,14 +126,14 @@ export function EventTimeField({ field, hasError }: EventTimeFieldProps) {
               <span className="font-mono text-[9px] tracking-wider text-faint uppercase">
                 Quick times
               </span>
-              <div className="mt-1 flex flex-wrap gap-1">
+              <div className="mt-1 grid grid-cols-4 gap-1">
                 {PRESETS.map((preset) => (
                   <button
                     key={preset}
                     type="button"
                     onClick={() => selectPreset(preset)}
                     className={cn(
-                      'rounded-xs px-1.5 py-0.5 font-mono text-[11px] transition-colors',
+                      'rounded-xs px-1 py-1 text-center font-mono text-[11px] transition-colors',
                       field.value === preset
                         ? 'bg-accent text-canvas font-semibold'
                         : 'border border-line bg-canvas text-muted hover:border-line-strong hover:text-ink',
@@ -146,14 +146,14 @@ export function EventTimeField({ field, hasError }: EventTimeFieldProps) {
             </div>
 
             {/* Hours and Minutes Columns */}
-            <div className="mt-3 grid grid-cols-2 gap-2 border-t border-line pt-2">
+            <div className="mt-2 grid grid-cols-2 gap-2 border-t border-line pt-2">
               <div>
                 <span className="block font-mono text-[9px] tracking-wider text-faint uppercase">
                   Hours
                 </span>
                 <div
                   ref={hourListRef}
-                  className="scrollbar-thin mt-1 max-h-36 overflow-y-auto space-y-0.5 pr-1"
+                  className="scrollbar-thin mt-0.5 max-h-24 overflow-y-auto space-y-0.5 pr-1"
                 >
                   {HOURS.map((hour) => {
                     const isSelected = hour === currentHour
@@ -183,7 +183,7 @@ export function EventTimeField({ field, hasError }: EventTimeFieldProps) {
                 </span>
                 <div
                   ref={minuteListRef}
-                  className="scrollbar-thin mt-1 max-h-36 overflow-y-auto space-y-0.5 pr-1"
+                  className="scrollbar-thin mt-0.5 max-h-24 overflow-y-auto space-y-0.5 pr-1"
                 >
                   {MINUTES.map((minute) => {
                     const isSelected = minute === currentMinute
