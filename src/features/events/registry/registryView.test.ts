@@ -42,6 +42,19 @@ describe('registryView', () => {
     expect(view.pageIndex).toBe(0)
   })
 
+  it('shares the owner and location facets as plain values', () => {
+    const view = readRegistryView(params('owner=Mira+Okafor&location=HQ+%C2%B7+Room+4'))
+
+    expect(view.columnFilters).toEqual([
+      { id: 'owner', value: 'Mira Okafor' },
+      { id: 'location', value: 'HQ · Room 4' },
+    ])
+
+    const written = writeRegistryView(view)
+    expect(written.get('owner')).toBe('Mira Okafor')
+    expect(written.get('location')).toBe('HQ · Room 4')
+  })
+
   it('keeps the default view out of the URL', () => {
     expect(writeRegistryView(DEFAULT_REGISTRY_VIEW).toString()).toBe('')
   })

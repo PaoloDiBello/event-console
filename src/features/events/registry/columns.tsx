@@ -38,7 +38,21 @@ const PRIORITY_RANK: Record<EventRecord['priority'], number> = {
   low: 3,
 }
 
-export function createEventColumns(onEdit: (event: EventRecord) => void): DataGridColumn<EventRecord>[] {
+interface EventColumnOptions {
+  /** Distinct values already in the data, offered by the Owner/Location facets. */
+  owners?: readonly string[]
+  locations?: readonly string[]
+}
+
+/**
+ * Owner and Location are open-ended text, so their filters are selects over the
+ * values the data actually contains rather than free-text boxes that accept a
+ * misspelling and then match nothing.
+ */
+export function createEventColumns(
+  onEdit: (event: EventRecord) => void,
+  { owners = [], locations = [] }: EventColumnOptions = {},
+): DataGridColumn<EventRecord>[] {
   return [
     {
       id: 'title',
@@ -123,7 +137,12 @@ export function createEventColumns(onEdit: (event: EventRecord) => void): DataGr
       accessorKey: 'owner',
       header: 'Owner',
       sortingFn: 'text',
-      meta: { filter: 'text', width: 132 },
+      meta: {
+        filter: 'select',
+        width: 132,
+        filterOptions: owners.map((value) => ({ value, label: value })),
+      },
+      filterFn: 'equalsString',
       cell: ({ row }) => <span className="truncate text-xs text-muted">{row.original.owner}</span>,
     },
     {
@@ -140,7 +159,12 @@ export function createEventColumns(onEdit: (event: EventRecord) => void): DataGr
       accessorKey: 'location',
       header: 'Location',
       sortingFn: 'text',
-      meta: { filter: 'text', width: 140 },
+      meta: {
+        filter: 'select',
+        width: 140,
+        filterOptions: locations.map((value) => ({ value, label: value })),
+      },
+      filterFn: 'equalsString',
       cell: ({ row }) => <span className="truncate text-xs text-faint">{row.original.location}</span>,
     },
     {

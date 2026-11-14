@@ -12,10 +12,15 @@ import { parseIsoDay, toIsoDay } from '@/shared/lib/dates'
  */
 
 /** Columns that render a filter control. Only these can appear in a link. */
-const FILTER_IDS = ['title', 'when', 'category', 'status', 'priority', 'owner'] as const
+const FILTER_IDS = ['title', 'when', 'category', 'status', 'priority', 'owner', 'location'] as const
 type FilterId = (typeof FILTER_IDS)[number]
 
-const TEXT_FILTER_IDS = new Set<FilterId>(['title', 'owner'])
+/**
+ * Owner and Location are selects over data-derived values, so a link can only be
+ * checked against the length limit — not against a fixed list. An unknown value
+ * still shows up in its control and as a chip, so it can be seen and removed.
+ */
+const TEXT_FILTER_IDS = new Set<FilterId>(['title', 'owner', 'location'])
 const MAX_TEXT_LENGTH = 80
 
 /** Sortable columns, including the ones without a filter. */

@@ -87,8 +87,11 @@ export function RegistryPage({ onEdit, highlightedId }: RegistryPageProps) {
     )
   }, [])
 
-  const columns = useMemo(() => createEventColumns(onEdit), [onEdit])
   const stats = useRegistryStats(events)
+  const columns = useMemo(
+    () => createEventColumns(onEdit, { owners: stats.owners, locations: stats.locations }),
+    [onEdit, stats.owners, stats.locations],
+  )
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
