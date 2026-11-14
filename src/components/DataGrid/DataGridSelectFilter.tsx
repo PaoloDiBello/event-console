@@ -74,11 +74,14 @@ export function DataGridSelectFilter({
       </div>
 
       <DropdownMenuPortal>
+        {/* A facet like Owner or Location has as many options as the data does,
+            so the menu is capped to the space Radix measured and scrolls inside
+            it rather than running off the bottom of the window. */}
         <DropdownMenuContent
           align="start"
           sideOffset={6}
           collisionPadding={8}
-          className="z-50 w-[var(--radix-dropdown-menu-trigger-width)] rounded-md border border-line-strong bg-raised p-1 shadow-2xl shadow-black/60"
+          className="scrollbar-thin z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] w-max min-w-[var(--radix-dropdown-menu-trigger-width)] max-w-[var(--radix-dropdown-menu-content-available-width)] overflow-y-auto overscroll-contain rounded-md border border-line-strong bg-raised p-1 shadow-2xl shadow-black/60"
         >
           <DropdownMenuRadioGroup
             value={active ? value : ALL_VALUE}
