@@ -39,8 +39,10 @@ export function EventFormFooter({
       ) : null}
 
       {confirmDiscard ? (
-        <div className="flex flex-wrap items-center gap-2 rounded-sm border border-amber/25 bg-amber/[0.07] px-2.5 py-2">
-          <p className="mr-auto text-[11px] text-amber">Discard your unsaved changes?</p>
+        <div className="grid grid-cols-2 gap-2 rounded-sm border border-amber/25 bg-amber/[0.07] px-2.5 py-2 sm:flex sm:flex-wrap sm:items-center">
+          <p className="col-span-2 text-[11px] text-amber sm:col-span-1 sm:mr-auto">
+            Discard your unsaved changes?
+          </p>
           <button
             type="button"
             ref={keepEditingRef}
@@ -49,12 +51,7 @@ export function EventFormFooter({
           >
             Keep editing
           </button>
-          <Button
-            variant="danger"
-            size="sm"
-            onClick={onDiscard}
-            className="rounded-xs"
-          >
+          <Button variant="danger" size="sm" onClick={onDiscard} className="rounded-xs">
             Discard changes
           </Button>
         </div>
