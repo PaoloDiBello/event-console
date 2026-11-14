@@ -32,7 +32,7 @@ npm run dev        # http://localhost:5173
 
 ![New event dialog](docs/screenshots/form.png)
 
-*The editor: controlled fields, a native date picker, and required-field validation.*
+*The editor: controlled fields, an in-app calendar and a 24-hour time picker, a live end-time preview, and required-field validation.*
 
 ## Stack
 
