@@ -1,0 +1,244 @@
+import * as Popover from '@radix-ui/react-popover'
+import { Check, Clock } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import type { ControllerRenderProps } from 'react-hook-form'
+import { buttonClass } from '@/components/ui/buttonStyles'
+import { cn } from '@/shared/lib/cn'
+import type { EventFormValues } from './schema'
+import { inputClass } from './styles'
+
+const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'))
+const MINUTES = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, '0'))
+const PRESETS = ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00']
+
+function getNowTime(): string {
+  const now = new Date()
+  const h = now.getHours()
+  const m = Math.round(now.getMinutes() / 5) * 5
+  const finalHour = m === 60 ? (h + 1) % 24 : h
+  const finalMinute = m === 60 ? 0 : m
+  return `${String(finalHour).padStart(2, '0')}:${String(finalMinute).padStart(2, '0')}`
+}
+
+interface EventTimeFieldProps {
+  field: ControllerRenderProps<EventFormValues, 'startTime'>
+  hasError: boolean
+}
+
+/**
+ * Time field with an integrated in-app popover time picker.
+ * Supports direct typing of 24-hour time (HH:mm), quick meeting presets,
+ * dual hour/minute column wheels, and a one-click "Now" shortcut.
+ */
+export function EventTimeField({ field, hasError }: EventTimeFieldProps) {
+  const [open, setOpen] = useState(false)
+  const hourListRef = useRef<HTMLDivElement>(null)
+  const minuteListRef = useRef<HTMLDivElement>(null)
+
+  const match = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(field.value)
+  const currentHour = match ? match[1]! : '09'
+  const currentMinute = match ? match[2]! : '00'
+
+  useEffect(() => {
+    if (open) {
+      requestAnimationFrame(() => {
+        hourListRef.current
+          ?.querySelector<HTMLElement>('[data-selected="true"]')
+          ?.scrollIntoView({ block: 'nearest' })
+        minuteListRef.current
+          ?.querySelector<HTMLElement>('[data-selected="true"]')
+          ?.scrollIntoView({ block: 'nearest' })
+      })
+    }
+  }, [open])
+
+  const selectHour = (hour: string) => {
+    field.onChange(`${hour}:${currentMinute}`)
+  }
+
+  const selectMinute = (minute: string) => {
+    field.onChange(`${currentHour}:${minute}`)
+  }
+
+  const selectPreset = (time: string) => {
+    field.onChange(time)
+    setOpen(false)
+  }
+
+  const handleNow = () => {
+    field.onChange(getNowTime())
+    setOpen(false)
+  }
+
+  return (
+    <div className="relative">
+      <input
+        {...field}
+        id="startTime"
+        type="text"
+        placeholder="HH:MM"
+        autoComplete="off"
+        spellCheck={false}
+        aria-required="true"
+        aria-invalid={hasError}
+        aria-describedby={hasError ? 'startTime-error' : undefined}
+        onKeyDown={(event) => {
+          if ((event.altKey && event.key === 'ArrowDown') || event.key === 'F4') {
+            event.preventDefault()
+            setOpen(true)
+          }
+        }}
+        className={cn(inputClass, 'pr-9')}
+      />
+
+      <Popover.Root open={open} onOpenChange={setOpen}>
+        <Popover.Trigger asChild>
+          <button
+            type="button"
+            aria-haspopup="dialog"
+            aria-label="Open time picker"
+            title="Open time picker (Alt+Down)"
+            className="absolute top-1/2 right-1.5 -translate-y-1/2 rounded-xs p-1 text-faint transition-colors hover:bg-raised hover:text-ink focus-visible:text-accent"
+          >
+            <Clock aria-hidden="true" className="size-4" />
+          </button>
+        </Popover.Trigger>
+
+        <Popover.Portal>
+          <Popover.Content
+            align="end"
+            sideOffset={6}
+            collisionPadding={8}
+            aria-label="Choose start time"
+            className="z-50 w-64 rounded-lg border border-line-strong bg-surface p-3 shadow-2xl shadow-black/50 outline-none data-[state=open]:animate-[content-in_150ms_ease-out]"
+          >
+            <div className="flex items-center justify-between border-b border-line pb-2">
+              <span className="font-mono text-[10px] tracking-wider text-faint uppercase">
+                Time (24h)
+              </span>
+              <span className="tnum font-mono text-xs font-semibold text-accent">
+                {currentHour}:{currentMinute}
+              </span>
+            </div>
+
+            {/* Quick Presets */}
+            <div className="mt-2">
+              <span className="font-mono text-[9px] tracking-wider text-faint uppercase">
+                Quick times
+              </span>
+              <div className="mt-1 flex flex-wrap gap-1">
+                {PRESETS.map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => selectPreset(preset)}
+                    className={cn(
+                      'rounded-xs px-1.5 py-0.5 font-mono text-[11px] transition-colors',
+                      field.value === preset
+                        ? 'bg-accent text-canvas font-semibold'
+                        : 'border border-line bg-canvas text-muted hover:border-line-strong hover:text-ink',
+                    )}
+                  >
+                    {preset}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Hours and Minutes Columns */}
+            <div className="mt-3 grid grid-cols-2 gap-2 border-t border-line pt-2">
+              <div>
+                <span className="block font-mono text-[9px] tracking-wider text-faint uppercase">
+                  Hours
+                </span>
+                <div
+                  ref={hourListRef}
+                  className="scrollbar-thin mt-1 max-h-36 overflow-y-auto space-y-0.5 pr-1"
+                >
+                  {HOURS.map((hour) => {
+                    const isSelected = hour === currentHour
+                    return (
+                      <button
+                        key={hour}
+                        type="button"
+                        data-selected={isSelected}
+                        onClick={() => selectHour(hour)}
+                        className={cn(
+                          'w-full rounded-xs py-1 text-center font-mono text-xs transition-colors',
+                          isSelected
+                            ? 'bg-accent text-canvas font-semibold'
+                            : 'text-muted hover:bg-raised hover:text-ink',
+                        )}
+                      >
+                        {hour}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <span className="block font-mono text-[9px] tracking-wider text-faint uppercase">
+                  Minutes
+                </span>
+                <div
+                  ref={minuteListRef}
+                  className="scrollbar-thin mt-1 max-h-36 overflow-y-auto space-y-0.5 pr-1"
+                >
+                  {MINUTES.map((minute) => {
+                    const isSelected = minute === currentMinute
+                    return (
+                      <button
+                        key={minute}
+                        type="button"
+                        data-selected={isSelected}
+                        onClick={() => selectMinute(minute)}
+                        className={cn(
+                          'w-full rounded-xs py-1 text-center font-mono text-xs transition-colors',
+                          isSelected
+                            ? 'bg-accent text-canvas font-semibold'
+                            : 'text-muted hover:bg-raised hover:text-ink',
+                        )}
+                      >
+                        {minute}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="mt-3 flex items-center justify-between border-t border-line pt-2">
+              <button
+                type="button"
+                onClick={handleNow}
+                className={buttonClass({
+                  variant: 'ghost',
+                  size: 'sm',
+                  className: 'gap-1 px-2 text-accent hover:bg-accent/10 hover:text-accent',
+                })}
+              >
+                <Clock aria-hidden="true" className="size-3.5" />
+                Now
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className={buttonClass({
+                  variant: 'secondary',
+                  size: 'sm',
+                  className: 'gap-1 px-2.5',
+                })}
+              >
+                <Check aria-hidden="true" className="size-3" />
+                Done
+              </button>
+            </div>
+          </Popover.Content>
+        </Popover.Portal>
+      </Popover.Root>
+    </div>
+  )
+}

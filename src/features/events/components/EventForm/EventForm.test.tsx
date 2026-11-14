@@ -135,4 +135,17 @@ describe('EventForm', () => {
     expect(screen.queryByRole('dialog', { name: 'Choose event date' })).not.toBeInTheDocument()
     expect(screen.getByLabelText(/Date/)).toHaveValue(todayIso())
   })
+
+  it('opens the time popover and picks a quick time', async () => {
+    const user = userEvent.setup()
+    renderForm()
+
+    await user.click(screen.getByRole('button', { name: 'Open time picker' }))
+
+    const timeDialog = await screen.findByRole('dialog', { name: 'Choose start time' })
+    await user.click(within(timeDialog).getByRole('button', { name: '14:00' }))
+
+    expect(screen.queryByRole('dialog', { name: 'Choose start time' })).not.toBeInTheDocument()
+    expect(screen.getByLabelText(/Start time/)).toHaveValue('14:00')
+  })
 })

@@ -9,6 +9,7 @@ import {
   STATUS_LABEL,
 } from '@/features/events/model'
 import { EventDateField } from './EventDateField'
+import { EventTimeField } from './EventTimeField'
 import { Field } from './Field'
 import { DURATION_OPTIONS, type EventFormValues } from './schema'
 import { inputClass, selectClass } from './styles'
@@ -98,14 +99,7 @@ export function EventFormFields({ form }: EventFormFieldsProps) {
           control={control}
           name="startTime"
           render={({ field }) => (
-            <input
-              {...field}
-              id="startTime"
-              type="time"
-              step={300}
-              {...fieldA11y('startTime', Boolean(errors.startTime))}
-              className={inputClass}
-            />
+            <EventTimeField field={field} hasError={Boolean(errors.startTime)} />
           )}
         />
       </Field>
