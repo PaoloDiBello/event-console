@@ -217,6 +217,12 @@ describe('EventForm', () => {
     ])
     expect(owner).toHaveAttribute('aria-expanded', 'true')
 
+    // The list announces itself on open: the first match is already active, so
+    // assistive tech reads it without waiting for an arrow key.
+    const firstOption = within(listbox).getAllByRole('option')[0]!
+    expect(firstOption).toHaveAttribute('aria-selected', 'true')
+    expect(owner).toHaveAttribute('aria-activedescendant', firstOption.id)
+
     await user.keyboard('{ArrowDown}')
     expect(within(listbox).getByRole('option', { selected: true })).toHaveTextContent('Mira Okafor')
     expect(owner).toHaveAttribute('aria-activedescendant', within(listbox).getByRole('option', { selected: true }).id)
@@ -229,6 +235,27 @@ describe('EventForm', () => {
     await user.clear(owner)
     await user.type(owner, 'Zed Diallo')
     expect(owner).toHaveValue('Zed Diallo')
+    expect(screen.queryByRole('listbox', { name: 'Owner' })).not.toBeInTheDocument()
+  })
+
+  it('moves through several suggestions and takes the active one', async () => {
+    const user = userEvent.setup()
+    renderForm(undefined, { ownerSuggestions: ['Mira Okafor', 'Amira Haddad'] })
+
+    const owner = screen.getByLabelText(/Owner/)
+    await user.type(owner, 'mir')
+
+    const listbox = await screen.findByRole('listbox', { name: 'Owner' })
+    const options = within(listbox).getAllByRole('option')
+    expect(options.map((option) => option.textContent)).toEqual(['Mira Okafor', 'Amira Haddad'])
+    expect(owner).toHaveAttribute('aria-activedescendant', options[0]!.id)
+
+    await user.keyboard('{ArrowDown}')
+    expect(owner).toHaveAttribute('aria-activedescendant', options[1]!.id)
+    expect(options[1]).toHaveAttribute('aria-selected', 'true')
+
+    await user.keyboard('{Enter}')
+    expect(owner).toHaveValue('Amira Haddad')
     expect(screen.queryByRole('listbox', { name: 'Owner' })).not.toBeInTheDocument()
   })
 

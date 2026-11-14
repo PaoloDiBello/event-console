@@ -36,7 +36,7 @@ export function SuggestionField({
   hasError,
 }: SuggestionFieldProps) {
   const [open, setOpen] = useState(false)
-  const [activeIndex, setActiveIndex] = useState(-1)
+  const [activeIndex, setActiveIndex] = useState(0)
   const listId = useId()
   const optionId = (index: number) => `${listId}-option-${index}`
 
@@ -58,10 +58,15 @@ export function SuggestionField({
   }, [suggestions, query])
 
   const expanded = open && matches.length > 0
+  // The first match is active from the moment the list opens, so the combobox
+  // announces what appeared ("Mira Okafor, 1 of 2") instead of waiting for an
+  // arrow key to point at an option. Keeping the index in range also handles a
+  // list that shrinks as the query gets more specific.
+  const active = expanded ? Math.min(activeIndex, matches.length - 1) : -1
 
   const close = () => {
     setOpen(false)
-    setActiveIndex(-1)
+    setActiveIndex(0)
   }
 
   const choose = (value: string) => {
@@ -85,33 +90,32 @@ export function SuggestionField({
             aria-expanded={expanded}
             aria-controls={expanded ? listId : undefined}
             aria-autocomplete="list"
-            aria-activedescendant={
-              expanded && activeIndex >= 0 ? optionId(activeIndex) : undefined
-            }
+            aria-activedescendant={active >= 0 ? optionId(active) : undefined}
             aria-invalid={hasError}
             aria-describedby={hasError ? `${id}-error` : undefined}
             onChange={(event) => {
               field.onChange(event)
               setOpen(true)
-              setActiveIndex(-1)
+              setActiveIndex(0)
             }}
-            onFocus={() => setOpen(true)}
+            onFocus={() => {
+              setOpen(true)
+              setActiveIndex(0)
+            }}
             onBlur={close}
             onKeyDown={(event) => {
               if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
                 if (!matches.length) return
                 event.preventDefault()
                 setOpen(true)
-                setActiveIndex((index) => {
-                  const next = event.key === 'ArrowDown' ? index + 1 : index - 1
-                  return Math.min(Math.max(next, 0), matches.length - 1)
-                })
+                const next = event.key === 'ArrowDown' ? active + 1 : active - 1
+                setActiveIndex(Math.min(Math.max(next, 0), matches.length - 1))
                 return
               }
 
-              if (event.key === 'Enter' && expanded && activeIndex >= 0) {
+              if (event.key === 'Enter' && active >= 0) {
                 event.preventDefault()
-                choose(matches[activeIndex]!)
+                choose(matches[active]!)
                 return
               }
 
@@ -146,7 +150,7 @@ export function SuggestionField({
                 key={value}
                 id={optionId(index)}
                 role="option"
-                aria-selected={index === activeIndex}
+                aria-selected={index === active}
                 onMouseDown={(event) => {
                   // Keep focus (and the caret) in the input while clicking.
                   event.preventDefault()
