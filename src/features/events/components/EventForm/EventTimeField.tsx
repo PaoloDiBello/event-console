@@ -19,6 +19,25 @@ const MINUTES = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, '
 const PRESETS = ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00']
 const TIME_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/
 
+/**
+ * Lenient parse of what the user typed so a partial value like `9:30` or `1`
+ * still drives the picker sensibly. Returns `null` only when there is nothing
+ * to read at all; otherwise the missing half defaults to `00` instead of
+ * discarding the half the user did type.
+ */
+function parseTime(value: string): { hour: string; minute: string } | null {
+  const trimmed = value.trim()
+  if (!trimmed) return null
+
+  const match = TIME_PATTERN.exec(trimmed)
+  if (match) return { hour: match[1]!, minute: match[2]! }
+
+  const [hourPart = '', minutePart = ''] = trimmed.split(':')
+  const hour = hourPart.replace(/\D/g, '').slice(0, 2).padStart(2, '0') || '00'
+  const minute = minutePart.replace(/\D/g, '').slice(0, 2).padStart(2, '0') || '00'
+  return { hour, minute }
+}
+
 function getNowTime(): string {
   const now = new Date()
   const h = now.getHours()
@@ -137,9 +156,9 @@ export function EventTimeField({ field, hasError }: EventTimeFieldProps) {
   const hourListRef = useRef<HTMLDivElement>(null)
   const minuteListRef = useRef<HTMLDivElement>(null)
 
-  const match = TIME_PATTERN.exec(field.value)
-  const currentHour = match?.[1] ?? null
-  const currentMinute = match?.[2] ?? null
+  const parsed = parseTime(field.value)
+  const currentHour = parsed?.hour ?? null
+  const currentMinute = parsed?.minute ?? null
 
   useEffect(() => {
     if (!open) return
@@ -228,7 +247,7 @@ export function EventTimeField({ field, hasError }: EventTimeFieldProps) {
                 Time (24h)
               </span>
               <span className="tnum font-mono text-xs font-semibold text-accent">
-                {match ? `${match[1]}:${match[2]}` : '—'}
+                {parsed ? `${parsed.hour}:${parsed.minute}` : '—'}
               </span>
             </div>
 

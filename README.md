@@ -280,7 +280,7 @@ mutations only pay for the sort/filter pass.
 ## Tests and quality checks
 
 ```bash
-npm test          # 106 tests, 17 files
+npm test          # 113 tests, 18 files
 npm run build     # tsc -b (strict) + vite build
 npm run lint      # oxlint
 ```
@@ -290,8 +290,10 @@ create/update, grid sorting / filtering / pagination (including typed page jumps
 and clamping) / focus-row reveal / filter-row clearing / the select and
 date-filter menus / seeded and controlled filter state, URL view round-tripping
 and validation, the quick-filter metrics, timeline grouping / windowing /
-keyboard navigation / announcements, the shortcut cheatsheet, and form
-validation, draft mapping plus the discard flow.
+keyboard navigation / announcements, the shortcut cheatsheet, form validation,
+draft mapping plus the discard flow, the debounced-search hook, the
+visual-viewport hook, the date-filter calendar, the registry view, the registry
+header stats, and the event columns.
 
 ## Trade-offs and limitations
 

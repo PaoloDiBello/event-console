@@ -21,7 +21,6 @@ describe('event store', () => {
       events: [],
       status: 'idle',
       error: null,
-      lastLoadedAt: null,
     })
   })
 
@@ -40,7 +39,6 @@ describe('event store', () => {
     const state = useEventStore.getState()
     expect(state.status).toBe('ready')
     expect(state.events).toHaveLength(DATASET_SIZE)
-    expect(state.lastLoadedAt).not.toBeNull()
     vi.useRealTimers()
   })
 

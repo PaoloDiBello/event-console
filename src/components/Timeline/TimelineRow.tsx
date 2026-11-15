@@ -84,12 +84,20 @@ export function TimelineItemRow<TItem>({
         tabIndex={tabbable ? 0 : -1}
         data-timeline-item={row.key}
         aria-label={`${getItemLabel(row.item)} ${row.group.label}. Event ${row.itemIndex + 1} of ${row.group.items.length}.`}
+        aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight Home End Enter Space"
         onClick={() => onActivate(row)}
         onFocus={() => onFocus(row)}
+        onKeyDown={(event) => {
+          // The arrow keys move the roving focus; Enter/Space activates.
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault()
+            onActivate(row)
+          }
+        }}
         className={cn(
           'group flex h-full w-full cursor-pointer items-stretch gap-3 rounded-md border border-line bg-surface px-3 text-left',
           'transition-colors hover:border-line-strong hover:bg-raised/80',
-          'focus-visible:border-accent/70 focus-visible:bg-raised/80 focus-visible:outline-2 focus-visible:outline-accent/70',
+          'focus-visible:border-accent/70 focus-visible:bg-raised/80 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent/70',
         )}
       >
         {renderItem(row.item)}

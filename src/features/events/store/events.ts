@@ -19,7 +19,6 @@ interface EventStore {
   events: EventRecord[]
   status: LoadStatus
   error: string | null
-  lastLoadedAt: number | null
   /** Load (or reload) the mock dataset. `fail` exists so the demo can show the error state on purpose. */
   load: (options?: { fail?: boolean }) => Promise<void>
   createEvent: (draft: EventDraft) => EventRecord
@@ -42,7 +41,6 @@ export const useEventStore = create<EventStore>()((set, get) => ({
   events: [],
   status: 'idle',
   error: null,
-  lastLoadedAt: null,
 
   load: async ({ fail = false } = {}) => {
     if (get().status === 'loading') return
@@ -58,7 +56,7 @@ export const useEventStore = create<EventStore>()((set, get) => ({
       return
     }
 
-    set({ events: generateEvents(), status: 'ready', lastLoadedAt: Date.now(), error: null })
+    set({ events: generateEvents(), status: 'ready', error: null })
   },
 
   createEvent: (draft) => {

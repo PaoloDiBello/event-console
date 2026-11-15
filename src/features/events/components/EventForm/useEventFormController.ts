@@ -134,8 +134,10 @@ export function useEventFormController({
 
     try {
       await onSubmit(draft)
-      form.reset(toFormValues({ ...draft, id: event?.id ?? 'draft', search: '' }))
-      onOpenChange(false)
+      // Close directly: the save succeeded, so there is no dirty state to
+      // protect and no need to re-enter the discard prompt. `close` also
+      // clears the transient prompts and the save-error region.
+      close()
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : 'Could not save the event. Try again.')
     } finally {

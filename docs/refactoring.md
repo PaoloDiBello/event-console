@@ -40,7 +40,7 @@ own markup.
 
 | Area | Before | After |
 | --- | --- | --- |
-| Grid state | ~200 lines of state, effects and handlers in `DataGrid.tsx` | `hooks/useDataGridController.ts` + `useRowReveal` + `useGridScrollReset` + `useDataGridShortcuts` |
+| Grid state | ~300 lines of state, effects and handlers in `DataGrid.tsx` | `hooks/useDataGridController.ts` + `useRowReveal` + `useGridScrollReset` + `useDataGridShortcuts` |
 | Grid presentation | filter controls and spacer rows duplicated in header/body | `DataGridColumnFilter`, `SpacerRow`, shared `columnLabel` |
 | Timeline | virtualization, focus, announcements and keyboard logic in `Timeline.tsx` | `hooks/useTimelineModel`, `useTimelineFocus`, `useTimelineKeyboard`, `useTimelineAnnouncement` |
 | Form | submit mapping, discard flow and focus effects in `EventForm.tsx` | `useEventFormController` + pure `toEventDraft` |

@@ -294,10 +294,19 @@ Tests are colocated with the unit they exercise:
 - `features/events/components/EventForm/EventForm.test.tsx` — focus, errors,
   discard flow.
 - `features/events/agenda/agendaData.test.ts` — windowing, grouping, search.
+- `features/events/agenda/AgendaDatePicker.test.tsx` — jump calendar.
+- `features/events/registry/registryView.test.ts` — URL view round-tripping
+  and validation.
+- `features/events/registry/RegistryHeader.test.tsx` — quick-filter stats.
+- `features/events/registry/columns.test.tsx` — column labels and sort keys.
 - `components/DataGrid/DataGrid.test.tsx` — sorting, filtering, pagination,
   page jump, focus reveal.
+- `components/DataGrid/DataGridDateFilter.test.tsx` — date filter menu.
 - `components/Timeline/Timeline.test.tsx` — navigation and announcements.
 - `app/components/ShortcutsDialog.test.tsx` — cheatsheet groups and Escape close.
+- `shared/hooks/useDebouncedValue.test.ts` — the search debounce hook.
+- `shared/hooks/useVisualViewport.test.ts` — the phone keyboard hook.
+- `components/ui/Kbd.test.tsx` — keyboard hint chip.
 
 The suite is behavior-focused. Pure model helpers are covered through their
 public components and page data tests; add unit tests when a helper grows logic

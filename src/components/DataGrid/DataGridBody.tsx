@@ -103,7 +103,7 @@ export function DataGridBody<TData>({
                 key={row.id}
                 data-row-index={virtualRow.index}
                 aria-rowindex={rowNumber + headerRowCount}
-                aria-keyshortcuts={activatable ? 'Enter' : undefined}
+                aria-keyshortcuts={activatable ? 'Enter Space' : undefined}
                 tabIndex={activatable ? (isActive ? 0 : -1) : undefined}
                 style={{ height: rowHeight }}
                 onClick={activatable ? () => onRowActivate?.(row.original) : undefined}

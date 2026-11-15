@@ -54,7 +54,7 @@ the README.
 
 - Public repository: `github.com/PaoloDiBello/event-console`.
 - Commit history separates scaffold, data/store, components, demo, and polish.
-- `npm test` (56 tests), `npm run build`, and `npm run lint` pass.
+- `npm test` (113 tests), `npm run build`, and `npm run lint` pass.
 
 ## Judgment calls worth knowing
 
