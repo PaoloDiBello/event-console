@@ -37,8 +37,10 @@ export function AgendaDatePicker({ value, min, max, onChange }: AgendaDatePicker
           })}
         >
           <CalendarDays aria-hidden="true" className="size-3.5 shrink-0 text-faint" />
-          <span className="font-mono text-[10px] tracking-wider text-faint uppercase">Jump</span>
-          <span className="tnum font-mono text-[11px] text-ink">{formatDayShort(value)}</span>
+          <span className="flex items-baseline gap-2">
+            <span className="font-mono text-[10px] tracking-wider text-faint uppercase">Jump</span>
+            <span className="tnum font-mono text-[11px] text-ink">{formatDayShort(value)}</span>
+          </span>
           <ChevronDown aria-hidden="true" className="ml-auto size-3.5 shrink-0 text-faint" />
         </button>
       </Popover.Trigger>
