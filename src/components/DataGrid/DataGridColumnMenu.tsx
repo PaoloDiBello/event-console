@@ -47,7 +47,7 @@ export function DataGridColumnMenu<TData>({
       <DropdownMenuContent
         align="end"
         sideOffset={6}
-        className="z-50 min-w-52 rounded-md border border-line-strong bg-raised p-1 shadow-2xl shadow-black/60"
+        className="scrollbar-thin z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] min-w-52 overflow-y-auto overscroll-contain rounded-md border border-line-strong bg-raised p-1 shadow-2xl shadow-black/60"
       >
         <DropdownMenuLabel className="px-2 py-1.5 font-mono text-[10px] tracking-widest text-faint uppercase">
           Visible columns

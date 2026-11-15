@@ -125,7 +125,9 @@ export function RegistryPage({ onEdit, highlightedId }: RegistryPageProps) {
           columnFilters={columnFilters}
           onColumnFiltersChange={setColumnFilters}
           onViewStateChange={handleViewStateChange}
-          initialColumnVisibility={{ location: false, notes: false }}
+          // Location stays visible: its select filter only exists where the
+          // column does, and a facet nobody can reach is not a facet.
+          initialColumnVisibility={{ notes: false }}
           onRowActivate={onEdit}
           focusRowId={highlightedId}
           emptyTitle="No events in the registry"
