@@ -171,8 +171,17 @@ export function useDataGridController<TData>({
   const visibleColumns = table.getVisibleLeafColumns()
   const filterCount = activeFilterCount(columnFilters)
   // Chips come from filter state, not from the visible columns, so a filter on
-  // a hidden column stays visible and removable.
-  const chips = useMemo(() => filterChips(table, columnFilters), [table, columnFilters])
+  // a hidden column stays visible and removable. They are derived from the
+  // column definitions rather than the table instance, which is recreated on
+  // every render, so this memo actually holds.
+  const chips = useMemo(
+    () =>
+      filterChips(
+        columns,
+        columnFilters,
+      ),
+    [columns, columnFilters],
+  )
   const hasSearch = globalFilter.length > 0
   const hasFilters = filterCount > 0
   const showFilterRow = useMemo(
