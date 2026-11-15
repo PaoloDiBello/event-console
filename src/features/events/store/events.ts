@@ -24,6 +24,9 @@ interface EventStore {
   load: (options?: { fail?: boolean }) => Promise<void>
   createEvent: (draft: EventDraft) => EventRecord
   updateEvent: (id: string, draft: EventDraft) => void
+  /** Remove an event and report where it was, so `restoreEvent` can undo it. */
+  deleteEvent: (id: string) => { event: EventRecord; index: number } | null
+  restoreEvent: (event: EventRecord, index: number) => void
 }
 
 function withSearch(draft: EventDraft): Omit<EventRecord, 'id'> {
@@ -70,6 +73,24 @@ export const useEventStore = create<EventStore>()((set, get) => ({
         event.id === id ? { ...event, ...withSearch(draft) } : event,
       ),
     }))
+  },
+
+  deleteEvent: (id) => {
+    const events = get().events
+    const index = events.findIndex((event) => event.id === id)
+    if (index === -1) return null
+
+    const event = events[index]!
+    set({ events: events.filter((candidate) => candidate.id !== id) })
+    return { event, index }
+  },
+
+  restoreEvent: (event, index) => {
+    set((state) => {
+      const events = [...state.events]
+      events.splice(Math.min(Math.max(index, 0), events.length), 0, event)
+      return { events }
+    })
   },
 }))
 

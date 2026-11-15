@@ -47,6 +47,8 @@ export function App() {
     openEdit,
     closeEditor,
     handleSubmit,
+    handleDelete,
+    undoAction,
   } = useEventEditor()
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   // Keeps the phone sheet sized to the visible area when the keyboard opens.
@@ -100,6 +102,7 @@ export function App() {
               if (!open) closeEditor()
             }}
             onSubmit={handleSubmit}
+            onDelete={handleDelete}
             ownerSuggestions={ownerSuggestions}
             locationSuggestions={locationSuggestions}
           />
@@ -108,7 +111,7 @@ export function App() {
 
       <ShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
 
-      <AppToast message={success} />
+      <AppToast message={success} action={undoAction} />
     </div>
   )
 }

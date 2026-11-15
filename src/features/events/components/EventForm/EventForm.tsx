@@ -13,6 +13,8 @@ export interface EventFormProps {
   onOpenChange: (open: boolean) => void
   /** Resolve to close the dialog; reject to surface a save error inside the form. */
   onSubmit: (draft: EventDraft) => Promise<void> | void
+  /** Edit mode only: the event was deleted after confirmation. */
+  onDelete?: (event: EventRecord) => void
   /** The control that opened the dialog: focus returns here on close. */
   returnFocusTo?: HTMLElement | null
   /** Owners and locations already in the registry, suggested while typing. */
@@ -26,6 +28,7 @@ export function EventForm({
   event,
   onOpenChange,
   onSubmit,
+  onDelete,
   returnFocusTo,
   ownerSuggestions,
   locationSuggestions,
@@ -35,13 +38,19 @@ export function EventForm({
     isSaving,
     saveError,
     confirmDiscard,
+    confirmingDelete,
     keepEditingRef,
     cancelRef,
+    deleteRef,
+    cancelDeleteRef,
     close,
     requestClose,
     submit,
     keepEditing,
-  } = useEventFormController({ open, event, onOpenChange, onSubmit })
+    requestDelete,
+    cancelDelete,
+    confirmDelete,
+  } = useEventFormController({ open, event, onOpenChange, onSubmit, onDelete })
 
   return (
     <Dialog.Root
@@ -114,11 +123,17 @@ export function EventForm({
                 isSaving={isSaving}
                 saveError={saveError}
                 confirmDiscard={confirmDiscard}
+                confirmingDelete={confirmingDelete}
                 keepEditingRef={keepEditingRef}
                 cancelRef={cancelRef}
+                deleteRef={deleteRef}
+                cancelDeleteRef={cancelDeleteRef}
                 onCancel={requestClose}
                 onKeepEditing={keepEditing}
                 onDiscard={close}
+                onRequestDelete={requestDelete}
+                onCancelDelete={cancelDelete}
+                onConfirmDelete={confirmDelete}
               />
             </form>
           </Dialog.Content>

@@ -12,6 +12,8 @@ interface EventFormControllerOptions {
   onOpenChange: (open: boolean) => void
   /** Resolve to close the dialog; reject to surface a save error inside the form. */
   onSubmit: (draft: EventDraft) => Promise<void> | void
+  /** Called with the record once the user confirms deletion. */
+  onDelete?: (event: EventRecord) => void
 }
 
 /**
@@ -25,13 +27,18 @@ export function useEventFormController({
   event,
   onOpenChange,
   onSubmit,
+  onDelete,
 }: EventFormControllerOptions) {
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [confirmDiscard, setConfirmDiscard] = useState(false)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
   const keepEditingRef = useRef<HTMLButtonElement>(null)
   const cancelRef = useRef<HTMLButtonElement>(null)
+  const deleteRef = useRef<HTMLButtonElement>(null)
+  const cancelDeleteRef = useRef<HTMLButtonElement>(null)
   const wasConfirming = useRef(false)
+  const wasConfirmingDelete = useRef(false)
 
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
@@ -65,16 +72,33 @@ export function useEventFormController({
     }
   }, [confirmDiscard])
 
+  // Same focus contract as the discard prompt: land on the safe answer, and
+  // put focus back on Delete when the prompt is dismissed.
+  useEffect(() => {
+    if (confirmingDelete) {
+      wasConfirmingDelete.current = true
+      cancelDeleteRef.current?.focus()
+    } else if (wasConfirmingDelete.current) {
+      wasConfirmingDelete.current = false
+      deleteRef.current?.focus()
+    }
+  }, [confirmingDelete])
+
   const close = () => {
     form.reset(toFormValues(event))
     setConfirmDiscard(false)
+    setConfirmingDelete(false)
     setSaveError(null)
     onOpenChange(false)
   }
 
   const requestClose = () => {
     if (isSaving) return
-    // Escape or Cancel while the prompt is up means "keep editing".
+    // Escape or Cancel while either prompt is up means "back to the form".
+    if (confirmingDelete) {
+      setConfirmingDelete(false)
+      return
+    }
     if (confirmDiscard) {
       setConfirmDiscard(false)
       return
@@ -87,6 +111,20 @@ export function useEventFormController({
   }
 
   const keepEditing = () => setConfirmDiscard(false)
+
+  const requestDelete = () => {
+    if (isSaving || !event) return
+    setConfirmDiscard(false)
+    setConfirmingDelete(true)
+  }
+
+  const confirmDelete = () => {
+    if (!event) return
+    const target = event
+    setConfirmingDelete(false)
+    close()
+    onDelete?.(target)
+  }
 
   const submit = form.handleSubmit(async (values) => {
     setIsSaving(true)
@@ -110,11 +148,17 @@ export function useEventFormController({
     isSaving,
     saveError,
     confirmDiscard,
+    confirmingDelete,
     keepEditingRef,
     cancelRef,
+    deleteRef,
+    cancelDeleteRef,
     close,
     requestClose,
     submit,
     keepEditing,
+    requestDelete,
+    cancelDelete: () => setConfirmingDelete(false),
+    confirmDelete,
   }
 }

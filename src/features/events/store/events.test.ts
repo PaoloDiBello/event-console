@@ -87,4 +87,22 @@ describe('event store', () => {
     expect(updated.search).toContain('release billing-api')
     expect(updated.search).toContain('critical')
   })
+
+  it('removes an event and restores it to the same index', () => {
+    useEventStore.setState({ events: [], status: 'ready' })
+    const first = useEventStore.getState().createEvent(draft)
+    const second = useEventStore.getState().createEvent({ ...draft, title: 'Rotate credentials' })
+
+    const removed = useEventStore.getState().deleteEvent(first.id)
+    expect(removed?.index).toBe(1)
+    expect(useEventStore.getState().events.map((event) => event.id)).toEqual([second.id])
+
+    useEventStore.getState().restoreEvent(removed!.event, removed!.index)
+    expect(useEventStore.getState().events.map((event) => event.id)).toEqual([second.id, first.id])
+  })
+
+  it('reports nothing to delete for an unknown id', () => {
+    useEventStore.setState({ events: [], status: 'ready' })
+    expect(useEventStore.getState().deleteEvent('evt_missing')).toBeNull()
+  })
 })

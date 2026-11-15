@@ -1,4 +1,4 @@
-import { AlertTriangle, Loader2, Save } from 'lucide-react'
+import { AlertTriangle, Loader2, Save, Trash2 } from 'lucide-react'
 import type { RefObject } from 'react'
 import { Button } from '@/components/ui/Button'
 import { buttonClass } from '@/components/ui/buttonStyles'
@@ -8,11 +8,17 @@ interface EventFormFooterProps {
   isSaving: boolean
   saveError: string | null
   confirmDiscard: boolean
+  confirmingDelete: boolean
   keepEditingRef: RefObject<HTMLButtonElement | null>
   cancelRef: RefObject<HTMLButtonElement | null>
+  deleteRef: RefObject<HTMLButtonElement | null>
+  cancelDeleteRef: RefObject<HTMLButtonElement | null>
   onCancel: () => void
   onKeepEditing: () => void
   onDiscard: () => void
+  onRequestDelete: () => void
+  onCancelDelete: () => void
+  onConfirmDelete: () => void
 }
 
 export function EventFormFooter({
@@ -20,11 +26,17 @@ export function EventFormFooter({
   isSaving,
   saveError,
   confirmDiscard,
+  confirmingDelete,
   keepEditingRef,
   cancelRef,
+  deleteRef,
+  cancelDeleteRef,
   onCancel,
   onKeepEditing,
   onDiscard,
+  onRequestDelete,
+  onCancelDelete,
+  onConfirmDelete,
 }: EventFormFooterProps) {
   return (
     <div className="shrink-0 border-t border-line bg-raised/40 px-5 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
@@ -55,8 +67,42 @@ export function EventFormFooter({
             Discard changes
           </Button>
         </div>
+      ) : confirmingDelete ? (
+        <div className="grid grid-cols-2 gap-2 rounded-sm border border-rose/25 bg-rose/[0.07] px-2.5 py-2 sm:flex sm:flex-wrap sm:items-center">
+          <p className="col-span-2 text-[11px] text-rose sm:col-span-1 sm:mr-auto">
+            Delete this event? Undo is waiting in the toast.
+          </p>
+          <button
+            type="button"
+            ref={cancelDeleteRef}
+            onClick={onCancelDelete}
+            className={buttonClass({ size: 'sm', className: 'rounded-xs' })}
+          >
+            Keep event
+          </button>
+          <Button variant="danger" size="sm" onClick={onConfirmDelete} className="rounded-xs">
+            Delete
+          </Button>
+        </div>
       ) : (
         <div className="flex items-center justify-end gap-2">
+          {mode === 'edit' ? (
+            <button
+              type="button"
+              ref={deleteRef}
+              onClick={onRequestDelete}
+              disabled={isSaving}
+              aria-label="Delete event"
+              className={buttonClass({
+                size: 'md',
+                className:
+                  'mr-auto gap-2 bg-transparent px-3 text-rose/80 hover:bg-rose/10 hover:text-rose',
+              })}
+            >
+              <Trash2 aria-hidden="true" className="size-3.5" />
+              Delete
+            </button>
+          ) : null}
           <button
             type="button"
             ref={cancelRef}

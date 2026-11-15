@@ -102,6 +102,44 @@ describe('EventForm', () => {
     expect(onOpenChange).toHaveBeenCalledWith(false)
   })
 
+  it('deletes the event only after the confirmation', async () => {
+    const user = userEvent.setup()
+    const onDelete = vi.fn()
+    const onOpenChange = vi.fn()
+    render(
+      <EventForm
+        open
+        mode="edit"
+        event={existing}
+        onOpenChange={onOpenChange}
+        onSubmit={vi.fn()}
+        onDelete={onDelete}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Delete event' }))
+    expect(
+      await screen.findByText('Delete this event? Undo is waiting in the toast.'),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Keep event' })).toHaveFocus()
+
+    await user.click(screen.getByRole('button', { name: 'Keep event' }))
+    expect(screen.queryByText(/Delete this event\?/)).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Delete event' })).toHaveFocus()
+    expect(onDelete).not.toHaveBeenCalled()
+
+    await user.click(screen.getByRole('button', { name: 'Delete event' }))
+    await user.click(await screen.findByRole('button', { name: 'Delete' }))
+
+    expect(onDelete).toHaveBeenCalledWith(existing)
+    expect(onOpenChange).toHaveBeenCalledWith(false)
+  })
+
+  it('offers no delete action while creating', () => {
+    renderForm()
+    expect(screen.queryByRole('button', { name: 'Delete event' })).not.toBeInTheDocument()
+  })
+
   it('asks before discarding changes and keeps focus inside the dialog', async () => {
     const user = userEvent.setup()
     const { onOpenChange } = renderForm()

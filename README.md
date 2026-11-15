@@ -46,7 +46,7 @@ Zod · date-fns · Vitest + Testing Library.
 | --- | --- |
 | `src/components/DataGrid` | Generic table: configurable columns, visibility, per-column text/select/date filters, global search, sorting, pagination, virtualized rows, row activation with a roving tab stop, loading/empty/error states, row reveal. |
 | `src/components/Timeline` | Generic grouped timeline: variable-height day groups, virtualization, roving `tabindex`, arrow-key navigation, live announcements. |
-| `src/features/events/components/EventForm` | Event-specific create/edit dialog: validation, focus management, dirty-state discard confirmation, save error region. |
+| `src/features/events/components/EventForm` | Event-specific create/edit dialog: validation, focus management, dirty-state discard confirmation, delete confirmation, save error region. |
 
 The demo owns the event-specific bits (`features/events/registry/columns.tsx`,
 `features/events/agenda/agendaData.ts`, the view pages, and
@@ -200,6 +200,9 @@ calendar date, time `HH:mm`, duration bounds).
   close, including after a successful save.
 - Save errors render in a `role="alert"` region; the dialog and the entered
   values stay put so the user can retry.
+- Editing offers **Delete**, which asks first (“Keep event” gets focus).
+  Confirming closes the dialog and shows a toast with **Undo**; undo puts the
+  event back at the index it was removed from.
 
 ## Measured performance
 
@@ -320,7 +323,7 @@ src/
   app/                       composition root
     App.tsx                  routes, lazy form, global shortcuts
     components/              AppHeader, AppToast, RouteFallback, ShortcutsDialog
-    hooks/useEventEditor.ts  editor state, submit, focus return, highlight
+    hooks/useEventEditor.ts  editor state, submit, delete/undo, focus return, highlight
   features/events/
     model/                   types, seeded generator, search text, tests
     store/                   Zustand events store, useEventFeed, tests

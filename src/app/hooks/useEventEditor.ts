@@ -26,6 +26,8 @@ function saveConfirmation(draft: EventDraft, mode: 'create' | 'edit'): string {
 export function useEventEditor() {
   const createEvent = useEventStore((state) => state.createEvent)
   const updateEvent = useEventStore((state) => state.updateEvent)
+  const deleteEvent = useEventStore((state) => state.deleteEvent)
+  const restoreEvent = useEventStore((state) => state.restoreEvent)
 
   const [editor, setEditor] = useState<EditorState | null>(null)
   // The editor chunk is fetched on first use. Once loaded it stays mounted
@@ -35,6 +37,8 @@ export function useEventEditor() {
   const [highlightedId, setHighlightedId] = useTransientValue<string>(4000)
   /** The control that opened the editor, so closing can return focus to it. */
   const [opener, setOpener] = useState<HTMLElement | null>(null)
+  /** What the last delete removed, held only for as long as the toast lives. */
+  const [undo, setUndo] = useState<{ event: EventRecord; index: number } | null>(null)
 
   const openEditor = useCallback((state: EditorState) => {
     const active = document.activeElement
@@ -62,6 +66,8 @@ export function useEventEditor() {
     async (draft: EventDraft) => {
       await simulateLatency()
 
+      setUndo(null)
+
       if (editor?.mode === 'edit') {
         updateEvent(editor.event.id, draft)
         setHighlightedId(editor.event.id)
@@ -76,6 +82,24 @@ export function useEventEditor() {
     [createEvent, editor, updateEvent, setHighlightedId, setSuccess],
   )
 
+  const handleDelete = useCallback(
+    (event: EventRecord) => {
+      const removed = deleteEvent(event.id)
+      if (!removed) return
+      setUndo(removed)
+      setSuccess(`Event “${event.title}” deleted.`)
+    },
+    [deleteEvent, setSuccess],
+  )
+
+  const undoDelete = useCallback(() => {
+    if (!undo) return
+    restoreEvent(undo.event, undo.index)
+    setHighlightedId(undo.event.id)
+    setSuccess(`Event “${undo.event.title}” restored.`)
+    setUndo(null)
+  }, [restoreEvent, setHighlightedId, setSuccess, undo])
+
   return {
     editor,
     editorMounted,
@@ -86,5 +110,8 @@ export function useEventEditor() {
     openEdit,
     closeEditor,
     handleSubmit,
+    handleDelete,
+    /** Undo affordance for the toast, present only after a delete. */
+    undoAction: undo ? { label: 'Undo', onClick: undoDelete } : undefined,
   }
 }
