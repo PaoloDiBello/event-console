@@ -1,9 +1,10 @@
 import type { ColumnDef } from '@tanstack/react-table'
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { act, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent, { type UserEvent } from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { formatGridDate, todayIso } from '@/shared/lib/dates'
 import { DataGrid } from './DataGrid'
+import { SEARCH_DEBOUNCE_MS } from './hooks/useDataGridController'
 import type { DataGridProps } from './types'
 
 // Render every row of the current page instead of measuring a scroll viewport;
@@ -98,6 +99,20 @@ async function toggleStatus(user: UserEvent, option: 'On' | 'Off') {
   await user.click(statusFilter())
   await user.click(await statusOption(option))
   await user.keyboard('{Escape}')
+}
+
+/**
+ * Wait for the search debounce to fire instead of polling for its result.
+ *
+ * `findBy`/`waitFor` hand the debounce timer and the filter pass a single
+ * 1s budget, so a loaded machine can miss a deadline the app met. This waits on
+ * the timer itself; the assertions that follow are then synchronous, with
+ * nothing left to race.
+ */
+async function flushSearchDebounce() {
+  await act(async () => {
+    await new Promise((resolve) => window.setTimeout(resolve, SEARCH_DEBOUNCE_MS + 50))
+  })
 }
 
 async function clearStatus(user: UserEvent) {
@@ -383,11 +398,15 @@ describe('DataGrid', () => {
     renderGrid()
 
     await user.type(screen.getByRole('searchbox', { name: 'Search all columns' }), 'nothing-matches')
+    await flushSearchDebounce()
 
-    await screen.findByText('No rows match your search')
+    expect(screen.getByText('No rows match your search')).toBeInTheDocument()
+
+    // Clearing skips the debounce, so the rows return in the same commit.
     await user.click(screen.getByRole('button', { name: 'Clear search' }))
 
-    await screen.findByText('Row 00')
+    expect(screen.getByText('Row 00')).toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent('23 rows match. Showing 1 to 10.')
   })
 
   it('clears column filters without discarding the search', async () => {
@@ -416,15 +435,14 @@ describe('DataGrid', () => {
     await toggleStatus(user, 'On')
     const search = screen.getByRole('searchbox', { name: 'Search all columns' })
     await user.type(search, 'Row 0')
-    await waitFor(() =>
-      expect(screen.getByRole('status')).toHaveTextContent('5 rows match. Showing 1 to 5.'),
-    )
+    await flushSearchDebounce()
+
+    expect(screen.getByRole('status')).toHaveTextContent('5 rows match. Showing 1 to 5.')
 
     await user.click(screen.getByRole('button', { name: 'Clear search field' }))
+
     expect(statusFilter()).toHaveAccessibleName('Filter by Status, currently On')
-    await waitFor(() =>
-      expect(screen.getByRole('status')).toHaveTextContent('12 rows match. Showing 1 to 10.'),
-    )
+    expect(screen.getByRole('status')).toHaveTextContent('12 rows match. Showing 1 to 10.')
   })
 
   it('resets both search and filters from the combined no-match state', async () => {

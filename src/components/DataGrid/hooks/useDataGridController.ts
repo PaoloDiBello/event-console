@@ -16,8 +16,11 @@ import { buildRows, collectFacetCounts } from '../model'
 import { activeFilterCount, filterChips } from '../utils'
 import type { DataGridColumn, DataGridViewState } from '../types'
 
-/** Long enough to swallow a burst of keystrokes, short enough to feel live. */
-const SEARCH_DEBOUNCE_MS = 200
+/**
+ * Long enough to swallow a burst of keystrokes, short enough to feel live.
+ * Exported so tests can wait for the debounce itself rather than guess at it.
+ */
+export const SEARCH_DEBOUNCE_MS = 200
 
 interface DataGridControllerOptions<TData> {
   data: TData[]
