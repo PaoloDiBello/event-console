@@ -2,6 +2,7 @@ import { flexRender, type Column, type Row } from '@tanstack/react-table'
 import type { VirtualItem } from '@tanstack/react-virtual'
 import type { KeyboardEvent, ReactNode } from 'react'
 import { cn } from '@/shared/lib/cn'
+import { pinnedColumnClass } from './pinnedColumn'
 import { DataGridSkeleton } from './DataGridSkeleton'
 
 interface DataGridBodyProps<TData> {
@@ -98,6 +99,7 @@ export function DataGridBody<TData>({
             if (!row) return null
             const rowNumber = pageIndex * pageSize + virtualRow.index + 1
             const isActive = virtualRow.index === activeRowIndex
+            const rowClassName = getRowClassName?.(row.original) ?? ''
             return (
               <tr
                 key={row.id}
@@ -118,19 +120,26 @@ export function DataGridBody<TData>({
                 }
                 onKeyDown={(event) => handleRowKeyDown(event, row)}
                 className={cn(
-                  'group transition-colors hover:bg-raised/70',
-                  'focus-visible:bg-raised/70 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent/60',
+                  'group transition-colors hover:bg-raised',
+                  'focus-visible:bg-raised focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent/60',
                   activatable && 'cursor-pointer',
-                  getRowClassName?.(row.original),
+                  rowClassName,
                 )}
               >
-                {row.getVisibleCells().map((cell) => {
+                {row.getVisibleCells().map((cell, cellIndex) => {
                   const align = cell.column.columnDef.meta?.align
+                  const pinned = cellIndex === 0
                   return (
                     <td
                       key={cell.id}
+                      data-pinned={pinned ? '' : undefined}
                       className={cn(
                         'overflow-hidden border-b border-line/60 px-3 text-muted',
+                        pinned &&
+                          `${pinnedColumnClass} sm:z-10 sm:bg-surface sm:group-hover:bg-raised sm:group-focus-visible:bg-raised`,
+                        // Mirror the row's own highlight (the saved-event tint)
+                        // onto the pinned cell, which paints over it otherwise.
+                        pinned && rowClassName,
                         align === 'right' && 'text-right',
                         align === 'center' && 'text-center',
                       )}

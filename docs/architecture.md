@@ -82,7 +82,7 @@ src/
         Field.tsx                   label/error/hint wrapper
         schema.ts                   Zod schema and time parsing
         formValues.ts               EventRecord <-> form values / EventDraft
-        styles.ts                   shared input/select classes
+        styles.ts                   shared input classes
         index.ts                    public form API
     registry/                       "records" lens
       RegistryPage.tsx              data + DataGrid composition, URL-backed view
@@ -99,6 +99,7 @@ src/
       AgendaDatePicker.tsx          jump-to-date popover and calendar
       AgendaFooter.tsx              panel footer: counts and key help
       AgendaEmptyState.tsx          query/window empty copy
+      AgendaError.tsx               load-failure panel with retry
       AgendaSkeleton.tsx            loading placeholder
       AgendaEventCard.tsx           one event's card content
       agendaData.ts                 windowing, grouping, sorting
@@ -128,9 +129,10 @@ src/
       DataGridPageJump.tsx          typed page input
       DataGridPageSize.tsx          rows-per-page menu
       DataGridEmpty.tsx             empty-state copy and reset actions
-      DataGridError.tsx             error state
+      DataGridError.tsx             load-failure copy over ErrorState
       DataGridScrollFade.tsx        gradient cue on a clipped edge
       DataGridSkeleton.tsx          loading rows
+      pinnedColumn.ts               frozen first column (sticky from sm up)
       model/                        pure filter/sort pipeline
         accessors.ts                column access and row shims
         filter.ts                   per-column and global filters
@@ -150,6 +152,8 @@ src/
     ui/
       PageHeader.tsx                generic page heading/actions layout
       EmptyState.tsx                shared empty-state layout
+      ErrorState.tsx                shared load-failure layout with retry
+      SelectMenu.tsx                one select control backed by the app menu
       Kbd.tsx                       keyboard hint chip
       Button.tsx                    one button component
       buttonStyles.ts               variant/size classes for triggers and refs
@@ -227,7 +231,22 @@ toolbar, a scrolling body and a status footer.
   `Button` uses it; Radix triggers and buttons that need a ref call
   `buttonClass()` directly.
 - `SearchField` is the only search control, so icon, height, clear affordance
-  and focus ring cannot drift between views.
+  and focus ring cannot drift between views. It also owns the Escape contract
+  for every search box: clear when there is a value, blur when there is not, and
+  a caller's `onKeyDown` runs first so a view can still prevent it.
+- `ErrorState` is the only load-failure panel. The grid titles it “Could not
+  load rows”, the agenda “Could not load events”, and both pass the feed's
+  `reload` as the same **Retry** — so a failed load cannot leave one view with a
+  retryable error and the other with a stale or empty body.
+- `SelectMenu` is the only select control: an in-app radio menu on the raised
+  surface, the trigger named by the field label, and the menu matched to the
+  trigger's width. The form's four choice fields use it; the grid's select
+  filters share the same menu treatment. No control hands the keyboard to the
+  operating-system `<select>` popup.
+- The grid pins its first visible column from `sm` up (`pinnedColumn.ts`), so
+  the event title holds still while the other columns scroll under it. Below
+  `sm` the column would be most of the viewport, so nothing is pinned and both
+  edges keep their fade.
 - `Stat` is the only metric card. Both headers show two of them at the same
   height as the adjacent buttons.
 - `components/ui/surfaces.ts` owns `panelClass`, `toolbarClass`, `footerClass`
@@ -302,11 +321,13 @@ Tests are colocated with the unit they exercise:
 - `features/events/components/EventForm/schema.test.ts` — validation.
 - `features/events/components/EventForm/formValues.test.ts` — draft mapping.
 - `features/events/components/EventForm/EventForm.test.tsx` — focus, errors,
-  discard flow.
+  menu-picked values, discard flow.
 - `features/events/agenda/agendaData.test.ts` — windowing, grouping, search.
 - `features/events/agenda/agendaView.test.ts` — agenda URL round-tripping,
   window/day validation and widening.
 - `features/events/agenda/AgendaDatePicker.test.tsx` — jump calendar.
+- `features/events/agenda/AgendaPage.test.tsx` — a failed load replaces the
+  timeline with a retryable error instead of a stale or empty one.
 - `features/events/registry/registryView.test.ts` — URL view round-tripping
   and validation.
 - `features/events/registry/RegistryHeader.test.tsx` — quick-filter stats.
@@ -320,6 +341,8 @@ Tests are colocated with the unit they exercise:
 - `shared/hooks/useDebouncedValue.test.ts` — the search debounce hook.
 - `shared/hooks/useVisualViewport.test.ts` — the phone keyboard hook.
 - `components/ui/Kbd.test.tsx` — keyboard hint chip.
+- `components/ui/SelectMenu.test.tsx` — menu selection, Escape, error wiring.
+- `components/ui/SearchField.test.tsx` — the shared Escape clear/blur contract.
 
 The suite is behavior-focused. Pure model helpers are covered through their
 public components and page data tests; add unit tests when a helper grows logic

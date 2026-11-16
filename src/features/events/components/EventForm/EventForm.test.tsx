@@ -102,6 +102,40 @@ describe('EventForm', () => {
     expect(onOpenChange).toHaveBeenCalledWith(false)
   })
 
+  it('submits the choices picked from the in-app menus', async () => {
+    const user = userEvent.setup()
+    const { onSubmit } = renderForm()
+
+    await user.type(screen.getByLabelText(/Title/), 'Menu picks')
+
+    async function pick(label: string, option: string) {
+      await user.click(screen.getByRole('button', { name: label }))
+      const menu = await screen.findByRole('menu', { name: `${label} options` })
+      await user.click(within(menu).getByRole('menuitemradio', { name: option }))
+    }
+
+    await pick('Duration', '45 minutes')
+    await pick('Category', 'Incident')
+    await pick('Status', 'At risk')
+    await pick('Priority', 'High')
+
+    // The trigger must show the pick, not just hold it in form state.
+    expect(screen.getByRole('button', { name: 'Duration' })).toHaveTextContent('45 minutes')
+    expect(screen.getByRole('button', { name: 'Status' })).toHaveTextContent('At risk')
+
+    await user.click(screen.getByRole('button', { name: 'Create event' }))
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1))
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        durationMin: 45,
+        category: 'incident',
+        status: 'at_risk',
+        priority: 'high',
+      }),
+    )
+  })
+
   it('deletes the event only after the confirmation', async () => {
     const user = userEvent.setup()
     const onDelete = vi.fn()

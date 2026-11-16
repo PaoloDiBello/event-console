@@ -8,6 +8,7 @@ import { formatMinute, shiftIsoDay, todayIso } from '@/shared/lib/dates'
 import { buildTimeline, TIMELINE_SCOPES, type TimelineScope } from './agendaData'
 import { readAgendaView, writeAgendaView, type AgendaView } from './agendaView'
 import { AgendaEmptyState } from './AgendaEmptyState'
+import { AgendaError } from './AgendaError'
 import { AgendaEventCard } from './AgendaEventCard'
 import { AgendaFooter } from './AgendaFooter'
 import { AgendaHeader } from './AgendaHeader'
@@ -19,7 +20,7 @@ interface AgendaPageProps {
 }
 
 export function AgendaPage({ onEdit }: AgendaPageProps) {
-  const { events, isLoading } = useEventFeed()
+  const { events, error, isLoading, reload } = useEventFeed()
   const today = useMemo(() => todayIso(), [])
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -147,6 +148,8 @@ export function AgendaPage({ onEdit }: AgendaPageProps) {
       <div className="min-h-0 flex-1">
         {isLoading ? (
           <AgendaSkeleton toolbar={toolbar} />
+        ) : error ? (
+          <AgendaError error={error} onRetry={reload} />
         ) : (
           <Timeline
             groups={data.groups}

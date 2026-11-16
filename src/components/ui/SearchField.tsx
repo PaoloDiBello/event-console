@@ -1,4 +1,4 @@
-import type { ComponentProps, ReactNode, Ref } from 'react'
+import type { ComponentProps, KeyboardEvent, ReactNode, Ref } from 'react'
 import { Search, X } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 
@@ -27,8 +27,20 @@ export function SearchField({
   wrapperClassName,
   className,
   placeholder = 'Search…',
+  onKeyDown,
   ...props
 }: SearchFieldProps) {
+  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    onKeyDown?.(event)
+    if (event.defaultPrevented || event.key !== 'Escape') return
+
+    // The same contract in both views: Escape clears what is typed, and a
+    // second Escape leaves the field. Clearing never requires finding the X.
+    event.preventDefault()
+    if (value) onValueChange('')
+    else event.currentTarget.blur()
+  }
+
   return (
     <div className={cn('group relative min-w-0 flex-1 sm:min-w-56', wrapperClassName)}>
       <Search
@@ -42,6 +54,7 @@ export function SearchField({
         value={value}
         placeholder={placeholder}
         onChange={(event) => onValueChange(event.target.value)}
+        onKeyDown={handleKeyDown}
         className={cn(
           'h-9 w-full rounded-sm border border-line bg-canvas pr-10 pl-9 text-sm text-ink',
           'placeholder:text-faint transition-colors focus:border-accent/60 focus:ring-2',

@@ -2,6 +2,7 @@ import { flexRender, type Column, type Table } from '@tanstack/react-table'
 import { ArrowDown, ArrowUp, ChevronsUpDown } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { DataGridColumnFilter } from './DataGridColumnFilter'
+import { pinnedColumnClass } from './pinnedColumn'
 
 interface DataGridHeaderProps<TData> {
   table: Table<TData>
@@ -28,19 +29,26 @@ export function DataGridHeader<TData>({
     <thead>
       {table.getHeaderGroups().map((headerGroup) => (
         <tr key={headerGroup.id}>
-          {headerGroup.headers.map((header) => {
+          {headerGroup.headers.map((header, headerIndex) => {
             const sorted = header.column.getIsSorted()
             const filterValue = header.column.getFilterValue()
             const filtered = filterValue !== undefined && filterValue !== ''
             const align = header.column.columnDef.meta?.align
+            // The first visible column stays put horizontally so a row keeps
+            // its identity while the rest of the table scrolls under it. Only
+            // from `sm` up: on a phone the column is most of the viewport, and
+            // pinning it would leave almost nothing to scroll through.
+            const pinned = headerIndex === 0
             return (
               <th
                 key={header.id}
                 scope="col"
+                data-pinned={pinned ? '' : undefined}
                 aria-sort={sorted === 'asc' ? 'ascending' : sorted === 'desc' ? 'descending' : 'none'}
                 className={cn(
                   'sticky top-0 z-20 h-10 border-b border-line bg-surface p-0',
                   'font-mono text-[10px] font-medium tracking-[0.14em] text-faint uppercase',
+                  pinned && `${pinnedColumnClass} sm:z-30`,
                 )}
               >
                 {header.isPlaceholder ? null : (
@@ -78,11 +86,15 @@ export function DataGridHeader<TData>({
 
       {showFilterRow ? (
         <tr>
-          {table.getHeaderGroups()[0]?.headers.map((header) => (
+          {table.getHeaderGroups()[0]?.headers.map((header, headerIndex) => (
             <th
               key={`${header.id}-filter`}
               scope="col"
-              className="sticky top-10 z-20 border-b border-line bg-surface px-2 py-1.5 font-normal"
+              data-pinned={headerIndex === 0 ? '' : undefined}
+              className={cn(
+                'sticky top-10 z-20 border-b border-line bg-surface px-2 py-1.5 font-normal',
+                headerIndex === 0 && `${pinnedColumnClass} sm:z-30`,
+              )}
             >
               <DataGridColumnFilter
                 column={header.column}

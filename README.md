@@ -161,7 +161,17 @@ search and the primary controls stay on one row down to 320 px.
 
 When the table is wider than its viewport, the grid fades the edge that still
 has columns instead of cutting them off, so horizontal overflow reads as
-something you can swipe.
+something you can swipe. From tablet width up the first visible column is
+pinned: the event title stays put while When, Status and Owner slide under it,
+so a row never loses its identity mid-scan. On a phone the first column is most
+of the screen, so nothing is pinned and both edges fade instead.
+
+Load failures look the same in both lenses: `components/ui/ErrorState.tsx` owns
+the panel, the registry titles it “Could not load rows”, the agenda “Could not
+load events”, and both offer the same **Retry**. A failed load never leaves a
+stale timeline or an empty table behind. While the error is up the grid also
+drops its pagination footer and its result-count status, because paging a data
+set that failed to load is not an action worth offering.
 
 Filtered results stay explainable: the grid footer reads “filtered from
 100,000” whenever search or column filters narrow the set, and the agenda keeps
@@ -258,6 +268,10 @@ mutations only pay for the sort/filter pass.
 - **Forms:** every field has a visible label; errors set `aria-invalid` and are
   referenced with `aria-describedby`; submit focuses the first invalid field.
   Radix Dialog provides the focus trap, Escape handling, and focus restoration.
+  The four choice fields (duration, category, status, priority) use the same
+  in-app menu as the grid's select filters — a `SelectMenu` trigger named by the
+  field label, so `getByLabelText` and screen readers see one control either way
+  — instead of handing the keyboard to the operating-system `<select>` popup.
 - **Reduced motion:** the global stylesheet collapses animations/transitions
   under `prefers-reduced-motion: reduce`.
 - **Keyboard shortcuts:** `/` focuses grid search, `f` focuses the first column
@@ -265,6 +279,10 @@ mutations only pay for the sort/filter pass.
   opens the shortcut cheatsheet, `g` and `t` switch between the Registry and
   Agenda views, and all dialogs close with Escape. Shortcuts are ignored while
   typing in a field or when a dialog or menu owns the keyboard.
+- **One Escape contract for search:** `SearchField` owns it, so both search
+  boxes behave the same — Escape clears what is typed and keeps the caret in the
+  field, and a second Escape (or the first, when the field is already empty)
+  leaves it. Clearing never depends on finding the X.
 - **Search vs filters:** global search and column filters are independent. The
   search input stays urgent while the applied query waits for a 200 ms pause in
   typing, and clearing it is immediate. Active column filters appear as
@@ -287,15 +305,15 @@ mutations only pay for the sort/filter pass.
   check, stays open so several columns can be toggled in a row, and “Show all
   columns” reveals every hideable column instead of resetting to the initial
   set.
-- **One menu language:** every menu in the panel — select filters, rows per
-  page, column visibility — is an in-app Radix menu on the raised surface with a
-  check on the current choice. No control hands the keyboard to an
-  operating-system popup.
+- **One menu language:** every menu in the panel — select filters, the form's
+  four choice fields, rows per page, column visibility — is an in-app Radix menu
+  on the raised surface with a check on the current choice. No control hands the
+  keyboard to an operating-system popup.
 
 ## Tests and quality checks
 
 ```bash
-npm test          # 127 tests, 20 files
+npm test          # 135 tests, 23 files
 npm run build     # tsc -b (strict) + vite build
 npm run lint      # oxlint
 ```
@@ -308,7 +326,8 @@ view round-tripping and validation, the quick-filter metrics, timeline grouping 
 windowing / keyboard navigation / announcements, the shortcut cheatsheet, form
 validation, draft mapping plus the discard flow, the debounced-search hook, the
 visual-viewport hook, the date-filter calendar, the registry view, the registry
-header stats, scroll-edge detection, and the event columns.
+header stats, scroll-edge detection, the shared search field's Escape contract,
+the in-app select menu, the agenda's load-failure panel, and the event columns.
 
 ## Trade-offs and limitations
 
@@ -350,7 +369,7 @@ src/
   components/
     DataGrid/                composition, hooks/, table/header/body, toolbar, model/
     Timeline/                composition, hooks/, rows, model
-    ui/                      PageHeader, EmptyState, Kbd, Button, SearchField, Stat, surfaces
+    ui/                      PageHeader, EmptyState, ErrorState, SelectMenu, Kbd, Button, SearchField, Stat, surfaces
   shared/
     hooks/                   useGlobalKeydown, useTransientValue
     lib/                     dates, formatting, cn, keyboard guards

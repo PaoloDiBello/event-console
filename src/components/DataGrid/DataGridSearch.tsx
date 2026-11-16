@@ -38,12 +38,6 @@ export function DataGridSearch({
         </Kbd>
       }
       onKeyDown={(event) => {
-        if (event.key === 'Escape') {
-          event.preventDefault()
-          if (search) onSearchChange('')
-          else event.currentTarget.blur()
-          return
-        }
         // "/" focuses this field. If it was already focused and empty,
         // pressing it again is the shortcut, not a request to find a slash.
         if (

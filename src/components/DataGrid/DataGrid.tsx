@@ -85,7 +85,10 @@ export function DataGrid<TData>({
 
   useGridScrollReset({ scrollRef, resetKey: grid.resetKey, skipRef: skipScrollResetRef })
   useDataGridShortcuts(searchRef, scrollRef)
-  const scrollEdges = useScrollEdges(scrollRef)
+  // From `sm` up the first column is pinned, so it owns the left edge and only
+  // the right edge can hide content. Below `sm` nothing is pinned, so both
+  // edges need the hint.
+  const { canScrollLeft, canScrollRight } = useScrollEdges(scrollRef)
 
   // One tab stop for the whole page of rows, moved with the arrow keys. A new
   // page, sort or filter invalidates the old position, so it starts at the top.
@@ -182,42 +185,46 @@ export function DataGrid<TData>({
                 }
               />
             </div>
-            {scrollEdges.canScrollLeft ? <DataGridScrollFade side="left" /> : null}
-            {scrollEdges.canScrollRight ? <DataGridScrollFade side="right" /> : null}
+            {canScrollLeft ? <DataGridScrollFade side="left" className="sm:hidden" /> : null}
+            {canScrollRight ? <DataGridScrollFade side="right" /> : null}
           </>
         )}
       </div>
 
-      <DataGridPagination
-        pageIndex={grid.pagination.pageIndex}
-        pageSize={grid.pagination.pageSize}
-        pageCount={grid.pageCount}
-        totalRows={grid.filteredCount}
-        sourceRows={data.length}
-        pageSizeOptions={pageSizeOptions}
-        onPageChange={grid.setPage}
-        onPageSizeChange={grid.setPageSize}
-        hint={
-          onRowActivate ? (
-            <>
-              <Kbd className="inline-flex size-4 items-center justify-center p-0">↑</Kbd>
-              <Kbd className="inline-flex size-4 items-center justify-center p-0">↓</Kbd>
-              <span>move</span>
-              <span aria-hidden="true" className="text-line-strong">
-                /
-              </span>
-              <Kbd className="inline-flex size-4 items-center justify-center p-0">↵</Kbd>
-              <span>open</span>
-            </>
-          ) : undefined
-        }
-      />
+      {error ? null : (
+        <DataGridPagination
+          pageIndex={grid.pagination.pageIndex}
+          pageSize={grid.pagination.pageSize}
+          pageCount={grid.pageCount}
+          totalRows={grid.filteredCount}
+          sourceRows={data.length}
+          pageSizeOptions={pageSizeOptions}
+          onPageChange={grid.setPage}
+          onPageSizeChange={grid.setPageSize}
+          hint={
+            onRowActivate ? (
+              <>
+                <Kbd className="inline-flex size-4 items-center justify-center p-0">↑</Kbd>
+                <Kbd className="inline-flex size-4 items-center justify-center p-0">↓</Kbd>
+                <span>move</span>
+                <span aria-hidden="true" className="text-line-strong">
+                  /
+                </span>
+                <Kbd className="inline-flex size-4 items-center justify-center p-0">↵</Kbd>
+                <span>open</span>
+              </>
+            ) : undefined
+          }
+        />
+      )}
 
       {/* Screen readers get the result count without having to hunt for it. */}
       <p className="sr-only" role="status">
-        {isLoading
-          ? 'Loading rows'
-          : `${formatCount(grid.filteredCount)} ${pluralize(grid.filteredCount, 'row')} match. Showing ${formatCount(grid.rangeStart)} to ${formatCount(grid.rangeEnd)}.`}
+        {error
+          ? ''
+          : isLoading
+            ? 'Loading rows'
+            : `${formatCount(grid.filteredCount)} ${pluralize(grid.filteredCount, 'row')} match. Showing ${formatCount(grid.rangeStart)} to ${formatCount(grid.rangeEnd)}.`}
       </p>
     </section>
   )

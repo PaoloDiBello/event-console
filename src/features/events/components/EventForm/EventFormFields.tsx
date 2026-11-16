@@ -1,6 +1,5 @@
-import { ChevronDown } from 'lucide-react'
-import type { ReactNode } from 'react'
 import { Controller, type UseFormReturn, useWatch } from 'react-hook-form'
+import { SelectMenu } from '@/components/ui/SelectMenu'
 import {
   EVENT_CATEGORIES,
   EVENT_PRIORITIES,
@@ -13,7 +12,7 @@ import { EventTimeField } from './EventTimeField'
 import { Field } from './Field'
 import { describeEnd } from './formValues'
 import { DURATION_OPTIONS, type EventFormValues } from './schema'
-import { inputClass, selectClass } from './styles'
+import { inputClass } from './styles'
 import { SuggestionField } from './SuggestionField'
 
 interface EventFormFieldsProps {
@@ -35,20 +34,19 @@ function fieldA11y(name: string, hasError: boolean, hintId?: string) {
 }
 
 /**
- * A native select with the browser chrome removed still needs a visible
- * chevron, otherwise it reads as a text input next to the real ones.
+ * The form's four choice fields. Labels are the same strings the grid's select
+ * filters show, so a status reads identically in both views.
  */
-function SelectShell({ children }: { children: ReactNode }) {
-  return (
-    <div className="relative">
-      {children}
-      <ChevronDown
-        aria-hidden="true"
-        className="pointer-events-none absolute top-1/2 right-2.5 size-3.5 -translate-y-1/2 text-faint"
-      />
-    </div>
-  )
-}
+const DURATION_CHOICES = DURATION_OPTIONS.map((minutes) => ({
+  value: minutes,
+  label: `${minutes} minutes`,
+}))
+const CATEGORY_CHOICES = EVENT_CATEGORIES.map((value) => ({
+  value,
+  label: value.charAt(0).toUpperCase() + value.slice(1),
+}))
+const STATUS_CHOICES = EVENT_STATUSES.map((value) => ({ value, label: STATUS_LABEL[value] }))
+const PRIORITY_CHOICES = EVENT_PRIORITIES.map((value) => ({ value, label: PRIORITY_LABEL[value] }))
 
 export function EventFormFields({
   form,
@@ -129,20 +127,18 @@ export function EventFormFields({
           control={control}
           name="durationMin"
           render={({ field }) => (
-            <SelectShell>
-              <select
-                {...field}
-                id="durationMin"
-                className={selectClass}
-                {...fieldA11y('durationMin', Boolean(errors.durationMin))}
-              >
-                {DURATION_OPTIONS.map((minutes) => (
-                  <option key={minutes} value={minutes}>
-                    {minutes} minutes
-                  </option>
-                ))}
-              </select>
-            </SelectShell>
+            <SelectMenu
+              id="durationMin"
+              label="Duration"
+              value={field.value}
+              options={DURATION_CHOICES}
+              onValueChange={field.onChange}
+              triggerRef={field.ref}
+              onBlur={field.onBlur}
+              triggerClassName={inputClass}
+              hasError={Boolean(errors.durationMin)}
+              describedBy={errors.durationMin ? 'durationMin-error' : undefined}
+            />
           )}
         />
       </Field>
@@ -152,20 +148,18 @@ export function EventFormFields({
           control={control}
           name="category"
           render={({ field }) => (
-            <SelectShell>
-              <select
-                {...field}
-                id="category"
-                className={`${selectClass} capitalize`}
-                {...fieldA11y('category', Boolean(errors.category))}
-              >
-                {EVENT_CATEGORIES.map((category) => (
-                  <option key={category} value={category} className="capitalize">
-                    {category}
-                  </option>
-                ))}
-              </select>
-            </SelectShell>
+            <SelectMenu
+              id="category"
+              label="Category"
+              value={field.value}
+              options={CATEGORY_CHOICES}
+              onValueChange={field.onChange}
+              triggerRef={field.ref}
+              onBlur={field.onBlur}
+              triggerClassName={inputClass}
+              hasError={Boolean(errors.category)}
+              describedBy={errors.category ? 'category-error' : undefined}
+            />
           )}
         />
       </Field>
@@ -175,20 +169,18 @@ export function EventFormFields({
           control={control}
           name="status"
           render={({ field }) => (
-            <SelectShell>
-              <select
-                {...field}
-                id="status"
-                className={selectClass}
-                {...fieldA11y('status', Boolean(errors.status))}
-              >
-                {EVENT_STATUSES.map((status) => (
-                  <option key={status} value={status}>
-                    {STATUS_LABEL[status]}
-                  </option>
-                ))}
-              </select>
-            </SelectShell>
+            <SelectMenu
+              id="status"
+              label="Status"
+              value={field.value}
+              options={STATUS_CHOICES}
+              onValueChange={field.onChange}
+              triggerRef={field.ref}
+              onBlur={field.onBlur}
+              triggerClassName={inputClass}
+              hasError={Boolean(errors.status)}
+              describedBy={errors.status ? 'status-error' : undefined}
+            />
           )}
         />
       </Field>
@@ -198,20 +190,18 @@ export function EventFormFields({
           control={control}
           name="priority"
           render={({ field }) => (
-            <SelectShell>
-              <select
-                {...field}
-                id="priority"
-                className={selectClass}
-                {...fieldA11y('priority', Boolean(errors.priority))}
-              >
-                {EVENT_PRIORITIES.map((priority) => (
-                  <option key={priority} value={priority}>
-                    {PRIORITY_LABEL[priority]}
-                  </option>
-                ))}
-              </select>
-            </SelectShell>
+            <SelectMenu
+              id="priority"
+              label="Priority"
+              value={field.value}
+              options={PRIORITY_CHOICES}
+              onValueChange={field.onChange}
+              triggerRef={field.ref}
+              onBlur={field.onBlur}
+              triggerClassName={inputClass}
+              hasError={Boolean(errors.priority)}
+              describedBy={errors.priority ? 'priority-error' : undefined}
+            />
           )}
         />
       </Field>
