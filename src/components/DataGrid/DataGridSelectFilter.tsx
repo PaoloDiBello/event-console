@@ -5,7 +5,6 @@ import {
   DropdownMenuItem,
   DropdownMenuItemIndicator,
   DropdownMenuPortal,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@radix-ui/react-dropdown-menu'
 import { Check, ChevronDown, X } from 'lucide-react'
@@ -79,7 +78,11 @@ export function DataGridSelectFilter({
   }
 
   return (
-    <DropdownMenu open={open} onOpenChange={handleOpenChange}>
+    // Not modal on purpose: the grid behind the menu stays in the accessibility
+    // tree, so the result-count live region announces the new total as values
+    // are toggled. A modal menu would hide the very feedback this menu exists
+    // to produce until it closes.
+    <DropdownMenu modal={false} open={open} onOpenChange={handleOpenChange}>
       <div className="relative">
         <DropdownMenuTrigger asChild disabled={disabled}>
           <button
@@ -156,15 +159,18 @@ export function DataGridSelectFilter({
             )
           })}
 
-          <DropdownMenuSeparator className="my-1 h-px bg-line" />
-          <DropdownMenuItem
-            disabled={!active}
-            onSelect={() => onChange([])}
-            className="flex cursor-pointer items-center gap-2 rounded-xs px-2 py-1.5 text-xs text-faint outline-none data-[disabled]:cursor-default data-[disabled]:opacity-40 data-[highlighted]:bg-canvas data-[highlighted]:text-ink"
-          >
-            <X aria-hidden="true" className="size-3" />
-            Clear
-          </DropdownMenuItem>
+          {/* Sticky footer: a facet like Owner can be taller than the menu, and
+              the escape hatch must not be the one row that scrolls away. */}
+          <div className="sticky bottom-0 -mx-1 -mb-1 border-t border-line bg-raised px-1 pb-1">
+            <DropdownMenuItem
+              disabled={!active}
+              onSelect={() => onChange([])}
+              className="mt-1 flex cursor-pointer items-center gap-2 rounded-xs px-2 py-1.5 text-xs text-faint outline-none data-[disabled]:cursor-default data-[disabled]:opacity-40 data-[highlighted]:bg-canvas data-[highlighted]:text-ink"
+            >
+              <X aria-hidden="true" className="size-3" />
+              Clear
+            </DropdownMenuItem>
+          </div>
         </DropdownMenuContent>
       </DropdownMenuPortal>
     </DropdownMenu>

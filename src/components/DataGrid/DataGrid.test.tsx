@@ -314,13 +314,11 @@ describe('DataGrid', () => {
 
     // The menu stays open for the second pick instead of closing after one.
     expect(screen.getByRole('menu')).toBeInTheDocument()
-    // While a modal menu is open Radix hides the page behind it, so the
-    // result count can only be read once the menu is dismissed.
-    await user.keyboard('{Escape}')
+    // The menu is not modal, so the result count is readable (and announced)
+    // while it is still open.
+    expect(screen.getByRole('status')).toHaveTextContent('23 rows match. Showing 1 to 10.')
 
-    await waitFor(() =>
-      expect(screen.getByRole('status')).toHaveTextContent('23 rows match. Showing 1 to 10.'),
-    )
+    await user.keyboard('{Escape}')
     expect(statusFilter()).toHaveAccessibleName('Filter by Status, currently On, Off')
   })
 
@@ -337,6 +335,57 @@ describe('DataGrid', () => {
 
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('11 rows match.'))
     expect(screen.getByRole('button', { name: 'Remove Status filter: Off' })).toBeInTheDocument()
+  })
+
+  it('runs the facet menu entirely from the keyboard', async () => {
+    const user = userEvent.setup()
+    renderGrid()
+
+    statusFilter().focus()
+    await user.keyboard('{Enter}')
+
+    // Opening puts focus on the first option, as a menu should.
+    expect(await statusOption('On')).toHaveFocus()
+
+    // Space toggles and the menu stays open for the next choice.
+    await user.keyboard(' ')
+    expect(await statusOption('On')).toHaveAttribute('aria-checked', 'true')
+    expect(screen.getByRole('menu')).toBeInTheDocument()
+    expect(await statusOption('On')).toHaveFocus()
+
+    await user.keyboard('{ArrowDown}')
+    expect(await statusOption('Off')).toHaveFocus()
+    await user.keyboard(' ')
+    expect(await statusOption('Off')).toHaveAttribute('aria-checked', 'true')
+
+    // Escape closes and hands focus back to the trigger.
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+    expect(statusFilter()).toHaveFocus()
+    expect(screen.getByRole('status')).toHaveTextContent('23 rows match. Showing 1 to 10.')
+    expect(statusFilter()).toHaveAccessibleName('Filter by Status, currently On, Off')
+  })
+
+  it('reaches Clear from the keyboard and clears every value', async () => {
+    const user = userEvent.setup()
+    renderGrid()
+
+    statusFilter().focus()
+    await user.keyboard('{Enter}')
+    await user.keyboard(' ')
+    // On is focused and checked; move to Off, check it, then step to Clear.
+    await user.keyboard('{ArrowDown}')
+    await user.keyboard(' ')
+    await user.keyboard('{ArrowDown}')
+
+    const clear = screen.getByRole('menuitem', { name: 'Clear' })
+    expect(clear).toHaveFocus()
+
+    await user.keyboard('{Enter}')
+
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+    expect(statusFilter()).toHaveAccessibleName('Filter by Status')
+    expect(screen.getByRole('status')).toHaveTextContent('23 rows match. Showing 1 to 10.')
   })
 
   it('shows how many rows each option would leave', async () => {

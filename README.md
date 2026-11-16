@@ -121,7 +121,11 @@ or an ISO timestamp key, so the same sort is a plain comparison. Formatting
   two. The menu is a checkbox list that stays open while you pick, each option
   shows how many events it would leave with the other filters applied, and every
   chosen value gets its own chip — so dropping one choice keeps the rest, and the
-  last removal clears the filter instead of leaving an empty one behind.
+  last removal clears the filter instead of leaving an empty one behind. The menu
+  is keyboard-operable (Enter opens with the first option focused, Space toggles,
+  Escape returns focus to the trigger) and deliberately non-modal, so the result
+  count keeps announcing as values are chosen. `Clear` stays pinned to the foot
+  of the menu, where a long facet cannot scroll it away.
 - Both views are **shareable**. The registry round-trips search, column filters,
   sort, page and page size
   (`/grid?q=deploy&category=meeting&category=deploy&sort=title:asc&page=2&size=25`); the agenda
@@ -321,7 +325,7 @@ mutations only pay for the sort/filter pass.
 ## Tests and quality checks
 
 ```bash
-npm test          # 142 tests, 23 files
+npm test          # 144 tests, 23 files
 npm run build     # tsc -b (strict) + vite build
 npm run lint      # oxlint
 ```
