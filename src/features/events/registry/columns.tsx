@@ -9,16 +9,9 @@ import {
 } from '@/features/events/model'
 import type { DataGridColumn } from '@/components/DataGrid'
 import { matchesSearch } from '@/features/events/model'
-import { HighlightText } from '@/components/ui/HighlightText'
-import { useSearchQuery } from '@/components/DataGrid/searchContext'
 import { formatGridDate, formatMinute } from '@/shared/lib/dates'
+import { EventTitleCell } from './EventTitleCell'
 import { CategoryLabel, PriorityLabel, StatusBadge } from '@/features/events/components/EventLabels'
-
-/** Wraps the title so search matches are highlighted. */
-function EventTitleCell({ title }: { title: string }) {
-  const query = useSearchQuery()
-  return <HighlightText text={title} query={query} />
-}
 
 /**
  * String columns use TanStack's simple `text` comparator instead of the
