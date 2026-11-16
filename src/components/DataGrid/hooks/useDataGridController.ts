@@ -6,6 +6,7 @@ import {
   type ColumnFiltersState,
   type FilterFn,
   type PaginationState,
+  type RowSelectionState,
   type SortingState,
   type Updater,
   type VisibilityState,
@@ -70,6 +71,7 @@ export function useDataGridController<TData>({
     initialColumnVisibility ?? {},
   )
   const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({})
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: initialPageIndex,
     pageSize: initialPageSize,
@@ -153,7 +155,7 @@ export function useDataGridController<TData>({
     data: pageRows,
     columns,
     getRowId,
-    state: { sorting, columnFilters, globalFilter, columnVisibility, pagination, columnSizing },
+    state: { sorting, columnFilters, globalFilter, columnVisibility, pagination, columnSizing, rowSelection },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
@@ -172,6 +174,8 @@ export function useDataGridController<TData>({
     autoResetPageIndex: false,
     getCoreRowModel: getCoreRowModel(),
     onColumnSizingChange: setColumnSizing,
+    onRowSelectionChange: setRowSelection,
+    enableRowSelection: true,
     enableColumnResizing: true,
     columnResizeMode: 'onChange',
   })
@@ -352,5 +356,8 @@ export function useDataGridController<TData>({
     setPageSize,
     rangeStart,
     rangeEnd,
+    rowSelection,
+    selectedRowIds: Object.keys(rowSelection).filter((k) => rowSelection[k]),
+    clearRowSelection: () => setRowSelection({}),
   }
 }

@@ -45,6 +45,7 @@ export function DataGrid<TData>({
   focusRowId,
   toolbarActions,
   onExport,
+  onSelectionChange,
   rowHeight = DEFAULT_ROW_HEIGHT,
 }: DataGridProps<TData>) {
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -119,6 +120,9 @@ export function DataGrid<TData>({
     [grid.rows.length, rowVirtualizer],
   )
 
+  useEffect(() => {
+    onSelectionChange?.(grid.selectedRowIds)
+  }, [grid.selectedRowIds, onSelectionChange])
   const virtualRows = rowVirtualizer.getVirtualItems()
   const paddingTop = virtualRows.length > 0 ? virtualRows[0]!.start : 0
   const paddingBottom =

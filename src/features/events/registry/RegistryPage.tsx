@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { DataGrid, type DataGridViewState } from '@/components/DataGrid'
 import type { EventRecord } from '@/features/events/model'
-import { useEventFeed } from '@/features/events/store'
+import { useEventFeed, useEventStore } from '@/features/events/store'
 import { createEventColumns, eventGlobalFilter } from './columns'
 import { RegistryHeader } from './RegistryHeader'
 import {
@@ -13,6 +13,7 @@ import {
   type RegistryView,
 } from './registryView'
 import { useRegistryStats } from './useRegistryStats'
+import { useTransientValue } from '@/shared/hooks/useTransientValue'
 import { exportToCsv } from '@/shared/lib/exportCsv'
 
 interface RegistryPageProps {
@@ -27,6 +28,8 @@ function getEventRowId(event: EventRecord) {
 
 export function RegistryPage({ onEdit, highlightedId }: RegistryPageProps) {
   const { events, status, error, isLoading, reload, simulateError } = useEventFeed()
+  const deleteEvents = useEventStore((s) => s.deleteEvents)
+  const restoreEvents = useEventStore((s) => s.restoreEvents)
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -91,8 +94,36 @@ export function RegistryPage({ onEdit, highlightedId }: RegistryPageProps) {
   }, [])
 
   const stats = useRegistryStats(events)
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [removedBulk, setRemovedBulk] = useState<{ event: any; index: number }[] | null>(null)
+  const [bulkSuccess, setBulkSuccess] = useTransientValue<string>(6000)
   const columns = useMemo(
-    () => createEventColumns(onEdit, { owners: stats.owners, locations: stats.locations }),
+    () => [
+      {
+        id: 'select',
+        header: ({ table }: { table: any }) => (
+          <input
+            type="checkbox"
+            aria-label="Select all rows on this page"
+            checked={table.getIsAllPageRowsSelected()}
+            onChange={(e: any) => table.toggleAllPageRowsSelected(e.target.checked)}
+          />
+        ),
+        cell: ({ row }: { row: any }) => (
+          <input
+            type="checkbox"
+            aria-label={`Select ${row.original.title}`}
+            checked={row.getIsSelected()}
+            onChange={(e: any) => row.toggleSelected(e.target.checked)}
+            onClick={(e: any) => e.stopPropagation()}
+          />
+        ),
+        size: 40,
+        enableSorting: false,
+        enableColumnFilter: false,
+      },
+      ...createEventColumns(onEdit, { owners: stats.owners, locations: stats.locations }),
+    ],
     [onEdit, stats.owners, stats.locations],
   )
 
@@ -114,6 +145,21 @@ export function RegistryPage({ onEdit, highlightedId }: RegistryPageProps) {
     )
   }, [events])
 
+  const handleBulkDelete = useCallback(() => {
+    if (selectedIds.length === 0) return
+    const removed = deleteEvents(selectedIds)
+    setRemovedBulk(removed)
+    setBulkSuccess(`${removed.length} event${removed.length === 1 ? '' : 's'} deleted.`)
+    setSelectedIds([])
+  }, [selectedIds, deleteEvents, setBulkSuccess])
+
+  const undoBulkDelete = useCallback(() => {
+    if (!removedBulk) return
+    restoreEvents(removedBulk)
+    setRemovedBulk(null)
+    setBulkSuccess(null)
+  }, [removedBulk, restoreEvents, setBulkSuccess])
+
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
       <RegistryHeader
@@ -128,6 +174,28 @@ export function RegistryPage({ onEdit, highlightedId }: RegistryPageProps) {
       />
 
       <div className="min-h-0 flex-1">
+        {selectedIds.length > 0 ? (
+          <div className="mb-2 flex items-center gap-3 rounded-md border border-line bg-raised px-3 py-2 text-sm">
+            <span className="font-medium">{selectedIds.length} selected</span>
+            <button
+              type="button"
+              onClick={handleBulkDelete}
+              className="rounded-sm border border-destructive/40 bg-destructive/10 px-2.5 py-1 text-xs text-destructive hover:bg-destructive/20"
+            >
+              Delete selected
+            </button>
+            {bulkSuccess ? (
+              <span className="ml-auto text-xs text-muted">
+                {bulkSuccess}{' '}
+                {removedBulk ? (
+                  <button type="button" onClick={undoBulkDelete} className="underline">
+                    Undo
+                  </button>
+                ) : null}
+              </span>
+            ) : null}
+          </div>
+        ) : null}
         <DataGrid
           key={seedKey}
           data={events}
@@ -151,6 +219,7 @@ export function RegistryPage({ onEdit, highlightedId }: RegistryPageProps) {
           initialColumnVisibility={{ notes: false }}
           onRowActivate={onEdit}
           onExport={handleExport}
+          onSelectionChange={setSelectedIds}
           focusRowId={highlightedId}
           emptyTitle="No events in the registry"
           emptyHint="Load the dataset, or add the first event with the New event button."

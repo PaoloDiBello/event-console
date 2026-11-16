@@ -25,7 +25,9 @@ interface EventStore {
   updateEvent: (id: string, draft: EventDraft) => void
   /** Remove an event and report where it was, so `restoreEvent` can undo it. */
   deleteEvent: (id: string) => { event: EventRecord; index: number } | null
+  deleteEvents: (ids: string[]) => { event: EventRecord; index: number }[]
   restoreEvent: (event: EventRecord, index: number) => void
+  restoreEvents: (items: { event: EventRecord; index: number }[]) => void
 }
 
 function withSearch(draft: EventDraft): Omit<EventRecord, 'id'> {
@@ -83,10 +85,33 @@ export const useEventStore = create<EventStore>()((set, get) => ({
     return { event, index }
   },
 
+  deleteEvents: (ids) => {
+    const idSet = new Set(ids)
+    const events = get().events
+    const removed: { event: EventRecord; index: number }[] = []
+    events.forEach((event, index) => {
+      if (idSet.has(event.id)) removed.push({ event, index })
+    })
+    set({ events: events.filter((event) => !idSet.has(event.id)) })
+    return removed
+  },
+
   restoreEvent: (event, index) => {
     set((state) => {
       const events = [...state.events]
       events.splice(Math.min(Math.max(index, 0), events.length), 0, event)
+      return { events }
+    })
+  },
+
+  restoreEvents: (items) => {
+    set((state) => {
+      const events = [...state.events]
+      // restore in reverse index order so splices don't shift each other
+      const sorted = [...items].sort((a, b) => b.index - a.index)
+      for (const { event, index } of sorted) {
+        events.splice(Math.min(Math.max(index, 0), events.length), 0, event)
+      }
       return { events }
     })
   },

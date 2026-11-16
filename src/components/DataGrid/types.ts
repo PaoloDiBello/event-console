@@ -89,5 +89,6 @@ export interface DataGridProps<TData> {
   focusRowId?: string | null
   toolbarActions?: ReactNode
   onExport?: () => void
+  onSelectionChange?: (ids: string[]) => void
   rowHeight?: number
 }
