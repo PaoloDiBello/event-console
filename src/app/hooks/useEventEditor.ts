@@ -6,6 +6,11 @@ import { formatDayShort } from '@/shared/lib/dates'
 
 type EditorState = { mode: 'create' } | { mode: 'edit'; event: EventRecord }
 
+type UndoAction =
+  | { kind: 'delete'; event: EventRecord; index: number }
+  | { kind: 'create'; eventId: string }
+  | { kind: 'update'; previous: EventRecord }
+
 /** Stand-in for a network round-trip so the form's saving state is visible. */
 function simulateLatency(ms = 380) {
   return new Promise((resolve) => setTimeout(resolve, ms))
@@ -37,8 +42,8 @@ export function useEventEditor() {
   const [highlightedId, setHighlightedId] = useTransientValue<string>(4000)
   /** The control that opened the editor, so closing can return focus to it. */
   const [opener, setOpener] = useState<HTMLElement | null>(null)
-  /** What the last delete removed, held only for as long as the toast lives. */
-  const [undo, setUndo] = useState<{ event: EventRecord; index: number } | null>(null)
+  /** What the last action changed, held only for as long as the toast lives. */
+  const [undo, setUndo] = useState<UndoAction | null>(null)
 
   const openEditor = useCallback((state: EditorState) => {
     const active = document.activeElement
@@ -69,15 +74,18 @@ export function useEventEditor() {
       setUndo(null)
 
       if (editor?.mode === 'edit') {
+        const previous = editor.event
         updateEvent(editor.event.id, draft)
         setHighlightedId(editor.event.id)
         setSuccess(saveConfirmation(draft, 'edit'))
+        setUndo({ kind: 'update', previous })
         return
       }
 
       const created = createEvent(draft)
       setHighlightedId(created.id)
       setSuccess(saveConfirmation(draft, 'create'))
+      setUndo({ kind: 'create', eventId: created.id })
     },
     [createEvent, editor, updateEvent, setHighlightedId, setSuccess],
   )
@@ -86,19 +94,42 @@ export function useEventEditor() {
     (event: EventRecord) => {
       const removed = deleteEvent(event.id)
       if (!removed) return
-      setUndo(removed)
+      setUndo({ kind: 'delete', event: removed.event, index: removed.index })
       setSuccess(`Event “${event.title}” deleted.`)
     },
     [deleteEvent, setSuccess],
   )
 
-  const undoDelete = useCallback(() => {
+  const undoAction = useCallback(() => {
     if (!undo) return
-    restoreEvent(undo.event, undo.index)
-    setHighlightedId(undo.event.id)
-    setSuccess(`Event “${undo.event.title}” restored.`)
+    if (undo.kind === 'delete') {
+      restoreEvent(undo.event, undo.index)
+      setHighlightedId(undo.event.id)
+      setSuccess(`Event “${undo.event.title}” restored.`)
+    } else if (undo.kind === 'create') {
+      const removed = deleteEvent(undo.eventId)
+      if (removed) {
+        setSuccess('Event creation undone.')
+      }
+    } else if (undo.kind === 'update') {
+      const { previous } = undo
+      updateEvent(previous.id, {
+        title: previous.title,
+        date: previous.date,
+        startMinute: previous.startMinute,
+        durationMin: previous.durationMin,
+        category: previous.category,
+        status: previous.status,
+        priority: previous.priority,
+        owner: previous.owner,
+        location: previous.location,
+        notes: previous.notes,
+      })
+      setHighlightedId(previous.id)
+      setSuccess(`Event “${previous.title}” reverted.`)
+    }
     setUndo(null)
-  }, [restoreEvent, setHighlightedId, setSuccess, undo])
+  }, [undo, deleteEvent, restoreEvent, updateEvent, setHighlightedId, setSuccess])
 
   return {
     editor,
@@ -111,7 +142,7 @@ export function useEventEditor() {
     closeEditor,
     handleSubmit,
     handleDelete,
-    /** Undo affordance for the toast, present only after a delete. */
-    undoAction: undo ? { label: 'Undo', onClick: undoDelete } : undefined,
+    /** Undo affordance for the toast, present only after a create, update, or delete. */
+    undoAction: undo ? { label: 'Undo', onClick: undoAction } : undefined,
   }
 }
