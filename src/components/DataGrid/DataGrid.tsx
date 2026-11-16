@@ -9,10 +9,11 @@ import { DataGridPagination } from './DataGridPagination'
 import { DataGridScrollFade } from './DataGridScrollFade'
 import { DataGridTable } from './DataGridTable'
 import { DataGridToolbar } from './DataGridToolbar'
-import { useDataGridController } from './hooks/useDataGridController'
+import { SearchQueryContext } from './searchContext'
 import { useDataGridShortcuts } from './hooks/useDataGridShortcuts'
 import { useGridScrollReset } from './hooks/useGridScrollReset'
 import { useRowReveal } from './hooks/useRowReveal'
+import { useDataGridController } from './hooks/useDataGridController'
 import { useScrollEdges } from './hooks/useScrollEdges'
 import { DEFAULT_PAGE_SIZE_OPTIONS, type DataGridProps } from './types'
 
@@ -125,7 +126,8 @@ export function DataGrid<TData>({
       : 0
 
   return (
-    <section className={panelClass}>
+    <SearchQueryContext.Provider value={grid.globalFilter}>
+      <section className={panelClass}>
       <DataGridToolbar
         table={grid.table}
         search={grid.search}
@@ -228,5 +230,6 @@ export function DataGrid<TData>({
             : `${formatCount(grid.filteredCount)} ${pluralize(grid.filteredCount, 'row')} match. Showing ${formatCount(grid.rangeStart)} to ${formatCount(grid.rangeEnd)}.`}
       </p>
     </section>
+    </SearchQueryContext.Provider>
   )
 }

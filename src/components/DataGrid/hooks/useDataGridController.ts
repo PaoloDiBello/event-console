@@ -327,6 +327,7 @@ export function useDataGridController<TData>({
     search,
     setSearch,
     isPending,
+    globalFilter,
     sorting,
     filterCount,
     chips,
