@@ -131,7 +131,7 @@ export function DataGrid<TData>({
         search={grid.search}
         onSearchChange={grid.setSearch}
         onClearColumnFilters={grid.clearColumnFilters}
-        onRemoveColumnFilter={grid.removeColumnFilter}
+        onRemoveColumnFilter={grid.removeFilterValue}
         chips={grid.chips}
         isPending={grid.isPending}
         searchPlaceholder={searchPlaceholder}
@@ -171,6 +171,7 @@ export function DataGrid<TData>({
                 onRowActivate={onRowActivate}
                 onSort={grid.sortByColumn}
                 onFilterChange={grid.filterByColumn}
+                getFacetCounts={grid.getFacetCounts}
                 emptyState={
                   <DataGridEmpty
                     totalRows={data.length}

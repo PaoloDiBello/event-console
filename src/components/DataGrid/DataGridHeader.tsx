@@ -2,6 +2,7 @@ import { flexRender, type Column, type Table } from '@tanstack/react-table'
 import { ArrowDown, ArrowUp, ChevronsUpDown } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { DataGridColumnFilter } from './DataGridColumnFilter'
+import { isBlank } from './model/accessors'
 import { pinnedColumnClass } from './pinnedColumn'
 
 interface DataGridHeaderProps<TData> {
@@ -9,7 +10,11 @@ interface DataGridHeaderProps<TData> {
   showFilterRow: boolean
   isLoading: boolean
   onSort: (column: Column<TData, unknown>, event: unknown) => void
-  onFilterChange: (column: Column<TData, unknown>, value: string | undefined) => void
+  onFilterChange: (
+    column: Column<TData, unknown>,
+    value: string | string[] | undefined,
+  ) => void
+  getFacetCounts?: (columnId: string) => Record<string, number>
 }
 
 function SortIcon({ direction }: { direction: false | 'asc' | 'desc' }) {
@@ -24,6 +29,7 @@ export function DataGridHeader<TData>({
   isLoading,
   onSort,
   onFilterChange,
+  getFacetCounts,
 }: DataGridHeaderProps<TData>) {
   return (
     <thead>
@@ -32,7 +38,7 @@ export function DataGridHeader<TData>({
           {headerGroup.headers.map((header, headerIndex) => {
             const sorted = header.column.getIsSorted()
             const filterValue = header.column.getFilterValue()
-            const filtered = filterValue !== undefined && filterValue !== ''
+            const filtered = !isBlank(filterValue)
             const align = header.column.columnDef.meta?.align
             // The first visible column stays put horizontally so a row keeps
             // its identity while the rest of the table scrolls under it. Only
@@ -100,6 +106,7 @@ export function DataGridHeader<TData>({
                 column={header.column}
                 disabled={isLoading}
                 onChange={onFilterChange}
+                getFacetCounts={getFacetCounts}
               />
             </th>
           ))}

@@ -49,8 +49,13 @@ export function valueById<TData>(
   return column ? cellValue(row, column, index) : undefined
 }
 
+/**
+ * A filter that constrains nothing. Multi-value filters store an array, and an
+ * empty array is the same "nothing selected" state as an empty box.
+ */
 export function isBlank(value: unknown): boolean {
-  return value === undefined || value === null || value === ''
+  if (value === undefined || value === null || value === '') return true
+  return Array.isArray(value) && value.length === 0
 }
 
 export function asText(value: unknown): string {

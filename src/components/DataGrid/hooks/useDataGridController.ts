@@ -12,7 +12,7 @@ import {
 } from '@tanstack/react-table'
 import { useCallback, useEffect, useMemo, useState, useTransition } from 'react'
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
-import { buildRows } from '../model'
+import { buildRows, collectFacetCounts } from '../model'
 import { activeFilterCount, filterChips } from '../utils'
 import type { DataGridColumn, DataGridViewState } from '../types'
 
@@ -219,9 +219,27 @@ export function useDataGridController<TData>({
     resetPage()
   }, [resetPage, setColumnFilters])
 
-  const removeColumnFilter = useCallback(
-    (columnId: string) => {
-      setColumnFilters((current) => current.filter((filter) => filter.id !== columnId))
+  /**
+   * Drop one value from a multi-select column, or the whole column filter when
+   * `raw` is omitted. Removing the last selected value removes the filter
+   * itself, so a filter never lingers as an empty, invisible constraint.
+   */
+  const removeFilterValue = useCallback(
+    (columnId: string, raw?: string) => {
+      setColumnFilters((current) => {
+        const next: ColumnFiltersState = []
+        for (const filter of current) {
+          if (filter.id !== columnId) {
+            next.push(filter)
+            continue
+          }
+          if (raw === undefined) continue
+          if (!Array.isArray(filter.value)) continue
+          const remaining = filter.value.filter((value) => value !== raw)
+          if (remaining.length > 0) next.push({ ...filter, value: remaining })
+        }
+        return next
+      })
       resetPage()
     },
     [resetPage, setColumnFilters],
@@ -249,11 +267,29 @@ export function useDataGridController<TData>({
   )
 
   const filterByColumn = useCallback(
-    (column: Column<TData, unknown>, value: string | undefined) => {
-      column.setFilterValue(value)
+    (column: Column<TData, unknown>, value: string | string[] | undefined) => {
+      const next = Array.isArray(value)
+        ? value.length > 0
+          ? value
+          : undefined
+        : value === ''
+          ? undefined
+          : value
+      column.setFilterValue(next)
       resetPage()
     },
     [resetPage],
+  )
+
+  /**
+   * Options for the menu that is open right now. Called on open rather than
+   * kept as state: the counts are derived, and holding them would keep a
+   * second copy of the filter result alive for the life of the grid.
+   */
+  const getFacetCounts = useCallback(
+    (columnId: string) =>
+      collectFacetCounts(data, columns, columnFilters, globalFilter, globalFilterFn, columnId),
+    [columnFilters, columns, data, globalFilter, globalFilterFn],
   )
 
   const setPage = useCallback((pageIndex: number) => {
@@ -297,7 +333,8 @@ export function useDataGridController<TData>({
     resetKey,
     clearSearch,
     clearColumnFilters,
-    removeColumnFilter,
+    removeFilterValue,
+    getFacetCounts,
     clearAll,
     sortByColumn,
     filterByColumn,

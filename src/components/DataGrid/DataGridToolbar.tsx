@@ -12,7 +12,7 @@ interface DataGridToolbarProps<TData> {
   search: string
   onSearchChange: (value: string) => void
   onClearColumnFilters: () => void
-  onRemoveColumnFilter: (columnId: string) => void
+  onRemoveColumnFilter: (columnId: string, raw?: string) => void
   chips: readonly FilterChip[]
   isPending: boolean
   searchPlaceholder?: string

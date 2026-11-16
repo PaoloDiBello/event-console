@@ -117,7 +117,7 @@ src/
       DataGridTable.tsx             table/colgroup composition
       DataGridHeader.tsx            sortable headers + filter row
       DataGridColumnFilter.tsx      one filter-row control
-      DataGridSelectFilter.tsx      select trigger + in-app radio menu
+      DataGridSelectFilter.tsx      multi-select facet: checkbox menu + row counts
       DataGridDateFilter.tsx        date filter trigger + shared calendar
       DataGridFilterClear.tsx       inline clear affordance
       filterControlStyles.ts        idle/active/focus control classes
@@ -136,6 +136,7 @@ src/
       model/                        pure filter/sort pipeline
         accessors.ts                column access and row shims
         filter.ts                   per-column and global filters
+        facets.ts                   per-option counts for the open menu
         sort.ts                     precomputed-key sorting
         buildRows.ts                full-set filter + sort
       types.ts / utils.ts / index.ts
@@ -207,6 +208,12 @@ the unit worth sharing. `features/events/registry/registryView.ts` is the only
 module that knows the registry's URL vocabulary. It validates every value against
 the filterable columns and the domain enums before returning state, and omits the
 default view so `/grid` stays canonical.
+
+A facet column can hold several values, so it repeats its parameter
+(`?category=meeting&category=deploy`). Each token is validated and de-duplicated
+on read and dropped on write if a control could not produce it; a single value
+still reads back as a one-item list, so filter state has one shape regardless of
+how many values were chosen.
 
 The agenda has the same contract in `features/events/agenda/agendaView.ts`:
 query, window, at-risk filter and focused day. Both modules use `q` for search

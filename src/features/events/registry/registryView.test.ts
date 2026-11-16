@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   DEFAULT_REGISTRY_VIEW,
   hasColumnFilter,
+  isExactlyColumnFilter,
   readRegistryView,
   withColumnFilter,
   writeRegistryView,
@@ -22,9 +23,10 @@ describe('registryView', () => {
     )
 
     expect(view.globalFilter).toBe('deploy')
+    // Facets read as lists even for one value, so the filter state has one shape.
     expect(view.columnFilters).toEqual([
-      { id: 'status', value: 'at_risk' },
-      { id: 'priority', value: 'high' },
+      { id: 'status', value: ['at_risk'] },
+      { id: 'priority', value: ['high'] },
     ])
     expect(view.sorting).toEqual([{ id: 'title', desc: false }])
     expect(view.pageIndex).toBe(2)
@@ -46,13 +48,30 @@ describe('registryView', () => {
     const view = readRegistryView(params('owner=Mira+Okafor&location=HQ+%C2%B7+Room+4'))
 
     expect(view.columnFilters).toEqual([
-      { id: 'owner', value: 'Mira Okafor' },
-      { id: 'location', value: 'HQ · Room 4' },
+      { id: 'owner', value: ['Mira Okafor'] },
+      { id: 'location', value: ['HQ · Room 4'] },
     ])
 
     const written = writeRegistryView(view)
-    expect(written.get('owner')).toBe('Mira Okafor')
-    expect(written.get('location')).toBe('HQ · Room 4')
+    expect(written.getAll('owner')).toEqual(['Mira Okafor'])
+    expect(written.getAll('location')).toEqual(['HQ · Room 4'])
+  })
+
+  it('reads repeated parameters as one multi-value filter', () => {
+    const view = readRegistryView(
+      params('category=meeting&category=deploy&status=at_risk&status=scheduled'),
+    )
+
+    expect(view.columnFilters).toEqual([
+      { id: 'category', value: ['meeting', 'deploy'] },
+      { id: 'status', value: ['at_risk', 'scheduled'] },
+    ])
+  })
+
+  it('drops unsupported values from a repeated parameter', () => {
+    const view = readRegistryView(params('category=meeting&category=nope&category=meeting'))
+
+    expect(view.columnFilters).toEqual([{ id: 'category', value: ['meeting'] }])
   })
 
   it('keeps the default view out of the URL', () => {
@@ -63,8 +82,8 @@ describe('registryView', () => {
     const search = writeRegistryView({
       globalFilter: 'incident',
       columnFilters: [
-        { id: 'status', value: 'at_risk' },
-        { id: 'owner', value: 'Mira Okafor' },
+        { id: 'status', value: ['at_risk', 'in_progress'] },
+        { id: 'owner', value: ['Mira Okafor'] },
       ],
       sorting: [{ id: 'when', desc: false }],
       pageIndex: 4,
@@ -72,8 +91,8 @@ describe('registryView', () => {
     })
 
     expect(search.get('q')).toBe('incident')
-    expect(search.get('status')).toBe('at_risk')
-    expect(search.get('owner')).toBe('Mira Okafor')
+    expect(search.getAll('status')).toEqual(['at_risk', 'in_progress'])
+    expect(search.getAll('owner')).toEqual(['Mira Okafor'])
     expect(search.get('sort')).toBe('when:asc')
     expect(search.get('page')).toBe('5')
     expect(search.get('size')).toBe('25')
@@ -84,7 +103,7 @@ describe('registryView', () => {
       globalFilter: 'release',
       columnFilters: [
         { id: 'when', value: '2026-11-13' },
-        { id: 'priority', value: 'critical' },
+        { id: 'priority', value: ['critical', 'high'] },
       ],
       sorting: [{ id: 'title', desc: true }],
       pageIndex: 1,
@@ -96,19 +115,33 @@ describe('registryView', () => {
 
   it('toggles one column filter without touching the others', () => {
     const filters = [
-      { id: 'priority', value: 'high' },
-      { id: 'status', value: 'scheduled' },
+      { id: 'priority', value: ['high'] },
+      { id: 'status', value: ['scheduled'] },
     ]
 
     expect(hasColumnFilter(filters, 'status', 'scheduled')).toBe(true)
     expect(hasColumnFilter(filters, 'status', 'at_risk')).toBe(false)
 
-    expect(withColumnFilter(filters, 'status', 'at_risk')).toEqual([
-      { id: 'priority', value: 'high' },
-      { id: 'status', value: 'at_risk' },
+    expect(withColumnFilter(filters, 'status', ['at_risk'])).toEqual([
+      { id: 'priority', value: ['high'] },
+      { id: 'status', value: ['at_risk'] },
     ])
     expect(withColumnFilter(filters, 'status', null)).toEqual([
-      { id: 'priority', value: 'high' },
+      { id: 'priority', value: ['high'] },
     ])
+  })
+
+  it('reports a value as exactly filtered only when it is alone', () => {
+    expect(isExactlyColumnFilter([{ id: 'status', value: ['at_risk'] }], 'status', 'at_risk')).toBe(
+      true,
+    )
+    expect(
+      isExactlyColumnFilter(
+        [{ id: 'status', value: ['at_risk', 'scheduled'] }],
+        'status',
+        'at_risk',
+      ),
+    ).toBe(false)
+    expect(isExactlyColumnFilter([], 'status', 'at_risk')).toBe(false)
   })
 })

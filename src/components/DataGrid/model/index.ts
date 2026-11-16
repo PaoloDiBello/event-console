@@ -1,4 +1,5 @@
 export { buildRows } from './buildRows'
+export { collectFacetCounts } from './facets'
 export { rowMatchesFilters } from './filter'
 export { sortRows } from './sort'
 export type { AnyColumn } from './accessors'

@@ -26,7 +26,11 @@ interface DataGridTableProps<TData> {
   onRowFocus: (index: number) => void
   onRowActivate?: (row: TData) => void
   onSort: (column: Column<TData, unknown>, event: unknown) => void
-  onFilterChange: (column: Column<TData, unknown>, value: string | undefined) => void
+  onFilterChange: (
+    column: Column<TData, unknown>,
+    value: string | string[] | undefined,
+  ) => void
+  getFacetCounts?: (columnId: string) => Record<string, number>
 }
 
 export function DataGridTable<TData>({
@@ -51,6 +55,7 @@ export function DataGridTable<TData>({
   onRowActivate,
   onSort,
   onFilterChange,
+  getFacetCounts,
 }: DataGridTableProps<TData>) {
   const headerRowCount = showFilterRow ? 2 : 1
   const bodyRowCount = isLoading ? 10 : rows.length === 0 ? 1 : filteredCount
@@ -84,6 +89,7 @@ export function DataGridTable<TData>({
         isLoading={isLoading}
         onSort={onSort}
         onFilterChange={onFilterChange}
+        getFacetCounts={getFacetCounts}
       />
       <DataGridBody
         rows={rows}

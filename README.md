@@ -44,7 +44,7 @@ Zod · date-fns · Vitest + Testing Library.
 
 | Component | Responsibility |
 | --- | --- |
-| `src/components/DataGrid` | Generic table: configurable columns, visibility, per-column text/select/date filters, global search, sorting, pagination, virtualized rows, row activation with a roving tab stop, loading/empty/error states, row reveal. |
+| `src/components/DataGrid` | Generic table: configurable columns, visibility, per-column text, multi-select facet and date filters (with per-option counts), global search, sorting, pagination, virtualized rows, row activation with a roving tab stop, loading/empty/error states, row reveal. |
 | `src/components/Timeline` | Generic grouped timeline: variable-height day groups, virtualization, roving `tabindex`, arrow-key navigation, live announcements. |
 | `src/features/events/components/EventForm` | Event-specific create/edit dialog: validation, focus management, dirty-state discard confirmation, delete confirmation, save error region. |
 
@@ -116,9 +116,15 @@ or an ISO timestamp key, so the same sort is a plain comparison. Formatting
   views cannot drift.
 - Loads include a small artificial latency (and a “Simulate error” action) so
   the loading/error/retry states are demonstrable.
+- Column filters are **multi-select facets**. A column holds several values at
+  once, meaning "either": `?category=meeting&category=deploy` is one filter, not
+  two. The menu is a checkbox list that stays open while you pick, each option
+  shows how many events it would leave with the other filters applied, and every
+  chosen value gets its own chip — so dropping one choice keeps the rest, and the
+  last removal clears the filter instead of leaving an empty one behind.
 - Both views are **shareable**. The registry round-trips search, column filters,
   sort, page and page size
-  (`/grid?q=deploy&status=at_risk&sort=title:asc&page=2&size=25`); the agenda
+  (`/grid?q=deploy&category=meeting&category=deploy&sort=title:asc&page=2&size=25`); the agenda
   round-trips the same search plus its window, at-risk filter and focused day
   (`/timeline?q=billing&window=30&at=risk&day=2026-11-18`). The default view
   stays out of the URL, and a hand-edited link is validated before it reaches
@@ -131,8 +137,10 @@ or an ISO timestamp key, so the same sort is a plain comparison. Formatting
   unfiltered.
 - The header metrics are live: **At risk** toggles the registry's status quick
   filter and narrows the agenda to at-risk events, while **Next 45 days** opens
-  the agenda window it counts. The number, the pressed card, the chip and the
-  filter row therefore always agree.
+  the   agenda window it counts. The number, the pressed card, the chip and the
+  filter row therefore always agree: the card reads pressed only while the
+  status filter is exactly that one value, so it never claims a count the grid
+  is not showing.
 
 ### One data set, two views
 
@@ -313,7 +321,7 @@ mutations only pay for the sort/filter pass.
 ## Tests and quality checks
 
 ```bash
-npm test          # 135 tests, 23 files
+npm test          # 142 tests, 23 files
 npm run build     # tsc -b (strict) + vite build
 npm run lint      # oxlint
 ```

@@ -1,13 +1,12 @@
 import { formatGridDate } from '@/shared/lib/dates'
+import { isBlank } from './model/accessors'
 import type { DataGridColumn } from './types'
 
 /** Number of active per-column filters. Global search is a query, not a filter. */
 export function activeFilterCount(
   columnFilters: readonly { id: string; value: unknown }[],
 ): number {
-  return columnFilters.filter(
-    (filter) => filter.value !== undefined && filter.value !== '',
-  ).length
+  return columnFilters.filter((filter) => !isBlank(filter.value)).length
 }
 
 /**
@@ -41,11 +40,19 @@ export function columnLabel(
   return typeof header === 'string' ? header : column.id
 }
 
-/** One active filter, rendered as a removable chip. */
+/** One active filter value, rendered as a removable chip. */
 export interface FilterChip {
+  /** Stable per-value key: a column can contribute several chips. */
+  key: string
+  /** Column the chip belongs to. */
   id: string
   label: string
   value: string
+  /**
+   * The raw value to remove. Undefined for a single-value filter (text, date),
+   * where removing the chip drops the whole column filter.
+   */
+  raw?: string
 }
 
 /**
@@ -79,21 +86,34 @@ export function filterChips<TData>(
   columns: readonly DataGridColumn<TData>[],
   columnFilters: readonly { id: string; value: unknown }[],
 ): FilterChip[] {
-  return columnFilters
-    .filter((filter) => filter.value !== undefined && filter.value !== '')
-    .map((filter) => {
-      const column = columns.find(
-        (candidate) =>
-          candidate.id === filter.id ||
-          (candidate as { accessorKey?: string }).accessorKey === filter.id,
-      )
-      const raw = String(filter.value)
-      return {
+  const chips: FilterChip[] = []
+
+  for (const filter of columnFilters) {
+    if (isBlank(filter.value)) continue
+    const column = columns.find(
+      (candidate) =>
+        candidate.id === filter.id ||
+        (candidate as { accessorKey?: string }).accessorKey === filter.id,
+    )
+    const like = asColumnLike(column)
+    const label = columnLabel(like, filter.id)
+    const values = Array.isArray(filter.value) ? filter.value : [filter.value]
+
+    // A multi-select column gets one chip per value so a single option can be
+    // dropped without reopening the menu and reconstructing the selection.
+    for (const value of values) {
+      const raw = String(value)
+      chips.push({
+        key: `${filter.id}:${raw}`,
         id: filter.id,
-        label: columnLabel(asColumnLike(column), filter.id),
-        value: filterChipValue(asColumnLike(column), raw),
-      }
-    })
+        label,
+        value: filterChipValue(like, raw),
+        raw: Array.isArray(filter.value) ? raw : undefined,
+      })
+    }
+  }
+
+  return chips
 }
 
 /** Coerce a TanStack Column or a raw ColumnDef to the shared shape. */

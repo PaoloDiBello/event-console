@@ -3,14 +3,16 @@ import type { FilterChip } from './utils'
 
 interface DataGridFilterChipsProps {
   chips: readonly FilterChip[]
-  onRemove: (columnId: string) => void
+  /** Remove one value, or the whole column filter when `raw` is omitted. */
+  onRemove: (columnId: string, raw?: string) => void
   onClearAll: () => void
   disabled?: boolean
 }
 
 /**
- * Applied filters, grouped in one strip under the toolbar. Each chip removes
- * only its own filter; "Clear all" sits at the far end so the destructive
+ * Applied filters, grouped in one strip under the toolbar. A multi-select
+ * column contributes one chip per value, so dropping "Meeting" does not throw
+ * away "Deploy" with it; "Clear all" sits at the far end so the destructive
  * action is available without competing with the search field.
  */
 export function DataGridFilterChips({
@@ -28,10 +30,10 @@ export function DataGridFilterChips({
       </span>
       {chips.map((chip) => (
         <button
-          key={chip.id}
+          key={chip.key}
           type="button"
           disabled={disabled}
-          onClick={() => onRemove(chip.id)}
+          onClick={() => onRemove(chip.id, chip.raw)}
           aria-label={`Remove ${chip.label} filter: ${chip.value}`}
           title={`Remove ${chip.label} filter`}
           className="group inline-flex h-6 max-w-56 items-center gap-1 rounded-xs border border-line bg-canvas pr-1 pl-2 text-[11px] text-muted transition-colors hover:border-line-strong hover:text-ink disabled:opacity-50"

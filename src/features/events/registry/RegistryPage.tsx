@@ -6,7 +6,7 @@ import { useEventFeed } from '@/features/events/store'
 import { createEventColumns, eventGlobalFilter } from './columns'
 import { RegistryHeader } from './RegistryHeader'
 import {
-  hasColumnFilter,
+  isExactlyColumnFilter,
   readRegistryView,
   withColumnFilter,
   writeRegistryView,
@@ -78,12 +78,14 @@ export function RegistryPage({ onEdit, highlightedId }: RegistryPageProps) {
     [mirrorView],
   )
 
-  const atRiskActive = hasColumnFilter(columnFilters, 'status', 'at_risk')
+  // The metric shows one number, so it may only read as pressed when the
+  // status filter is exactly that value — not when at-risk is one of several.
+  const atRiskActive = isExactlyColumnFilter(columnFilters, 'status', 'at_risk')
   const toggleAtRisk = useCallback(() => {
     setColumnFilters((current) =>
-      hasColumnFilter(current, 'status', 'at_risk')
+      isExactlyColumnFilter(current, 'status', 'at_risk')
         ? withColumnFilter(current, 'status', null)
-        : withColumnFilter(current, 'status', 'at_risk'),
+        : withColumnFilter(current, 'status', ['at_risk']),
     )
   }, [])
 

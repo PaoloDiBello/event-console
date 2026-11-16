@@ -23,6 +23,19 @@ type FilterId = (typeof FILTER_IDS)[number]
 const TEXT_FILTER_IDS = new Set<FilterId>(['title', 'owner', 'location'])
 const MAX_TEXT_LENGTH = 80
 
+/**
+ * Columns whose filter holds a list of chosen values. Title is free text and
+ * `when` is one day, so both stay single-valued; everything else is a facet
+ * where "Meeting or Deploy" is one filter, not two.
+ */
+const MULTI_FILTER_IDS = new Set<FilterId>([
+  'category',
+  'status',
+  'priority',
+  'owner',
+  'location',
+])
+
 /** Sortable columns, including the ones without a filter. */
 const SORT_IDS = new Set([
   'title',
@@ -88,8 +101,11 @@ function readPositiveInteger(raw: string | null, fallback: number): number {
 export function readRegistryView(params: URLSearchParams): RegistryView {
   const columnFilters: ColumnFiltersState = []
   for (const id of FILTER_IDS) {
-    const value = params.get(id)
-    if (value !== null && isAllowedValue(id, value)) columnFilters.push({ id, value })
+    // Repeated params: `?status=at_risk&status=scheduled` is one filter with
+    // two values. Anything a control could not produce is dropped here.
+    const values = [...new Set(params.getAll(id).filter((value) => isAllowedValue(id, value)))]
+    if (values.length === 0) continue
+    columnFilters.push({ id, value: MULTI_FILTER_IDS.has(id) ? values : values[0]! })
   }
 
   const query = params.get('q') ?? ''
@@ -111,9 +127,13 @@ export function writeRegistryView(view: RegistryView): URLSearchParams {
   if (view.globalFilter !== '') params.set('q', view.globalFilter)
 
   for (const filter of view.columnFilters) {
-    if (typeof filter.value !== 'string') continue
-    if (!isFilterId(filter.id) || !isAllowedValue(filter.id, filter.value)) continue
-    params.set(filter.id, filter.value)
+    if (!isFilterId(filter.id)) continue
+    const values = Array.isArray(filter.value) ? filter.value : [filter.value]
+    for (const value of values) {
+      if (typeof value !== 'string' || !isAllowedValue(filter.id, value)) continue
+      if (MULTI_FILTER_IDS.has(filter.id)) params.append(filter.id, value)
+      else params.set(filter.id, value)
+    }
   }
 
   const sort = view.sorting[0]
@@ -128,14 +148,34 @@ export function writeRegistryView(view: RegistryView): URLSearchParams {
 
 /** `?status=at_risk` → the filter a quick-filter metric should toggle. */
 export function hasColumnFilter(filters: ColumnFiltersState, id: string, value: string): boolean {
-  return filters.some((filter) => filter.id === id && filter.value === value)
+  return filters.some(
+    (filter) =>
+      filter.id === id &&
+      (Array.isArray(filter.value) ? filter.value.includes(value) : filter.value === value),
+  )
+}
+
+/**
+ * True only when the column is filtered to exactly this one value. A metric's
+ * count is a total for one value, so it may only look pressed when the filter
+ * it would set is the filter in force.
+ */
+export function isExactlyColumnFilter(
+  filters: ColumnFiltersState,
+  id: string,
+  value: string,
+): boolean {
+  const filter = filters.find((candidate) => candidate.id === id)
+  if (!filter) return false
+  if (Array.isArray(filter.value)) return filter.value.length === 1 && filter.value[0] === value
+  return filter.value === value
 }
 
 /** Replace a column's filter with `value`, or remove it when `value` is null. */
 export function withColumnFilter(
   filters: ColumnFiltersState,
   id: string,
-  value: string | null,
+  value: string | string[] | null,
 ): ColumnFiltersState {
   const rest = filters.filter((filter) => filter.id !== id)
   return value === null ? rest : [...rest, { id, value }]

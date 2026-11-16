@@ -8,12 +8,31 @@ import {
   type RowShim,
 } from './accessors'
 
+/**
+ * Select filters hold a list of chosen values, so "Meetings or Deploys" is one
+ * filter with two values rather than two filters fighting each other. A single
+ * value keeps working: a quick filter, a date and a shared link that names one
+ * option all still produce scalar values.
+ */
+function matchesAny(filterValue: unknown, test: (candidate: unknown) => boolean): boolean {
+  if (Array.isArray(filterValue)) {
+    if (filterValue.length === 0) return true
+    return filterValue.some((candidate) => test(candidate))
+  }
+  return test(filterValue)
+}
+
 function includes(value: unknown, filterValue: unknown): boolean {
-  return asText(value).toLowerCase().includes(asText(filterValue).toLowerCase())
+  return matchesAny(filterValue, (candidate) =>
+    asText(value).toLowerCase().includes(asText(candidate).toLowerCase()),
+  )
 }
 
 function equalsString(value: unknown, filterValue: unknown): boolean {
-  return asText(value).toLowerCase() === asText(filterValue).toLowerCase()
+  return matchesAny(
+    filterValue,
+    (candidate) => asText(value).toLowerCase() === asText(candidate).toLowerCase(),
+  )
 }
 
 /**
@@ -47,8 +66,9 @@ function matchesColumnFilter<TData>(
 
   if (filterFn === 'equalsString') return equalsString(value, filterValue)
   if (filterFn === 'includesString') return includes(value, filterValue)
-  if (filterFn === 'equals') return value === filterValue
-  if (filterFn === 'weakEquals') return asText(value) === asText(filterValue)
+  if (filterFn === 'equals') return matchesAny(filterValue, (candidate) => value === candidate)
+  if (filterFn === 'weakEquals')
+    return matchesAny(filterValue, (candidate) => asText(value) === asText(candidate))
 
   // No explicit function: fall back to the filter control's semantics.
   switch (column.meta?.filter) {
