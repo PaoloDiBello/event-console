@@ -21,6 +21,11 @@ export function AgendaEventCard({ event }: { event: EventRecord }) {
           <span className="truncate text-sm font-medium text-ink">{event.title}</span>
         </span>
         <span className="flex min-w-0 items-center gap-2 truncate text-[11px] text-faint">
+          {/* On a phone the right-hand status column is gone; keep the
+              exceptions (at risk, cancelled, in progress) visible here. */}
+          {event.status !== 'scheduled' ? (
+            <StatusBadge status={event.status} className="shrink-0 sm:hidden" />
+          ) : null}
           <span className="truncate">{event.owner}</span>
           <span aria-hidden="true">·</span>
           <span className="truncate">{event.location}</span>

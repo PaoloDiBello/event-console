@@ -92,7 +92,8 @@ src/
       columns.tsx                   event columns and fast sort keys
       index.ts                      public page API
     agenda/                         "by day" lens
-      AgendaPage.tsx                data + Timeline composition
+      AgendaPage.tsx                data + Timeline composition, URL-backed view
+      agendaView.ts                 shareable view <-> URL (read, validate, write)
       AgendaHeader.tsx              page header and window stats
       AgendaToolbar.tsx             panel toolbar: search, window, jump, today
       AgendaDatePicker.tsx          jump-to-date popover and calendar
@@ -110,6 +111,7 @@ src/
         useDataGridController.ts    search, sort, filters, pagination, table
         useRowReveal.ts             jump to a row's page and scroll it into view
         useGridScrollReset.ts       top-of-list reset on view changes
+        useScrollEdges.ts           which horizontal edges still hide content
         useDataGridShortcuts.ts     "/" focuses search, "f" the first filter
       DataGridTable.tsx             table/colgroup composition
       DataGridHeader.tsx            sortable headers + filter row
@@ -127,6 +129,7 @@ src/
       DataGridPageSize.tsx          rows-per-page menu
       DataGridEmpty.tsx             empty-state copy and reset actions
       DataGridError.tsx             error state
+      DataGridScrollFade.tsx        gradient cue on a clipped edge
       DataGridSkeleton.tsx          loading rows
       model/                        pure filter/sort pipeline
         accessors.ts                column access and row shims
@@ -197,15 +200,22 @@ components. A file boundary exists where a unit has a distinct reason to change.
 
 The registry's applied view — query, column filters, sort, page, page size — is
 the unit worth sharing. `features/events/registry/registryView.ts` is the only
-module that knows the URL vocabulary. It validates every value against the
-filterable columns and the domain enums before returning state, and omits the
+module that knows the registry's URL vocabulary. It validates every value against
+the filterable columns and the domain enums before returning state, and omits the
 default view so `/grid` stays canonical.
+
+The agenda has the same contract in `features/events/agenda/agendaView.ts`:
+query, window, at-risk filter and focused day. Both modules use `q` for search
+because it means the same thing in both lenses, which is why switching views
+keeps it. A shared `day` outside the chosen window widens the window instead of
+being dropped, so a link never points at a day the user cannot see.
 
 `DataGrid` remains uncontrolled by default. `RegistryPage` passes `columnFilters`
 plus `onColumnFiltersChange` only because the At-risk metric must set a filter
-from outside the grid; `onViewStateChange` mirrors search/sort/paging. The page
-writes with `replace`, so filtering never fills the history stack, and an
-external URL change (nav click, Back) re-seeds the grid through a remount key.
+from outside the grid; `onViewStateChange` mirrors search/sort/paging. Both pages
+write with `replace`, so filtering never fills the history stack, and an external
+URL change (nav click, Back) re-seeds the view — the grid through a remount key,
+the agenda by adopting the link and jumping to its day.
 
 ## One visual system
 
@@ -294,6 +304,8 @@ Tests are colocated with the unit they exercise:
 - `features/events/components/EventForm/EventForm.test.tsx` — focus, errors,
   discard flow.
 - `features/events/agenda/agendaData.test.ts` — windowing, grouping, search.
+- `features/events/agenda/agendaView.test.ts` — agenda URL round-tripping,
+  window/day validation and widening.
 - `features/events/agenda/AgendaDatePicker.test.tsx` — jump calendar.
 - `features/events/registry/registryView.test.ts` — URL view round-tripping
   and validation.
@@ -302,6 +314,7 @@ Tests are colocated with the unit they exercise:
 - `components/DataGrid/DataGrid.test.tsx` — sorting, filtering, pagination,
   page jump, focus reveal.
 - `components/DataGrid/DataGridDateFilter.test.tsx` — date filter menu.
+- `components/DataGrid/hooks/useScrollEdges.test.ts` — clipped-edge detection.
 - `components/Timeline/Timeline.test.tsx` — navigation and announcements.
 - `app/components/ShortcutsDialog.test.tsx` — cheatsheet groups and Escape close.
 - `shared/hooks/useDebouncedValue.test.ts` — the search debounce hook.

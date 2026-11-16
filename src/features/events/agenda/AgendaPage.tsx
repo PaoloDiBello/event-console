@@ -1,10 +1,12 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Timeline } from '@/components/Timeline'
 import type { EventRecord } from '@/features/events/model'
 import { PRIORITY_LABEL, STATUS_LABEL } from '@/features/events/model'
 import { useEventFeed } from '@/features/events/store'
 import { formatMinute, shiftIsoDay, todayIso } from '@/shared/lib/dates'
 import { buildTimeline, TIMELINE_SCOPES, type TimelineScope } from './agendaData'
+import { readAgendaView, writeAgendaView, type AgendaView } from './agendaView'
 import { AgendaEmptyState } from './AgendaEmptyState'
 import { AgendaEventCard } from './AgendaEventCard'
 import { AgendaFooter } from './AgendaFooter'
@@ -18,12 +20,52 @@ interface AgendaPageProps {
 
 export function AgendaPage({ onEdit }: AgendaPageProps) {
   const { events, isLoading } = useEventFeed()
-  const [scope, setScope] = useState<TimelineScope>(45)
-  const [query, setQuery] = useState('')
-  const [atRiskOnly, setAtRiskOnly] = useState(false)
   const today = useMemo(() => todayIso(), [])
-  const [selectedDate, setSelectedDate] = useState(today)
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  // The URL seeds the view once; after that the page owns the state and
+  // mirrors every change back, so a link can reopen the same day and filter.
+  const [seed] = useState(() => readAgendaView(searchParams, today))
+  const [scope, setScope] = useState<TimelineScope>(seed.scope)
+  const [query, setQuery] = useState(seed.query)
+  const [atRiskOnly, setAtRiskOnly] = useState(seed.atRiskOnly)
+  const [selectedDate, setSelectedDate] = useState(seed.day)
   const [jumpRequest, setJumpRequest] = useState<{ day: string; id: number } | null>(null)
+
+  const viewRef = useRef<AgendaView>(seed)
+  const lastUrlRef = useRef(searchParams.toString())
+  const mirrorView = useCallback(
+    (next: Partial<AgendaView>) => {
+      viewRef.current = { ...viewRef.current, ...next }
+      const params = writeAgendaView(viewRef.current, today)
+      const serialized = params.toString()
+      // Replacing history with an identical URL would still re-render the
+      // route, so only write when the view actually changed.
+      if (serialized === lastUrlRef.current) return
+      lastUrlRef.current = serialized
+      setSearchParams(params, { replace: true })
+    },
+    [setSearchParams, today],
+  )
+
+  // A nav click or Back button can change the URL without this page knowing.
+  // Adopt the link's view, and jump when the link points at another day.
+  useEffect(() => {
+    const current = searchParams.toString()
+    if (current === lastUrlRef.current) return
+    const previous = viewRef.current
+    const next = readAgendaView(searchParams, today)
+    lastUrlRef.current = current
+    viewRef.current = next
+    setScope(next.scope)
+    setQuery(next.query)
+    setAtRiskOnly(next.atRiskOnly)
+    setSelectedDate(next.day)
+    if (next.day !== previous.day) {
+      setJumpRequest((request) => ({ day: next.day, id: (request?.id ?? 0) + 1 }))
+    }
+  }, [searchParams, today])
+
   const maxJumpDate = shiftIsoDay(today, TIMELINE_SCOPES[TIMELINE_SCOPES.length - 1]! - 1)
 
   const data = useMemo(
@@ -34,20 +76,35 @@ export function AgendaPage({ onEdit }: AgendaPageProps) {
   const handleScopeChange = (nextScope: TimelineScope) => {
     setScope(nextScope)
     const end = shiftIsoDay(today, nextScope)
-    setSelectedDate((current) => (current >= end ? today : current))
+    const nextDay = selectedDate >= end ? today : selectedDate
+    setSelectedDate(nextDay)
+    mirrorView({ scope: nextScope, day: nextDay })
+  }
+
+  const handleQueryChange = (nextQuery: string) => {
+    setQuery(nextQuery)
+    mirrorView({ query: nextQuery })
+  }
+
+  const toggleAtRisk = () => {
+    const next = !atRiskOnly
+    setAtRiskOnly(next)
+    mirrorView({ atRiskOnly: next })
   }
 
   const handleJumpDateChange = (day: string) => {
     if (!day) return
 
     setSelectedDate(day)
+    let nextScope = scope
     if (day >= shiftIsoDay(today, scope)) {
-      const nextScope =
+      nextScope =
         TIMELINE_SCOPES.find((days) => day < shiftIsoDay(today, days)) ??
         TIMELINE_SCOPES[TIMELINE_SCOPES.length - 1]!
       setScope(nextScope)
     }
     setJumpRequest((current) => ({ day, id: (current?.id ?? 0) + 1 }))
+    mirrorView({ day, scope: nextScope })
   }
 
   const getItemId = useCallback((event: EventRecord) => event.id, [])
@@ -60,14 +117,15 @@ export function AgendaPage({ onEdit }: AgendaPageProps) {
   const clearFilters = useCallback(() => {
     setQuery('')
     setAtRiskOnly(false)
-  }, [])
+    mirrorView({ query: '', atRiskOnly: false })
+  }, [mirrorView])
 
   const toolbar = (
     <AgendaToolbar
       scope={scope}
       onScopeChange={handleScopeChange}
       query={query}
-      onQueryChange={setQuery}
+      onQueryChange={handleQueryChange}
       today={today}
       jumpDate={selectedDate}
       jumpMin={today}
@@ -83,7 +141,7 @@ export function AgendaPage({ onEdit }: AgendaPageProps) {
         total={data.total}
         atRisk={data.atRisk}
         atRiskActive={atRiskOnly}
-        onToggleAtRisk={() => setAtRiskOnly((current) => !current)}
+        onToggleAtRisk={toggleAtRisk}
       />
 
       <div className="min-h-0 flex-1">

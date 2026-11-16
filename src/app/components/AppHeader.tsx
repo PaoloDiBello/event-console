@@ -1,5 +1,6 @@
 import { Activity, CalendarRange, Database, Keyboard, Plus, Table2 } from 'lucide-react'
-import { NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { useCallback } from 'react'
+import { NavLink, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { buttonClass } from '@/components/ui/buttonStyles'
 import { Kbd } from '@/components/ui/Kbd'
 import { selectedSegmentClass } from '@/components/ui/surfaces'
@@ -40,7 +41,20 @@ export function AppHeader({ onNewEvent, onOpenShortcuts }: AppHeaderProps) {
   const events = useEvents()
   const navigate = useNavigate()
   const { pathname } = useLocation()
+  const [searchParams] = useSearchParams()
   const isTimeline = pathname.startsWith('/timeline')
+  // Search is the one filter both lenses understand, so switching views keeps
+  // it instead of silently dropping what the user just typed.
+  const sharedQuery = searchParams.get('q')
+  const withSharedQuery = useCallback(
+    (path: string) => {
+      if (!sharedQuery) return path
+      const params = new URLSearchParams()
+      params.set('q', sharedQuery)
+      return `${path}?${params.toString()}`
+    },
+    [sharedQuery],
+  )
 
   // Fast switching without stealing keys from fields, dialogs or menus.
   useGlobalKeydown((event) => {
@@ -49,7 +63,7 @@ export function AppHeader({ onNewEvent, onOpenShortcuts }: AppHeaderProps) {
     const key = event.key.toLowerCase()
     if (key !== 'g' && key !== 't') return
     event.preventDefault()
-    navigate(key === 'g' ? '/grid' : '/timeline')
+    navigate(withSharedQuery(key === 'g' ? '/grid' : '/timeline'))
   })
 
   return (
@@ -94,7 +108,7 @@ export function AppHeader({ onNewEvent, onOpenShortcuts }: AppHeaderProps) {
               return (
                 <NavLink
                   key={item.to}
-                  to={item.to}
+                  to={withSharedQuery(item.to)}
                   title={`${item.description} (${item.shortcut})`}
                   aria-keyshortcuts={item.shortcut.toLowerCase()}
                   className={({ isActive }) =>

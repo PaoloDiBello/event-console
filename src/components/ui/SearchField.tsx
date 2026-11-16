@@ -30,7 +30,7 @@ export function SearchField({
   ...props
 }: SearchFieldProps) {
   return (
-    <div className={cn('group relative min-w-56 flex-1', wrapperClassName)}>
+    <div className={cn('group relative min-w-0 flex-1 sm:min-w-56', wrapperClassName)}>
       <Search
         aria-hidden="true"
         className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-faint"

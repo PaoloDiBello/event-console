@@ -116,12 +116,19 @@ or an ISO timestamp key, so the same sort is a plain comparison. Formatting
   views cannot drift.
 - Loads include a small artificial latency (and a “Simulate error” action) so
   the loading/error/retry states are demonstrable.
-- The registry view is **shareable**: search, column filters, sort, page and page
-  size round-trip through the URL (`/grid?q=deploy&status=at_risk&sort=title:asc&page=2&size=25`).
-  The default view stays out of the URL, and a hand-edited link is validated
-  before it reaches the grid — unknown columns, values and page sizes are
-  dropped instead of trusted. External URL changes (nav click, Back) re-seed the
-  grid; the page's own writes use `replace` so filtering never floods history.
+- Both views are **shareable**. The registry round-trips search, column filters,
+  sort, page and page size
+  (`/grid?q=deploy&status=at_risk&sort=title:asc&page=2&size=25`); the agenda
+  round-trips the same search plus its window, at-risk filter and focused day
+  (`/timeline?q=billing&window=30&at=risk&day=2026-11-18`). The default view
+  stays out of the URL, and a hand-edited link is validated before it reaches
+  the view — unknown columns, values, windows and impossible days are dropped
+  instead of trusted. External URL changes (nav click, Back) re-seed the view;
+  the page's own writes use `replace` so filtering never floods history.
+- Search is the one filter both lenses understand, so switching Registry ↔
+  Agenda keeps `q` instead of silently dropping what was typed. The **Next 45
+  days** metric deliberately opens a clean agenda, because its count is
+  unfiltered.
 - The header metrics are live: **At risk** toggles the registry's status quick
   filter and narrows the agenda to at-risk events, while **Next 45 days** opens
   the agenda window it counts. The number, the pressed card, the chip and the
@@ -147,6 +154,14 @@ control heights, radii and states identical across both views.
 
 On a phone the header drops its explanatory paragraph and the two maintenance
 actions collapse to icons, so the panel — the actual work — keeps the screen.
+The panel toolbars tighten the same way: the Columns trigger becomes an icon
+plus its visible/total count, the agenda hides its previous/next day arrows
+(day headings still carry them) and drops the date picker's “Jump” label, so
+search and the primary controls stay on one row down to 320 px.
+
+When the table is wider than its viewport, the grid fades the edge that still
+has columns instead of cutting them off, so horizontal overflow reads as
+something you can swipe.
 
 Filtered results stay explainable: the grid footer reads “filtered from
 100,000” whenever search or column filters narrow the set, and the agenda keeps
@@ -280,7 +295,7 @@ mutations only pay for the sort/filter pass.
 ## Tests and quality checks
 
 ```bash
-npm test          # 113 tests, 18 files
+npm test          # 127 tests, 20 files
 npm run build     # tsc -b (strict) + vite build
 npm run lint      # oxlint
 ```
@@ -288,12 +303,12 @@ npm run lint      # oxlint
 Coverage includes dataset determinism, search-text construction, store
 create/update, grid sorting / filtering / pagination (including typed page jumps
 and clamping) / focus-row reveal / filter-row clearing / the select and
-date-filter menus / seeded and controlled filter state, URL view round-tripping
-and validation, the quick-filter metrics, timeline grouping / windowing /
-keyboard navigation / announcements, the shortcut cheatsheet, form validation,
-draft mapping plus the discard flow, the debounced-search hook, the
+date-filter menus / seeded and controlled filter state, registry and agenda URL
+view round-tripping and validation, the quick-filter metrics, timeline grouping /
+windowing / keyboard navigation / announcements, the shortcut cheatsheet, form
+validation, draft mapping plus the discard flow, the debounced-search hook, the
 visual-viewport hook, the date-filter calendar, the registry view, the registry
-header stats, and the event columns.
+header stats, scroll-edge detection, and the event columns.
 
 ## Trade-offs and limitations
 

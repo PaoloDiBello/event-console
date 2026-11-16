@@ -33,12 +33,14 @@ export function AgendaDatePicker({ value, min, max, onChange }: AgendaDatePicker
           title={formatDayFull(value)}
           className={buttonClass({
             size: 'md',
-            className: 'min-w-[10.5rem] justify-start gap-2 px-2.5 font-normal',
+            className: 'min-w-0 justify-start gap-2 px-2.5 font-normal sm:min-w-[10.5rem]',
           })}
         >
           <CalendarDays aria-hidden="true" className="size-3.5 shrink-0 text-faint" />
           <span className="flex items-baseline gap-2">
-            <span className="font-mono text-[10px] tracking-wider text-faint uppercase">Jump</span>
+            <span className="hidden font-mono text-[10px] tracking-wider text-faint uppercase sm:inline">
+              Jump
+            </span>
             <span className="tnum font-mono text-[11px] text-ink">{formatDayShort(value)}</span>
           </span>
           <ChevronDown aria-hidden="true" className="ml-auto size-3.5 shrink-0 text-faint" />

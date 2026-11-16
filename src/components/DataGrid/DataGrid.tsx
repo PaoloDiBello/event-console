@@ -6,12 +6,14 @@ import { formatCount, pluralize } from '@/shared/lib/format'
 import { DataGridEmpty } from './DataGridEmpty'
 import { DataGridError } from './DataGridError'
 import { DataGridPagination } from './DataGridPagination'
+import { DataGridScrollFade } from './DataGridScrollFade'
 import { DataGridTable } from './DataGridTable'
 import { DataGridToolbar } from './DataGridToolbar'
 import { useDataGridController } from './hooks/useDataGridController'
 import { useDataGridShortcuts } from './hooks/useDataGridShortcuts'
 import { useGridScrollReset } from './hooks/useGridScrollReset'
 import { useRowReveal } from './hooks/useRowReveal'
+import { useScrollEdges } from './hooks/useScrollEdges'
 import { DEFAULT_PAGE_SIZE_OPTIONS, type DataGridProps } from './types'
 
 const DEFAULT_ROW_HEIGHT = 44
@@ -83,6 +85,7 @@ export function DataGrid<TData>({
 
   useGridScrollReset({ scrollRef, resetKey: grid.resetKey, skipRef: skipScrollResetRef })
   useDataGridShortcuts(searchRef, scrollRef)
+  const scrollEdges = useScrollEdges(scrollRef)
 
   // One tab stop for the whole page of rows, moved with the arrow keys. A new
   // page, sort or filter invalidates the old position, so it starts at the top.
@@ -138,46 +141,50 @@ export function DataGrid<TData>({
         {error ? (
           <DataGridError error={error} onRetry={onRetry} />
         ) : (
-          <div
-            ref={scrollRef}
-            aria-busy={isLoading}
-            className="scrollbar-thin h-full overflow-auto"
-          >
-            <DataGridTable
-              table={grid.table}
-              visibleColumns={grid.visibleColumns}
-              caption={caption}
-              filteredCount={grid.filteredCount}
-              sorting={grid.sorting}
-              isLoading={isLoading}
-              showFilterRow={grid.showFilterRow}
-              rows={grid.rows}
-              virtualRows={virtualRows}
-              paddingTop={paddingTop}
-              paddingBottom={paddingBottom}
-              rowHeight={rowHeight}
-              pageIndex={grid.pagination.pageIndex}
-              pageSize={grid.pagination.pageSize}
-              getRowClassName={getRowClassName}
-              activeRowIndex={activeRowIndex}
-              onRowFocus={focusRowAt}
-              onRowActivate={onRowActivate}
-              onSort={grid.sortByColumn}
-              onFilterChange={grid.filterByColumn}
-              emptyState={
-                <DataGridEmpty
-                  totalRows={data.length}
-                  hasSearch={grid.hasSearch}
-                  hasFilters={grid.hasFilters}
-                  emptyTitle={emptyTitle}
-                  emptyHint={emptyHint}
-                  onClearSearch={grid.clearSearch}
-                  onClearFilters={grid.clearColumnFilters}
-                  onClearAll={grid.clearAll}
-                />
-              }
-            />
-          </div>
+          <>
+            <div
+              ref={scrollRef}
+              aria-busy={isLoading}
+              className="scrollbar-thin h-full overflow-auto"
+            >
+              <DataGridTable
+                table={grid.table}
+                visibleColumns={grid.visibleColumns}
+                caption={caption}
+                filteredCount={grid.filteredCount}
+                sorting={grid.sorting}
+                isLoading={isLoading}
+                showFilterRow={grid.showFilterRow}
+                rows={grid.rows}
+                virtualRows={virtualRows}
+                paddingTop={paddingTop}
+                paddingBottom={paddingBottom}
+                rowHeight={rowHeight}
+                pageIndex={grid.pagination.pageIndex}
+                pageSize={grid.pagination.pageSize}
+                getRowClassName={getRowClassName}
+                activeRowIndex={activeRowIndex}
+                onRowFocus={focusRowAt}
+                onRowActivate={onRowActivate}
+                onSort={grid.sortByColumn}
+                onFilterChange={grid.filterByColumn}
+                emptyState={
+                  <DataGridEmpty
+                    totalRows={data.length}
+                    hasSearch={grid.hasSearch}
+                    hasFilters={grid.hasFilters}
+                    emptyTitle={emptyTitle}
+                    emptyHint={emptyHint}
+                    onClearSearch={grid.clearSearch}
+                    onClearFilters={grid.clearColumnFilters}
+                    onClearAll={grid.clearAll}
+                  />
+                }
+              />
+            </div>
+            {scrollEdges.canScrollLeft ? <DataGridScrollFade side="left" /> : null}
+            {scrollEdges.canScrollRight ? <DataGridScrollFade side="right" /> : null}
+          </>
         )}
       </div>
 

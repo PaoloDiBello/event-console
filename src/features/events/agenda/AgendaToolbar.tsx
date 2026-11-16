@@ -79,20 +79,22 @@ export function AgendaToolbar({
         </div>
 
         <div className="flex items-center gap-1">
-          <button
-            type="button"
-            disabled={jumpDate <= jumpMin}
-            onClick={() => onJumpDateChange(shiftIsoDay(jumpDate, -1))}
-            aria-label="Previous day"
-            title="Previous day"
-            className={buttonClass({
-              variant: 'secondary',
-              size: 'md',
-              className: 'size-9 p-0 justify-center disabled:opacity-30',
-            })}
-          >
-            <ChevronLeft aria-hidden="true" className="size-4" />
-          </button>
+          <div className="hidden items-center gap-1 sm:flex">
+            <button
+              type="button"
+              disabled={jumpDate <= jumpMin}
+              onClick={() => onJumpDateChange(shiftIsoDay(jumpDate, -1))}
+              aria-label="Previous day"
+              title="Previous day"
+              className={buttonClass({
+                variant: 'secondary',
+                size: 'md',
+                className: 'size-9 p-0 justify-center disabled:opacity-30',
+              })}
+            >
+              <ChevronLeft aria-hidden="true" className="size-4" />
+            </button>
+          </div>
 
           <AgendaDatePicker
             value={jumpDate}
@@ -101,20 +103,22 @@ export function AgendaToolbar({
             onChange={onJumpDateChange}
           />
 
-          <button
-            type="button"
-            disabled={jumpDate >= jumpMax}
-            onClick={() => onJumpDateChange(shiftIsoDay(jumpDate, 1))}
-            aria-label="Next day"
-            title="Next day"
-            className={buttonClass({
-              variant: 'secondary',
-              size: 'md',
-              className: 'size-9 p-0 justify-center disabled:opacity-30',
-            })}
-          >
-            <ChevronRight aria-hidden="true" className="size-4" />
-          </button>
+          <div className="hidden items-center gap-1 sm:flex">
+            <button
+              type="button"
+              disabled={jumpDate >= jumpMax}
+              onClick={() => onJumpDateChange(shiftIsoDay(jumpDate, 1))}
+              aria-label="Next day"
+              title="Next day"
+              className={buttonClass({
+                variant: 'secondary',
+                size: 'md',
+                className: 'size-9 p-0 justify-center disabled:opacity-30',
+              })}
+            >
+              <ChevronRight aria-hidden="true" className="size-4" />
+            </button>
+          </div>
         </div>
 
         {jumpDate !== today ? (
