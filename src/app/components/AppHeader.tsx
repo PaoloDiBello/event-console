@@ -151,10 +151,10 @@ export function AppHeader({ onNewEvent, onOpenShortcuts }: AppHeaderProps) {
             className={buttonClass({
               variant: 'ghost',
               size: 'md',
-              className: 'w-9 px-0 sm:w-auto sm:px-2.5',
+              className: 'w-10 px-0 sm:w-auto sm:px-2.5',
             })}
           >
-            <Keyboard aria-hidden="true" className="size-5 sm:size-4" />
+            <Keyboard aria-hidden="true" className="size-6 sm:size-4" />
             <span className="hidden sm:inline">Shortcuts</span>
             <Kbd
               ariaHidden
