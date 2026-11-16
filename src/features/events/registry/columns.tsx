@@ -60,6 +60,7 @@ export function createEventColumns(
       accessorKey: 'title',
       header: 'Event',
       sortingFn: 'text',
+      size: 268,
       meta: { filter: 'text', width: 268 },
       cell: ({ row }) => (
         <div className="min-w-0">
