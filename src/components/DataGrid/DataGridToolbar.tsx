@@ -1,5 +1,5 @@
 import type { Table } from '@tanstack/react-table'
-import { Loader2 } from 'lucide-react'
+import { Download, Loader2 } from 'lucide-react'
 import type { ReactNode, RefObject } from 'react'
 import { toolbarClass } from '@/components/ui/surfaces'
 import { DataGridColumnMenu } from './DataGridColumnMenu'
@@ -18,6 +18,7 @@ interface DataGridToolbarProps<TData> {
   searchPlaceholder?: string
   searchRef: RefObject<HTMLInputElement | null>
   toolbarActions?: ReactNode
+  onExport?: () => void
   disabled?: boolean
 }
 
@@ -32,6 +33,7 @@ export function DataGridToolbar<TData>({
   searchPlaceholder,
   searchRef,
   toolbarActions,
+  onExport,
   disabled = false,
 }: DataGridToolbarProps<TData>) {
   return (
@@ -55,6 +57,19 @@ export function DataGridToolbar<TData>({
         </div>
 
         <div className="ml-auto flex items-center gap-2">
+          {onExport ? (
+            <button
+              type="button"
+              onClick={onExport}
+              disabled={disabled}
+              aria-label="Export filtered rows to CSV"
+              title="Export filtered rows to CSV"
+              className="inline-flex h-9 items-center gap-1.5 rounded-sm border border-line bg-raised px-2.5 text-xs text-muted transition-colors hover:border-line-strong hover:text-ink disabled:opacity-50"
+            >
+              <Download aria-hidden="true" className="size-3.5" />
+              <span className="hidden sm:inline">Export</span>
+            </button>
+          ) : null}
           {toolbarActions}
           <DataGridColumnMenu table={table} disabled={disabled} />
         </div>

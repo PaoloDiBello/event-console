@@ -44,6 +44,7 @@ export function DataGrid<TData>({
   onRowActivate,
   focusRowId,
   toolbarActions,
+  onExport,
   rowHeight = DEFAULT_ROW_HEIGHT,
 }: DataGridProps<TData>) {
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -139,6 +140,7 @@ export function DataGrid<TData>({
         searchPlaceholder={searchPlaceholder}
         searchRef={searchRef}
         toolbarActions={toolbarActions}
+        onExport={onExport}
         disabled={isLoading || Boolean(error)}
       />
 

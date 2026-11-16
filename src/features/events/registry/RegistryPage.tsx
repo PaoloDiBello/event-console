@@ -13,6 +13,7 @@ import {
   type RegistryView,
 } from './registryView'
 import { useRegistryStats } from './useRegistryStats'
+import { exportToCsv } from '@/shared/lib/exportCsv'
 
 interface RegistryPageProps {
   onEdit: (event: EventRecord) => void
@@ -95,6 +96,24 @@ export function RegistryPage({ onEdit, highlightedId }: RegistryPageProps) {
     [onEdit, stats.owners, stats.locations],
   )
 
+  const handleExport = useCallback(() => {
+    exportToCsv(
+      events,
+      [
+        { id: 'title', header: 'Event', accessor: (e) => e.title },
+        { id: 'when', header: 'When', accessor: (e) => `${e.date} ${String(e.startMinute).padStart(4, '0')}` },
+        { id: 'category', header: 'Category', accessor: (e) => e.category },
+        { id: 'status', header: 'Status', accessor: (e) => e.status },
+        { id: 'priority', header: 'Priority', accessor: (e) => e.priority },
+        { id: 'owner', header: 'Owner', accessor: (e) => e.owner },
+        { id: 'duration', header: 'Length (min)', accessor: (e) => String(e.durationMin) },
+        { id: 'location', header: 'Location', accessor: (e) => e.location },
+        { id: 'notes', header: 'Notes', accessor: (e) => e.notes ?? '' },
+      ],
+      'events.csv',
+    )
+  }, [events])
+
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
       <RegistryHeader
@@ -131,6 +150,7 @@ export function RegistryPage({ onEdit, highlightedId }: RegistryPageProps) {
           // column does, and a facet nobody can reach is not a facet.
           initialColumnVisibility={{ notes: false }}
           onRowActivate={onEdit}
+          onExport={handleExport}
           focusRowId={highlightedId}
           emptyTitle="No events in the registry"
           emptyHint="Load the dataset, or add the first event with the New event button."

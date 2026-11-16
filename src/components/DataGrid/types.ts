@@ -88,5 +88,6 @@ export interface DataGridProps<TData> {
   /** Row to reveal (e.g. the event just created): jumps to its page and scrolls it into view. */
   focusRowId?: string | null
   toolbarActions?: ReactNode
+  onExport?: () => void
   rowHeight?: number
 }
