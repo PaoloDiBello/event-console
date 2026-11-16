@@ -22,6 +22,8 @@ import type { DataGridColumn, DataGridViewState } from '../types'
  */
 export const SEARCH_DEBOUNCE_MS = 200
 
+type ColumnSizingState = Record<string, number>
+
 interface DataGridControllerOptions<TData> {
   data: TData[]
   columns: DataGridColumn<TData>[]
@@ -67,6 +69,7 @@ export function useDataGridController<TData>({
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
     initialColumnVisibility ?? {},
   )
+  const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({})
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: initialPageIndex,
     pageSize: initialPageSize,
@@ -150,7 +153,7 @@ export function useDataGridController<TData>({
     data: pageRows,
     columns,
     getRowId,
-    state: { sorting, columnFilters, globalFilter, columnVisibility, pagination },
+    state: { sorting, columnFilters, globalFilter, columnVisibility, pagination, columnSizing },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
@@ -168,6 +171,7 @@ export function useDataGridController<TData>({
     // filter/sort controls so they are easy to reason about.
     autoResetPageIndex: false,
     getCoreRowModel: getCoreRowModel(),
+    onColumnSizingChange: setColumnSizing,
     enableColumnResizing: true,
     columnResizeMode: 'onChange',
   })
