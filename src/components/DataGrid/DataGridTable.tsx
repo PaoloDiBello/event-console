@@ -76,9 +76,7 @@ export function DataGridTable<TData>({
         {visibleColumns.map((column) => (
           <col
             key={column.id}
-            style={
-              column.columnDef.meta?.width ? { width: column.columnDef.meta.width } : undefined
-            }
+            style={{ width: column.getSize() }}
           />
         ))}
       </colgroup>

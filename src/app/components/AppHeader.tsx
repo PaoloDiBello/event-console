@@ -154,7 +154,7 @@ export function AppHeader({ onNewEvent, onOpenShortcuts }: AppHeaderProps) {
               className: 'w-9 px-0 sm:w-auto sm:px-2.5',
             })}
           >
-            <Keyboard aria-hidden="true" className="size-4" />
+            <Keyboard aria-hidden="true" className="size-5 sm:size-4" />
             <span className="hidden sm:inline">Shortcuts</span>
             <Kbd
               ariaHidden
