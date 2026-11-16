@@ -168,6 +168,8 @@ export function useDataGridController<TData>({
     // filter/sort controls so they are easy to reason about.
     autoResetPageIndex: false,
     getCoreRowModel: getCoreRowModel(),
+    enableColumnResizing: true,
+    columnResizeMode: 'onChange',
   })
 
   const rows = table.getRowModel().rows

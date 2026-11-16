@@ -52,37 +52,49 @@ export function DataGridHeader<TData>({
                 data-pinned={pinned ? '' : undefined}
                 aria-sort={sorted === 'asc' ? 'ascending' : sorted === 'desc' ? 'descending' : 'none'}
                 className={cn(
-                  'sticky top-0 z-20 h-10 border-b border-line bg-surface p-0',
+                  'sticky top-0 z-20 h-10 border-b border-line bg-surface p-0 relative',
                   'font-mono text-[10px] font-medium tracking-[0.14em] text-faint uppercase',
                   pinned && `${pinnedColumnClass} sm:z-30`,
                 )}
               >
                 {header.isPlaceholder ? null : (
-                  <button
-                    type="button"
-                    disabled={!header.column.getCanSort() || isLoading}
-                    onClick={(event) => onSort(header.column, event)}
-                    className={cn(
-                      'flex h-10 w-full items-center gap-1.5 px-3 text-inherit',
-                      align === 'right' && 'justify-end',
-                      align === 'center' && 'justify-center',
-                      header.column.getCanSort()
-                        ? 'cursor-pointer transition-colors hover:text-ink'
-                        : 'cursor-default',
-                    )}
-                  >
-                    <span className="truncate">
-                      {flexRender(header.column.columnDef.header, header.getContext())}
-                    </span>
-                    {filtered ? (
-                      <span
-                        aria-hidden="true"
-                        title="Filtered"
-                        className="size-1.5 shrink-0 rounded-full bg-accent"
+                  <>
+                    <button
+                      type="button"
+                      disabled={!header.column.getCanSort() || isLoading}
+                      onClick={(event) => onSort(header.column, event)}
+                      className={cn(
+                        'flex h-10 w-full items-center gap-1.5 px-3 text-inherit',
+                        align === 'right' && 'justify-end',
+                        align === 'center' && 'justify-center',
+                        header.column.getCanSort()
+                          ? 'cursor-pointer transition-colors hover:text-ink'
+                          : 'cursor-default',
+                      )}
+                    >
+                      <span className="truncate">
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                      </span>
+                      {filtered ? (
+                        <span
+                          aria-hidden="true"
+                          title="Filtered"
+                          className="size-1.5 shrink-0 rounded-full bg-accent"
+                        />
+                      ) : null}
+                      {header.column.getCanSort() ? <SortIcon direction={sorted} /> : null}
+                    </button>
+                    {header.column.getCanResize() ? (
+                      <div
+                        role="separator"
+                        aria-orientation="vertical"
+                        onMouseDown={header.getResizeHandler()}
+                        onTouchStart={header.getResizeHandler()}
+                        onClick={(event) => event.stopPropagation()}
+                        className="absolute right-0 top-0 h-full w-1 cursor-col-resize select-none bg-transparent hover:bg-line-strong"
                       />
                     ) : null}
-                    {header.column.getCanSort() ? <SortIcon direction={sorted} /> : null}
-                  </button>
+                  </>
                 )}
               </th>
             )
