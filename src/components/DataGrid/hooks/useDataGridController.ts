@@ -15,7 +15,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
 import { buildRows, collectFacetCounts } from '../model'
 import { activeFilterCount, filterChips } from '../utils'
-import type { DataGridColumn, DataGridViewState } from '../types'
+import type { DataGridColumn, DataGridViewState, SelectionSummary } from '../types'
 
 /**
  * Long enough to swallow a burst of keystrokes, short enough to feel live.
@@ -261,6 +261,25 @@ export function useDataGridController<TData>({
       ),
     [sizedColumns, columnFilters],
   )
+  const selectedIdsInGrid = useMemo(
+    () =>
+      selectedRowIds ??
+      Object.keys(internalRowSelection).filter((id) => internalRowSelection[id]),
+    [internalRowSelection, selectedRowIds],
+  )
+
+  // Walk the filtered rows only when something is selected, and only when that
+  // selection or the result set changed: an idle grid pays nothing for this.
+  const selectionSummary = useMemo<SelectionSummary>(() => {
+    if (selectedIdsInGrid.length === 0) return { selected: 0, inView: 0 }
+    const wanted = new Set(selectedIdsInGrid)
+    let inView = 0
+    for (const row of displayRows) {
+      if (wanted.has(getRowId(row))) inView += 1
+    }
+    return { selected: selectedIdsInGrid.length, inView }
+  }, [displayRows, getRowId, selectedIdsInGrid])
+
   const hasSearch = globalFilter.length > 0
   const hasFilters = filterCount > 0
   const showFilterRow = useMemo(
@@ -277,6 +296,7 @@ export function useDataGridController<TData>({
       sorting,
       pageIndex: pagination.pageIndex,
       pageSize: pagination.pageSize,
+      columnVisibility,
     })
   }, [
     globalFilter,
@@ -284,6 +304,7 @@ export function useDataGridController<TData>({
     sorting,
     pagination.pageIndex,
     pagination.pageSize,
+    columnVisibility,
     onViewStateChange,
   ])
 
@@ -422,7 +443,8 @@ export function useDataGridController<TData>({
     rangeStart,
     rangeEnd,
     rowSelection,
-    selectedRowIds: Object.keys(rowSelection).filter((id) => rowSelection[id]),
+    selectedRowIds: selectedIdsInGrid,
+    selectionSummary,
     clearRowSelection: () => setRowSelection({}),
   }
 }

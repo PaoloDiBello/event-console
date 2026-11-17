@@ -42,9 +42,11 @@ export function DataGrid<TData>({
   initialColumnVisibility,
   selectedRowIds,
   onSelectionChange,
+  onSelectionSummaryChange,
   pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS,
   emptyTitle = 'Nothing here yet',
   emptyHint = 'Rows will appear here once data is available.',
+  emptyAction,
   getRowClassName,
   onRowActivate,
   focusRowId,
@@ -94,6 +96,12 @@ export function DataGrid<TData>({
     scrollRef,
     virtualizer: rowVirtualizer,
   })
+
+  // The page renders the selection bar, so it needs the split between what is
+  // selected and what is still visible under the applied filters.
+  useEffect(() => {
+    onSelectionSummaryChange?.(grid.selectionSummary)
+  }, [grid.selectionSummary, onSelectionSummaryChange])
 
   useGridScrollReset({ scrollRef, resetKey: grid.resetKey, skipRef: skipScrollResetRef })
   useDataGridShortcuts(searchRef, scrollRef)
@@ -206,6 +214,7 @@ export function DataGrid<TData>({
                     hasFilters={grid.hasFilters}
                     emptyTitle={emptyTitle}
                     emptyHint={emptyHint}
+                    emptyAction={emptyAction}
                     onClearSearch={grid.clearSearch}
                     onClearFilters={grid.clearColumnFilters}
                     onClearAll={grid.clearAll}

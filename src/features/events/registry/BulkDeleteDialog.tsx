@@ -10,6 +10,8 @@ interface BulkDeleteDialogProps {
   open: boolean
   /** The selected records. Only the first few are previewed. */
   events: readonly EventRecord[]
+  /** Selected records the current filters no longer show. */
+  outsideCount?: number
   onOpenChange: (open: boolean) => void
   onConfirm: () => void
 }
@@ -25,6 +27,7 @@ const PREVIEW_LIMIT = 5
 export function BulkDeleteDialog({
   open,
   events,
+  outsideCount = 0,
   onOpenChange,
   onConfirm,
 }: BulkDeleteDialogProps) {
@@ -65,6 +68,9 @@ export function BulkDeleteDialog({
                 </Dialog.Title>
                 <Dialog.Description className="mt-1 text-xs text-muted">
                   {count === 1 ? 'It is' : 'They are'} removed from the registry and the agenda.
+                  {outsideCount > 0
+                    ? ` ${outsideCount} of them ${outsideCount === 1 ? 'is' : 'are'} outside the current search and filters.`
+                    : ''}{' '}
                   Undo stays available in the toast for a few seconds.
                 </Dialog.Description>
               </div>

@@ -1,4 +1,5 @@
 import { Inbox, SearchX, SlidersHorizontal } from 'lucide-react'
+import type { ReactNode } from 'react'
 import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { formatCount, pluralize } from '@/shared/lib/format'
@@ -9,6 +10,8 @@ interface DataGridEmptyProps {
   hasFilters: boolean
   emptyTitle: string
   emptyHint: string
+  /** The way out when there is no data at all, rather than a narrowed view. */
+  emptyAction?: ReactNode
   onClearSearch: () => void
   onClearFilters: () => void
   onClearAll: () => void
@@ -53,6 +56,7 @@ export function DataGridEmpty({
   hasFilters,
   emptyTitle,
   emptyHint,
+  emptyAction,
   onClearSearch,
   onClearFilters,
   onClearAll,
@@ -72,7 +76,11 @@ export function DataGridEmpty({
       action={
         hasQuery ? (
           <Button onClick={onClear}>{copy.actionLabel}</Button>
-        ) : undefined
+        ) : (
+          // Pointing at a button in the page header is not an action: the empty
+          // state has to offer the way out itself.
+          emptyAction
+        )
       }
     />
   )

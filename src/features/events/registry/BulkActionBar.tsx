@@ -3,6 +3,8 @@ import { Button } from '@/components/ui/Button'
 
 interface BulkActionBarProps {
   count: number
+  /** Selected rows the current search and filters no longer show. */
+  outsideCount?: number
   onClear: () => void
   onDelete: () => void
 }
@@ -16,7 +18,7 @@ interface BulkActionBarProps {
  * announces the change, because the selection can move from the header checkbox
  * or from a row that does not have focus.
  */
-export function BulkActionBar({ count, onClear, onDelete }: BulkActionBarProps) {
+export function BulkActionBar({ count, outsideCount = 0, onClear, onDelete }: BulkActionBarProps) {
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-3 z-30 flex justify-center px-3">
       <div
@@ -34,9 +36,20 @@ export function BulkActionBar({ count, onClear, onDelete }: BulkActionBarProps) 
           <span aria-hidden="true" className="hidden sm:inline">
             selected
           </span>
+          {/* The selection outlives a filter change, so say when part of it is
+              no longer on screen. Hidden on a phone, where the confirm dialog
+              carries the same warning and the bar has no room for both. */}
+          {outsideCount > 0 ? (
+            <span aria-hidden="true" className="hidden text-faint sm:inline">
+              · {outsideCount} outside this view
+            </span>
+          ) : null}
         </span>
         <span role="status" className="sr-only">
           {count} {count === 1 ? 'row' : 'rows'} selected
+          {outsideCount > 0
+            ? `, ${outsideCount} of them outside the current search and filters`
+            : ''}
         </span>
 
         <span aria-hidden="true" className="mx-1 h-5 w-px bg-line" />

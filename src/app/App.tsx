@@ -49,6 +49,7 @@ export function App() {
     handleSubmit,
     handleDelete,
     handleBulkDelete,
+    dismissSuccess,
     undoAction,
   } = useEventEditor()
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
@@ -118,7 +119,7 @@ export function App() {
 
       <ShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
 
-      <AppToast message={success} action={undoAction} />
+      <AppToast message={success} action={undoAction} onDismiss={dismissSuccess} />
     </div>
   )
 }

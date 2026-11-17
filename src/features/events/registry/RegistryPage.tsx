@@ -1,18 +1,22 @@
+import type { VisibilityState } from '@tanstack/react-table'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   DataGrid,
   type DataGridColumn,
   type DataGridViewState,
+  type SelectionSummary,
 } from '@/components/DataGrid'
+import { Button } from '@/components/ui/Button'
 import { Checkbox } from '@/components/ui/Checkbox'
 import type { EventRecord } from '@/features/events/model'
 import { useEventFeed } from '@/features/events/store'
 import { exportToCsv } from '@/shared/lib/exportCsv'
+import { usePersistentState } from '@/shared/hooks/usePersistentState'
 import { BulkActionBar } from './BulkActionBar'
 import { BulkDeleteDialog } from './BulkDeleteDialog'
 import { DensityMenu } from './DensityMenu'
-import { ROW_HEIGHT, type RowDensity } from './density'
+import { isRowDensity, ROW_HEIGHT, type RowDensity } from './density'
 import { createEventColumns, eventGlobalFilter } from './columns'
 import { RegistryHeader } from './RegistryHeader'
 import { SortMenu } from './SortMenu'
@@ -37,6 +41,27 @@ function getEventRowId(event: EventRecord) {
   return event.id
 }
 
+/**
+ * Where "my console" lives. Versioned so a future shape can move on without
+ * reading the old one, and separate from the URL: search, filters, sort and
+ * page are shareable view state, density and columns are personal taste.
+ */
+const DENSITY_KEY = 'event-console:v1:registry.density'
+const COLUMNS_KEY = 'event-console:v1:registry.columns'
+
+/**
+ * Notes is long-form and relevance has no cells, so both start hidden.
+ * Location stays visible: its filter only exists where the column does.
+ */
+const DEFAULT_COLUMN_VISIBILITY: VisibilityState = { notes: false, relevance: false }
+
+function isColumnVisibility(value: unknown): boolean {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false
+  return Object.values(value as Record<string, unknown>).every(
+    (entry) => typeof entry === 'boolean',
+  )
+}
+
 export function RegistryPage({ onEdit, onBulkDelete, highlightedId }: RegistryPageProps) {
   const { events, status, error, isLoading, reload, simulateError } = useEventFeed()
   const navigate = useNavigate()
@@ -54,6 +79,15 @@ export function RegistryPage({ onEdit, onBulkDelete, highlightedId }: RegistryPa
   // not just hide the action bar. The grid reports every toggle back here.
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [confirmOpen, setConfirmOpen] = useState(false)
+  // What the last reload kept: the columns you chose, not the ones we guessed.
+  const [columnVisibility, setColumnVisibility] = usePersistentState<VisibilityState>(
+    COLUMNS_KEY,
+    DEFAULT_COLUMN_VISIBILITY,
+    isColumnVisibility,
+  )
+  // The grid reports how much of the selection the current filters still show,
+  // so the bulk bar and the confirm dialog can say what the action will touch.
+  const [selection, setSelection] = useState<SelectionSummary>({ selected: 0, inView: 0 })
 
   const viewRef = useRef<RegistryView>(seed)
   const lastUrlRef = useRef(searchParams.toString())
@@ -95,8 +129,9 @@ export function RegistryPage({ onEdit, onBulkDelete, highlightedId }: RegistryPa
         pageIndex: state.pageIndex,
         pageSize: state.pageSize,
       })
+      setColumnVisibility(state.columnVisibility)
     },
-    [mirrorView],
+    [mirrorView, setColumnVisibility],
   )
 
   // The metric shows one number, so it may only read as pressed when the
@@ -111,7 +146,11 @@ export function RegistryPage({ onEdit, onBulkDelete, highlightedId }: RegistryPa
   }, [])
 
   const stats = useRegistryStats(events)
-  const [density, setDensity] = useState<RowDensity>('comfortable')
+  const [density, setDensity] = usePersistentState<RowDensity>(
+    DENSITY_KEY,
+    'comfortable',
+    isRowDensity,
+  )
   const columns = useMemo<DataGridColumn<EventRecord>[]>(
     () => [
       {
@@ -169,6 +208,10 @@ export function RegistryPage({ onEdit, onBulkDelete, highlightedId }: RegistryPa
     )
   }, [events])
 
+  // Selected rows that the current search and filters no longer show. The
+  // selection is kept on purpose, so the count has to cover the whole of it.
+  const outsideCount = Math.max(0, selectedIds.length - selection.inView)
+
   const handleBulkDelete = useCallback(() => {
     if (selectedIds.length === 0) return
     setConfirmOpen(true)
@@ -214,19 +257,19 @@ export function RegistryPage({ onEdit, onBulkDelete, highlightedId }: RegistryPa
           columnFilters={columnFilters}
           onColumnFiltersChange={setColumnFilters}
           onViewStateChange={handleViewStateChange}
-          // Location stays visible: its select filter only exists where the
-          // column does, and a facet nobody can reach is not a facet. The
-          // relevance column is sort-only — it has no cells, so it must never
-          // take a column slot in the table.
-          initialColumnVisibility={{ notes: false, relevance: false }}
+          // Seeded from the stored preference, then owned by the grid; every
+          // change is reported back through `onViewStateChange`.
+          initialColumnVisibility={columnVisibility}
           onRowActivate={onEdit}
           onExport={handleExport}
           selectedRowIds={selectedIds}
           onSelectionChange={setSelectedIds}
+          onSelectionSummaryChange={setSelection}
           selectionBar={
             selectedIds.length > 0 ? (
               <BulkActionBar
                 count={selectedIds.length}
+                outsideCount={outsideCount}
                 onClear={() => setSelectedIds([])}
                 onDelete={handleBulkDelete}
               />
@@ -243,7 +286,8 @@ export function RegistryPage({ onEdit, onBulkDelete, highlightedId }: RegistryPa
           }
           focusRowId={highlightedId}
           emptyTitle="No events in the registry"
-          emptyHint="Load the dataset, or add the first event with the New event button."
+          emptyHint="The dataset is empty. Reload it, or create the first event."
+          emptyAction={<Button onClick={reload}>Reload the dataset</Button>}
           getRowClassName={(event) =>
             event.id === highlightedId
               ? 'bg-accent/[0.07] shadow-[inset_2px_0_0_0_var(--color-accent)]'
@@ -255,6 +299,7 @@ export function RegistryPage({ onEdit, onBulkDelete, highlightedId }: RegistryPa
       <BulkDeleteDialog
         open={confirmOpen}
         events={selectedEvents}
+        outsideCount={outsideCount}
         onOpenChange={setConfirmOpen}
         onConfirm={confirmBulkDelete}
       />

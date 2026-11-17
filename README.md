@@ -224,8 +224,11 @@ them still works and still shows a chip.
 
 When the table is wider than its viewport, the grid fades the right edge
 instead of cutting it off, so horizontal overflow reads as something you can
-swipe. The first column is pinned at every width, and in the registry that is
-the 32 px selection gutter: the checkboxes never scroll away from the row they
+swipe.   The empty state offers its own way out — the query variants clear the search or
+  the filters, and an empty data set reloads the dataset in place instead of
+  explaining which header button to press.
+  The first column is pinned at every width, and in the registry that is
+  the 32 px selection gutter: the checkboxes never scroll away from the row they
 belong to, and on a phone that is all the horizontal space pinning costs. The
 left edge needs no fade because nothing ever hides under it.
 
@@ -299,6 +302,11 @@ calendar date, time `HH:mm`, duration bounds).
 - Editing offers **Delete**, which asks first (“Keep event” gets focus).
   Confirming closes the dialog and shows a toast with **Undo**; undo puts the
   event back at the index it was removed from.
+- The toast is dismissible. Only its sentence is the live region: the Undo and
+  Dismiss buttons sit beside it, because an interactive control inside
+  `role="status"` is read out as part of the announcement and is awkward to
+  reach while it plays. Dismissing also drops the undo it carried, so no later
+  click can act on something the user can no longer see.
 
 ## Measured performance
 
@@ -393,6 +401,20 @@ mutations only pay for the sort/filter pass.
   toast + Undo path as the single-event delete, and clearing the selection
   actually unchecks the boxes because the page owns the ids. The checkbox column
   is sized like the utility it is, not like a data column.
+- **A selection that tells the truth.** The selection is kept when the search or
+  filters change, because narrowing the list to check one row should not throw
+  away the twenty already ticked. But an action must not then imply it only
+  touches what is on screen, so the grid walks the filtered rows (only while
+  something is selected) and reports how many of them are still in view. The bar
+  reads **12 selected · 3 outside this view**, its live region says the same in
+  words, and the confirmation adds “3 of them are outside the current search and
+  filters” before the count it is about to delete.
+- **Row density and columns stick.** Both are personal taste rather than
+  shareable view state, so they live in `localStorage` (versioned keys,
+  validated on read, best-effort on write) while search, filters, sort and page
+  stay in the URL. Choosing Compact and hiding Notes used to last until the next
+  reload; now it lasts until you change your mind. A corrupt or stale value falls
+  back to the default instead of handing the virtualizer an unknown row height.
 - **Row density:** one named **Density** menu replaces the old “Comp / Comf /
   Spac” buttons. It spells out Compact, Comfortable and Spacious, previews each
   with a row-count icon and its pixel height, and checks the active choice; the
@@ -469,7 +491,7 @@ src/
     Timeline/                composition, hooks/, rows, model
     ui/                      PageHeader, EmptyState, ErrorState, SelectMenu, Kbd, Button, Checkbox, SearchField, Stat, surfaces
   shared/
-    hooks/                   useGlobalKeydown, useTransientValue
+    hooks/                   useGlobalKeydown, useTransientValue, usePersistentState
     lib/                     dates, formatting, cn, keyboard guards
     test/                    jsdom setup
 ```

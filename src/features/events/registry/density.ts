@@ -7,3 +7,14 @@ export const ROW_HEIGHT: Record<RowDensity, number> = {
   comfortable: 44,
   spacious: 56,
 }
+
+const DENSITIES = Object.keys(ROW_HEIGHT)
+
+/**
+ * Guard for the stored preference. An unknown density would hand the
+ * virtualizer `undefined` and collapse every row to zero height, so a stale or
+ * hand-edited value has to fall back to the default instead.
+ */
+export function isRowDensity(value: unknown): boolean {
+  return typeof value === 'string' && DENSITIES.includes(value)
+}

@@ -172,6 +172,7 @@ src/
     hooks/                          reusable React hooks
       useGlobalKeydown.ts           global shortcut subscription
       useTransientValue.ts          value that clears itself after N ms
+      usePersistentState.ts         validated preference kept in localStorage
     lib/                            cn, dates, formatting, keyboard guards
     test/setup.ts                   jsdom + Testing Library setup
 ```
@@ -317,6 +318,11 @@ page buttons are `h-9`, compact buttons `h-8`, icon buttons `size-9`/`size-8`.
 - `@/shared/lib/keyboard` — `isShortcutBlocked`, `hasCommandModifier`.
 - `@/shared/hooks/useGlobalKeydown` — global shortcut subscription.
 - `@/shared/hooks/useTransientValue` — auto-clearing toast/highlight state.
+- `@/shared/hooks/usePersistentState` — a display preference that survives a
+  reload. View state (search, filters, sort, page) stays in the URL so it can be
+  shared and undone with Back; only taste that no link should carry — row
+  density, column visibility — is stored, and it is validated on read because a
+  stale value must not reach the virtualizer.
 
 Inside `features/events/model`, files import sibling `./types` directly to avoid
 a barrel cycle. Consumers outside the model import the barrel.

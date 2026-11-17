@@ -123,6 +123,16 @@ export function useEventEditor() {
     [deleteEvents, setSuccess],
   )
 
+  /**
+   * Put the toast away. The undo it carried goes with it: an affordance the
+   * user cannot see is worse than no affordance, because a later click would
+   * seem to do something unrelated.
+   */
+  const dismissSuccess = useCallback(() => {
+    setSuccess(null)
+    setUndo(null)
+  }, [setSuccess])
+
   const undoAction = useCallback(() => {
     if (!undo) return
     if (undo.kind === 'delete') {
@@ -177,6 +187,7 @@ export function useEventEditor() {
     handleSubmit,
     handleDelete,
     handleBulkDelete,
+    dismissSuccess,
     /** Undo affordance for the toast, present only after a create, update, or delete. */
     undoAction: undo ? { label: 'Undo', onClick: undoAction } : undefined,
   }

@@ -54,6 +54,20 @@ export interface DataGridViewState {
   sorting: SortingState
   pageIndex: number
   pageSize: number
+  /** Which columns are shown. A display preference, not part of the URL. */
+  columnVisibility: VisibilityState
+}
+
+/**
+ * How much of the selection is inside the applied search and filters.
+ *
+ * The selection survives a filter change on purpose — narrowing the list to
+ * check one row should not throw away the twenty already ticked — but an action
+ * must not then imply it only touches what is on screen.
+ */
+export interface SelectionSummary {
+  selected: number
+  inView: number
 }
 
 export interface DataGridProps<TData> {
@@ -93,6 +107,8 @@ export interface DataGridProps<TData> {
   pageSizeOptions?: readonly number[]
   emptyTitle?: string
   emptyHint?: string
+  /** Offered inside the empty state when there is no result set at all. */
+  emptyAction?: ReactNode
   getRowClassName?: (row: TData) => string
   /**
    * Makes rows a control: clicking a row or pressing Enter/Space on it calls
@@ -112,5 +128,10 @@ export interface DataGridProps<TData> {
    */
   selectedRowIds?: string[]
   onSelectionChange?: (ids: string[]) => void
+  /**
+   * Reports the selected total and how many of those are visible under the
+   * current search and filters, so a bulk action can say what it will touch.
+   */
+  onSelectionSummaryChange?: (summary: SelectionSummary) => void
   rowHeight?: number
 }
