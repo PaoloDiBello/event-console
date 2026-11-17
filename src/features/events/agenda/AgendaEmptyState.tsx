@@ -6,9 +6,18 @@ interface AgendaEmptyStateProps {
   query: string
   atRiskOnly: boolean
   onClearFilters: () => void
+  /** Widens the window; absent when it is already the widest one on offer. */
+  onWiden?: () => void
+  widenLabel?: string
 }
 
-export function AgendaEmptyState({ query, atRiskOnly, onClearFilters }: AgendaEmptyStateProps) {
+export function AgendaEmptyState({
+  query,
+  atRiskOnly,
+  onClearFilters,
+  onWiden,
+  widenLabel = 'Widen the window',
+}: AgendaEmptyStateProps) {
   const filtering = query !== '' || atRiskOnly
   const atRiskOnlyWithoutQuery = atRiskOnly && query === ''
 
@@ -26,13 +35,17 @@ export function AgendaEmptyState({ query, atRiskOnly, onClearFilters }: AgendaEm
       hint={
         filtering
           ? 'Try a different search, show every status, or widen the window.'
-          : 'Widen the window, or add an event with the New event button.'
+          : 'Nothing falls inside this window. Look further ahead, or add an event.'
       }
       action={
         filtering ? (
           <Button onClick={onClearFilters}>
             {atRiskOnlyWithoutQuery ? 'Show every status' : 'Clear filters'}
           </Button>
+        ) : // Same rule as the grid: a state that names the way out has to offer
+        // it, instead of pointing at a control in the toolbar above.
+        onWiden ? (
+          <Button onClick={onWiden}>{widenLabel}</Button>
         ) : undefined
       }
     />

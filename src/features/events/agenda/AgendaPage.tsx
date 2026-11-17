@@ -163,6 +163,14 @@ export function AgendaPage({ onEdit }: AgendaPageProps) {
                 query={query}
                 atRiskOnly={atRiskOnly}
                 onClearFilters={clearFilters}
+                // On the widest window there is nothing left to widen, so the
+                // empty state offers no button rather than a dead one.
+                onWiden={
+                  scope === TIMELINE_SCOPES[TIMELINE_SCOPES.length - 1]
+                    ? undefined
+                    : () => handleScopeChange(TIMELINE_SCOPES[TIMELINE_SCOPES.length - 1]!)
+                }
+                widenLabel={`Widen to ${TIMELINE_SCOPES[TIMELINE_SCOPES.length - 1]} days`}
               />
             }
             toolbar={toolbar}
