@@ -87,14 +87,14 @@ export function AppHeader({ onNewEvent, onOpenShortcuts }: AppHeaderProps) {
           </span>
           <nav
             aria-label="Event views"
-            className="relative grid grid-cols-2 rounded-md border border-line bg-surface/70 p-0.5"
+            className={cn(
+              'relative grid grid-cols-2 rounded-md border border-line bg-canvas p-0.5',
+              'shadow-[inset_0_1px_2px_rgb(0_0_0_/_0.4)]',
+            )}
           >
             {/* One surface slides between the two modes, so the control reads
                 as a lens rather than two adjacent buttons. */}
-            <span
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-0.5 grid grid-cols-2"
-            >
+            <span aria-hidden="true" className="pointer-events-none absolute inset-0.5 grid grid-cols-2">
               <span
                 className={cn(
                   'col-start-1 row-start-1 rounded-[5px] transition-transform duration-200 ease-out motion-reduce:transition-none',
@@ -113,9 +113,14 @@ export function AppHeader({ onNewEvent, onOpenShortcuts }: AppHeaderProps) {
                   aria-keyshortcuts={item.shortcut.toLowerCase()}
                   className={({ isActive }) =>
                     cn(
-                      'relative z-10 inline-flex h-9 items-center justify-center gap-1.5 rounded-[5px] px-2.5 text-[11px] font-medium transition-colors sm:px-3 sm:text-xs',
-                      'focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent',
-                      isActive ? 'text-ink' : 'text-muted hover:text-ink',
+                      // A full 40px target on touch, the tighter 36px elsewhere.
+                      'relative z-10 inline-flex h-10 items-center justify-center gap-1.5 rounded-[5px] px-2.5 text-[11px] transition-colors sm:h-9 sm:px-3 sm:text-xs',
+                      // Inset so the focus ring is drawn inside the track
+                      // instead of being clipped by it.
+                      'focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent',
+                      isActive
+                        ? 'font-semibold text-ink'
+                        : 'font-medium text-muted hover:bg-raised/60 hover:text-ink',
                     )
                   }
                 >
@@ -124,7 +129,7 @@ export function AppHeader({ onNewEvent, onOpenShortcuts }: AppHeaderProps) {
                       <Icon
                         aria-hidden="true"
                         className={cn(
-                          'size-3.5 transition-colors',
+                          'size-4 transition-colors sm:size-3.5',
                           isActive ? 'text-accent' : 'text-faint',
                         )}
                       />

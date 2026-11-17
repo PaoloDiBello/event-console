@@ -17,13 +17,18 @@ export const toolbarClass =
 export const footerClass =
   'flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-line bg-surface/80 px-3 py-2.5 text-xs text-muted'
 
-/** The raised pill used for the selected segment in a view switcher. */
+/**
+ * The selected segment of a switcher: a raised chip, not a tinted one. The
+ * track is recessed (`segmentTrackClass`), so the chip has to sit visibly above
+ * it — border ring, top highlight, drop shadow — or the two read as a box
+ * inside a box and the current choice has to be hunted for.
+ */
 export const selectedSegmentClass =
-  'bg-raised text-ink shadow-[inset_0_0_0_1px_var(--color-line-strong)]'
+  'bg-raised text-ink shadow-[inset_0_0_0_1px_var(--color-line-strong),inset_0_1px_0_rgb(255_255_255_/_0.06),0_1px_2px_rgb(0_0_0_/_0.5)]'
 
-/** Track that holds the segments of a view switcher. */
+/** Track that holds the segments of a view switcher: recessed, not just outlined. */
 export const segmentTrackClass =
-  'flex h-9 items-center rounded-md border border-line bg-canvas p-0.5'
+  'flex h-9 items-center rounded-md border border-line bg-canvas p-0.5 shadow-[inset_0_1px_2px_rgb(0_0_0_/_0.4)]'
 
 /** One segment inside a switcher track. */
 export const segmentClass = 'h-8 rounded-[5px] px-2.5 transition-colors'

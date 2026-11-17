@@ -154,7 +154,12 @@ store, not separate destinations. A shared surface makes that relationship
 visible, gives the active mode one consistent treatment, and keeps both targets
 reachable at 320 px without a navigation drawer. The labels match the page
 headings (“Event registry” / “Agenda”), so the control names the user's mental
-model instead of the widget behind it; the icons carry the representation.
+model instead of the widget behind it; the icons carry the representation. The
+track is recessed and the active lens is a raised chip — ring, top highlight,
+drop shadow, semibold label, accent icon — because on a dark surface a slightly
+lighter fill is not a selection cue you can find at a glance. Segments are 40 px
+tall on a phone and 36 px elsewhere, the focus ring is drawn inside the track so
+it is never clipped, and the same chip marks the agenda's 7/30/45-day window.
 `G` and `T` switch modes from anywhere that is not already capturing text input.
 
 Both pages also share one shell: a page header with two metric cards and the
