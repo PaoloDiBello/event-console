@@ -14,6 +14,7 @@ import {
 } from './registryView'
 import { useRegistryStats } from './useRegistryStats'
 import { useTransientValue } from '@/shared/hooks/useTransientValue'
+import * as Dialog from '@radix-ui/react-dialog'
 import { exportToCsv } from '@/shared/lib/exportCsv'
 
 interface RegistryPageProps {
@@ -95,6 +96,7 @@ export function RegistryPage({ onEdit, highlightedId }: RegistryPageProps) {
 
   const stats = useRegistryStats(events)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [confirmOpen, setConfirmOpen] = useState(false)
   const [density, setDensity] = useState<'compact' | 'comfortable' | 'spacious'>('comfortable')
   const [removedBulk, setRemovedBulk] = useState<{ event: any; index: number }[] | null>(null)
   const [bulkSuccess, setBulkSuccess] = useTransientValue<string>(6000)
@@ -147,11 +149,16 @@ export function RegistryPage({ onEdit, highlightedId }: RegistryPageProps) {
   }, [events])
 
   const handleBulkDelete = useCallback(() => {
+    setConfirmOpen(true)
+  }, [])
+
+  const confirmBulkDelete = useCallback(() => {
     if (selectedIds.length === 0) return
     const removed = deleteEvents(selectedIds)
     setRemovedBulk(removed)
     setBulkSuccess(`${removed.length} event${removed.length === 1 ? '' : 's'} deleted.`)
     setSelectedIds([])
+    setConfirmOpen(false)
   }, [selectedIds, deleteEvents, setBulkSuccess])
 
   const undoBulkDelete = useCallback(() => {
@@ -246,6 +253,37 @@ export function RegistryPage({ onEdit, highlightedId }: RegistryPageProps) {
           }
         />
       </div>
+
+      <Dialog.Root open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm" />
+          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[90vw] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg border border-line bg-surface p-6 shadow-lg">
+            <Dialog.Title className="text-base font-semibold text-ink">
+              Delete {selectedIds.length} event{selectedIds.length === 1 ? '' : 's'}?
+            </Dialog.Title>
+            <Dialog.Description className="mt-2 text-sm text-muted">
+              This action can be undone with the Undo button that appears after deletion.
+            </Dialog.Description>
+            <div className="mt-5 flex justify-end gap-2">
+              <Dialog.Close asChild>
+                <button
+                  type="button"
+                  className="rounded-md border border-line px-3 py-1.5 text-sm text-muted hover:text-ink"
+                >
+                  Cancel
+                </button>
+              </Dialog.Close>
+              <button
+                type="button"
+                onClick={confirmBulkDelete}
+                className="rounded-md bg-destructive px-3 py-1.5 text-sm font-medium text-white hover:bg-destructive/90"
+              >
+                Delete
+              </button>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
     </div>
   )
 }
