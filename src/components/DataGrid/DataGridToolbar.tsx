@@ -89,7 +89,7 @@ export function DataGridToolbar<TData>({
               disabled={disabled}
               aria-label="Export filtered rows to CSV"
               title="Export filtered rows to CSV"
-              className="inline-flex h-9 items-center gap-1.5 rounded-sm border border-line bg-raised px-2.5 text-xs text-muted transition-colors hover:border-line-strong hover:text-ink disabled:opacity-50"
+              className="inline-flex h-9 w-9 items-center justify-center gap-1.5 rounded-sm border border-line bg-raised px-0 text-xs text-muted transition-colors hover:border-line-strong hover:text-ink disabled:opacity-50 sm:w-auto sm:px-2.5"
             >
               <Download aria-hidden="true" className="size-3.5" />
               <span className="hidden sm:inline">Export</span>

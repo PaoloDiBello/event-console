@@ -179,8 +179,17 @@ Columns one keeps an accent dot while the table is hiding columns) so all five
 panel controls share a single row down to 320 px; Reload and the overflow menu
 wrap as one right-aligned pair instead of stranding the “…” on its own line;
 the agenda keeps its previous/next day buttons — full-size 40 px targets — and
-drops the date picker's “Jump” label. Metric cards are `shrink-0` and their row
-wraps: a 320 px header shows both numbers whole rather than half of “AT RISK”.
+drops the date picker's “Jump” label. Sort, Density and Columns are uniform
+36 px tools there, and an applied filter is a dot on the Filters button rather
+than a number — a badge was enough to push Columns onto a second row at 320 px.
+The chip strip drops its “Filters” prefix at that width so the first chip and
+“Clear all” stay on one line.
+
+A phone header reads title, then its two icon actions at the right edge, then
+the metric cards as an even two-up row filling the panel width; from `sm` up it
+is the single row of title, cards and actions. Cards are `shrink-0`, so nothing
+is clipped to its label — the window metric says “45 days” instead of “Next 45
+days” to buy that room, with the calendar icon and card title carrying “next”.
 
 Below `md` the grid stops pretending it has room for a desktop header. The
 filter row — one control per column, a few dozen pixels high — is replaced by a
@@ -251,6 +260,11 @@ selected.
 field state; Zod validates the schema (title required, date required and a real
 calendar date, time `HH:mm`, duration bounds).
 
+- Nothing is validated until **Create event** / **Save changes** is pressed;
+  from then on the fields re-validate as they are edited. Blur validation cannot
+  tell “I finished with this field” from “focus moved because I clicked the X”,
+  and with the title auto-focused the second reading made the close button look
+  like it was demanding a title.
 - Submit runs validation, focuses the **first invalid field**, and keeps the
   dialog open.
 - Closing a dirty form opens a second confirmation step (“Keep editing” /

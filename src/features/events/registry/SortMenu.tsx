@@ -61,7 +61,10 @@ export function SortMenu({ value, onValueChange }: SortMenuProps) {
           type="button"
           aria-label={`Sort: ${current?.label ?? 'custom'}`}
           title={current ? `Sorted by ${current.label}` : 'Choose a sort order'}
-          className={buttonClass({ size: 'md', className: 'gap-2 px-2 sm:px-3' })}
+          className={buttonClass({
+            size: 'md',
+            className: 'w-9 justify-center gap-2 px-0 sm:w-auto sm:px-3',
+          })}
         >
           <ArrowUpDown aria-hidden="true" className="size-3.5" />
           {/* Icon-only on a phone: the label is in the accessible name, and the

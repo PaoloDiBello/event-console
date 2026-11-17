@@ -25,7 +25,9 @@ export function DataGridFilterChips({
 
   return (
     <div className="flex flex-wrap items-center gap-1.5 border-b border-line/60 bg-surface/80 px-3 py-2">
-      <span className="mr-1 font-mono text-[10px] tracking-[0.14em] text-faint uppercase">
+      {/* The strip is already under the Filters button; on a phone the word
+          costs the width the first chip needs to stay on one line. */}
+      <span className="mr-1 hidden font-mono text-[10px] tracking-[0.14em] text-faint uppercase sm:inline">
         Filters
       </span>
       {chips.map((chip) => (

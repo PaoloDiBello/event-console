@@ -53,9 +53,18 @@ export function DataGridFilterPanel<TData>({
           <SlidersHorizontal aria-hidden="true" className="size-3.5" />
           <span>Filters</span>
           {activeCount > 0 ? (
-            <span className="tnum inline-flex min-w-4 items-center justify-center rounded-full bg-accent px-1 font-mono text-[10px] font-semibold text-canvas">
-              {activeCount}
-            </span>
+            <>
+              {/* A dot, not a number, on a phone: the badge widened the button
+                  enough to push Columns onto a second row at 320px, and the
+                  count is in the accessible name and the chip strip below. */}
+              <span
+                aria-hidden="true"
+                className="size-1.5 rounded-full bg-accent sm:hidden"
+              />
+              <span className="tnum hidden min-w-4 items-center justify-center rounded-full bg-accent px-1 font-mono text-[10px] font-semibold text-canvas sm:inline-flex">
+                {activeCount}
+              </span>
+            </>
           ) : null}
         </button>
       </Dialog.Trigger>

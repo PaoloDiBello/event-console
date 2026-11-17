@@ -36,7 +36,10 @@ export function DataGridColumnMenu<TData>({
           type="button"
           disabled={disabled}
           aria-label={`Columns, ${visibleCount} of ${hideableColumns.length} visible`}
-          className={buttonClass({ size: 'md', className: 'relative gap-2 px-2 sm:px-3' })}
+          className={buttonClass({
+            size: 'md',
+            className: 'relative w-9 justify-center gap-2 px-0 sm:w-auto sm:px-3',
+          })}
         >
           <Columns3 aria-hidden="true" className="size-3.5" />
           <span className="hidden sm:inline">Columns</span>

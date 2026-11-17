@@ -25,9 +25,9 @@ export function AgendaHeader({
       title="Agenda"
       description={`The next ${scope} days, grouped by day.`}
       actions={
-        // Same two metrics, same cards as the registry header — including the
-        // wrap, so neither label is cut on a narrow screen.
-        <div className="flex flex-wrap items-center gap-2">
+        // Same two metrics, same cards, and the same even pair on a phone as
+        // the registry header, so neither label is cut or left hugging the edge.
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:items-center">
           <Stat
             icon={<CalendarRange aria-hidden="true" className="size-4" />}
             label="In window"

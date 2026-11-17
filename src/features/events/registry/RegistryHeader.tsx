@@ -35,39 +35,13 @@ export function RegistryHeader({
       title="Event registry"
       description="Every meeting, deploy, incident and release, filtered in your browser."
       actions={
-        <>
-          {/* Peer metrics: same card, same height, on both views. The trailing
-              icon says what a click does — open the agenda, or narrow to at-risk.
-              They wrap rather than shrink: below ~360px two cards do not fit on
-              one line, and a truncated "AT RISK" is not a label. */}
-          <div className="flex flex-wrap items-center gap-2">
-            <Stat
-              icon={<CalendarClock aria-hidden="true" className="size-4" />}
-              // "45 days", not "Next 45 days": the card has to fit beside the
-              // at-risk one on a 320px header, and the calendar icon plus the
-              // card's title already say which window this is.
-              label={`${AGENDA_WINDOW_DAYS} days`}
-              value={formatCount(nextWindow)}
-              tone="text-sky"
-              onClick={onOpenAgenda}
-              title={`Open the ${AGENDA_WINDOW_DAYS}-day agenda`}
-              trailing={<ArrowUpRight aria-hidden="true" className="size-3.5" />}
-            />
-            <Stat
-              icon={<AlertTriangle aria-hidden="true" className="size-4" />}
-              label="At risk"
-              value={formatCount(atRisk)}
-              tone="text-rose"
-              active={atRiskActive}
-              onClick={onToggleAtRisk}
-              title={atRiskActive ? 'Show every status again' : 'Show only at-risk events'}
-              trailing={<Filter aria-hidden="true" className="size-3.5" />}
-            />
-          </div>
-          {/* Reload and the overflow menu are one unit, so a narrow header wraps
-              them together (right-aligned) instead of stranding the "…" alone
-              on a line of its own. */}
-          <div className="ml-auto flex items-center gap-1 sm:ml-0 sm:gap-2">
+        /**
+         * Phone: the page actions take the line right under the title, where a
+         * header's actions belong, and the two metrics fill the row below them
+         * as an even pair. Desktop: one row, metrics then actions, as before.
+         */
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-2">
+          <div className="flex items-center justify-end gap-1 sm:order-last sm:gap-2">
             <Button
               onClick={onReload}
               disabled={status === 'loading'}
@@ -118,7 +92,34 @@ export function RegistryHeader({
               </DropdownMenu.Portal>
             </DropdownMenu.Root>
           </div>
-        </>
+
+          {/* Peer metrics: same card, same height, on both views. The trailing
+              icon says what a click does — open the agenda, or narrow to at-risk. */}
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center">
+            <Stat
+              icon={<CalendarClock aria-hidden="true" className="size-4" />}
+              // "45 days", not "Next 45 days": the card has to sit beside the
+              // at-risk one on a 320px header, and the calendar icon plus the
+              // card's title already say which window this is.
+              label={`${AGENDA_WINDOW_DAYS} days`}
+              value={formatCount(nextWindow)}
+              tone="text-sky"
+              onClick={onOpenAgenda}
+              title={`Open the ${AGENDA_WINDOW_DAYS}-day agenda`}
+              trailing={<ArrowUpRight aria-hidden="true" className="size-3.5" />}
+            />
+            <Stat
+              icon={<AlertTriangle aria-hidden="true" className="size-4" />}
+              label="At risk"
+              value={formatCount(atRisk)}
+              tone="text-rose"
+              active={atRiskActive}
+              onClick={onToggleAtRisk}
+              title={atRiskActive ? 'Show every status again' : 'Show only at-risk events'}
+              trailing={<Filter aria-hidden="true" className="size-3.5" />}
+            />
+          </div>
+        </div>
       }
     />
   )

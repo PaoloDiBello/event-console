@@ -18,7 +18,12 @@ export function PageHeader({ title, description, actions, children }: PageHeader
             {description}
           </p>
         </div>
-        {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
+        {/* Full width on a phone so a page's own action block can lay itself
+            out (metrics under actions) against the real content width; from
+            `sm` up it shrinks to the row it shares with the title. */}
+        {actions ? (
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">{actions}</div>
+        ) : null}
       </div>
       {children}
     </div>

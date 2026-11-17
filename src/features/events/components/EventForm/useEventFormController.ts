@@ -43,9 +43,13 @@ export function useEventFormController({
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
     defaultValues: toFormValues(event),
-    // Validate a field once it is left, so a wrong value is caught while the
-    // user is still next to it instead of all at once on submit.
-    mode: 'onTouched',
+    // Nothing is validated until the user asks to save. Blur validation cannot
+    // tell "I am done with this field" from "focus moved because I clicked the
+    // X, the Cancel button, or a menu" — and the auto-focused Title made that
+    // read as the close button demanding a title. After a failed save the
+    // fields re-validate as they are edited, so the errors clear as you fix
+    // them instead of all at once on the next attempt.
+    mode: 'onSubmit',
     reValidateMode: 'onChange',
     // The requirement, straight from react-hook-form: on a failed submit, focus
     // moves to the first field whose validation failed.

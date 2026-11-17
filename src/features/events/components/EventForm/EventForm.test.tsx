@@ -183,7 +183,7 @@ describe('EventForm', () => {
     await user.click(screen.getByRole('button', { name: 'Category' }))
     const menu = await screen.findByRole('menu', { name: 'Category options' })
     await user.click(within(menu).getByRole('menuitemradio', { name: 'Incident' }))
-    expect(screen.getByText('Title is required')).toBeInTheDocument()
+    expect(screen.queryByText('Title is required')).not.toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Close dialog' }))
 
@@ -283,14 +283,22 @@ describe('EventForm', () => {
     expect(within(minuteList).getByRole('option', { selected: true })).toHaveTextContent('55')
   })
 
-  it('reports a missing title as soon as the field is left', async () => {
+  it('does not report a missing title just because the field was left', async () => {
     const user = userEvent.setup()
-    renderForm()
+    const { onSubmit } = renderForm()
 
+    // Focusing a field and leaving it empty is not a request to save — and it
+    // is exactly what clicking Cancel, a menu or the X does on the way out.
     await user.click(screen.getByLabelText(/Title/))
     await user.tab()
 
+    expect(screen.queryByText('Title is required')).not.toBeInTheDocument()
+    expect(screen.getByLabelText(/Title/)).toHaveAttribute('aria-invalid', 'false')
+
+    // The error still arrives when it means something.
+    await user.click(screen.getByRole('button', { name: 'Create event' }))
     expect(await screen.findByText('Title is required')).toBeInTheDocument()
+    expect(onSubmit).not.toHaveBeenCalled()
   })
 
   it('suggests an existing owner while still accepting free text', async () => {
