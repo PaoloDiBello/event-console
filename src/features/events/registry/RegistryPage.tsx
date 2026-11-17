@@ -176,20 +176,20 @@ export function RegistryPage({ onEdit, highlightedId }: RegistryPageProps) {
 
       <div className="min-h-0 flex-1">
         {selectedIds.length > 0 ? (
-          <div className="mb-2 flex items-center gap-3 rounded-md border border-line bg-raised px-3 py-2 text-sm">
-            <span className="font-medium">{selectedIds.length} selected</span>
+          <div className="flex items-center gap-3 rounded-md border border-destructive/30 bg-destructive/5 px-4 py-2.5 text-sm">
+            <span className="font-semibold text-destructive">{selectedIds.length} selected</span>
             <button
               type="button"
               onClick={handleBulkDelete}
-              className="rounded-sm border border-destructive/40 bg-destructive/10 px-2.5 py-1 text-xs text-destructive hover:bg-destructive/20"
+              className="rounded-md bg-destructive px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-destructive/90"
             >
-              Delete selected
+              Delete {selectedIds.length} selected
             </button>
             {bulkSuccess ? (
               <span className="ml-auto text-xs text-muted">
                 {bulkSuccess}{' '}
                 {removedBulk ? (
-                  <button type="button" onClick={undoBulkDelete} className="underline">
+                  <button type="button" onClick={undoBulkDelete} className="font-medium underline">
                     Undo
                   </button>
                 ) : null}

@@ -59,31 +59,50 @@ export function DataGridHeader<TData>({
               >
                 {header.isPlaceholder ? null : (
                   <>
-                    <button
-                      type="button"
-                      disabled={!header.column.getCanSort() || isLoading}
-                      onClick={(event) => onSort(header.column, event)}
-                      className={cn(
-                        'flex h-10 w-full items-center gap-1.5 px-3 text-inherit',
-                        align === 'right' && 'justify-end',
-                        align === 'center' && 'justify-center',
-                        header.column.getCanSort()
-                          ? 'cursor-pointer transition-colors hover:text-ink'
-                          : 'cursor-default',
-                      )}
-                    >
-                      <span className="truncate">
-                        {flexRender(header.column.columnDef.header, header.getContext())}
-                      </span>
-                      {filtered ? (
-                        <span
-                          aria-hidden="true"
-                          title="Filtered"
-                          className="size-1.5 shrink-0 rounded-full bg-accent"
-                        />
-                      ) : null}
-                      {header.column.getCanSort() ? <SortIcon direction={sorted} /> : null}
-                    </button>
+                    {header.column.getCanSort() ? (
+                      <button
+                        type="button"
+                        disabled={isLoading}
+                        onClick={(event) => onSort(header.column, event)}
+                        className={cn(
+                          'flex h-10 w-full items-center gap-1.5 px-3 text-inherit',
+                          align === 'right' && 'justify-end',
+                          align === 'center' && 'justify-center',
+                          'cursor-pointer transition-colors hover:text-ink',
+                        )}
+                      >
+                        <span className="truncate">
+                          {flexRender(header.column.columnDef.header, header.getContext())}
+                        </span>
+                        {filtered ? (
+                          <span
+                            aria-hidden="true"
+                            title="Filtered"
+                            className="size-1.5 shrink-0 rounded-full bg-accent"
+                          />
+                        ) : null}
+                        <SortIcon direction={sorted} />
+                      </button>
+                    ) : (
+                      <div
+                        className={cn(
+                          'flex h-10 w-full items-center gap-1.5 px-3 text-inherit',
+                          align === 'right' && 'justify-end',
+                          align === 'center' && 'justify-center',
+                        )}
+                      >
+                        <span className="truncate">
+                          {flexRender(header.column.columnDef.header, header.getContext())}
+                        </span>
+                        {filtered ? (
+                          <span
+                            aria-hidden="true"
+                            title="Filtered"
+                            className="size-1.5 shrink-0 rounded-full bg-accent"
+                          />
+                        ) : null}
+                      </div>
+                    )}
                     {header.column.getCanResize() ? (
                       <div
                         role="separator"
