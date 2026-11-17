@@ -156,21 +156,30 @@ reachable at 320 px without a navigation drawer. The labels match the page
 headings (“Event registry” / “Agenda”), so the control names the user's mental
 model instead of the widget behind it; the icons carry the representation.
 
-The track is a recessed capsule and the active lens is an accent surface — a
-tinted fill with a one-pixel accent edge, semibold label, accent icon — so the
-current mode is a colour you can find without reading. The previous treatment
-(a raised chip with a ring and a drop shadow) put a box inside a box, and on a
-dark surface the 6% step between `raised` and `canvas` was not a selection cue
-at all: the only real signal was the icon's colour. A tinted capsule says it
-outright, and the agenda's 7/30/45-day window wears the same one.
+The track is a recessed capsule and the active lens is a lit accent surface — a
+vertical accent gradient, a one-pixel accent edge, a faint accent glow that the
+track clips so it cannot bloom over its hairline, semibold label, accent icon —
+so the current mode is a colour you can find without reading. The previous treatment (a raised chip with a ring and a drop shadow)
+put a box inside a box, and on a dark surface the 6% step between `raised` and
+`canvas` was not a selection cue at all: the only real signal was the icon's
+colour. A lit capsule says it outright, and the agenda's 7/30/45-day window
+wears the same one.
 
-The control is 38 px tall — level with the 36 px buttons beside it instead of
-towering over the row — the surface slides between the two cells in 300 ms
-(disabled under `prefers-reduced-motion`), and it presses in slightly on tap.
-The focus ring is drawn inside the track so it is never clipped, and it turns
-from accent to ink on the selected segment, whose own edge is already accent.
-Above `xl` each segment also shows the key that reaches it (`G` / `T`), which
-switch modes from anywhere that is not already capturing text input.
+The surface slides between the two cells in 300 ms (disabled under
+`prefers-reduced-motion`) and presses in slightly on tap. The focus ring is
+drawn inside the track so it is never clipped, and it turns from accent to ink
+on the selected segment, whose own edge is already accent. Each segment also
+shows the key that reaches it (`G` / `T`) above `xl`, so the control teaches the
+shortcut instead of leaving it to the tooltip.
+
+From `xl` up the switcher takes the middle of the bar — brand, lens, actions —
+rather than sitting in the gap after the wordmark with 500 px of empty header
+to its right; below that it stays in the brand cluster, where the bar is too
+narrow to give away the centre. It is 42 px tall when centred (a 32 px segment
+in a 4 px padded track) and 38 px on a phone, where it sits level with the 36 px
+buttons beside it. The dataset count appears at `lg`, not `md`: between 768 and
+1023 it had to share a 736 px bar with the wordmark, the switch, Shortcuts and
+New event, and wrapped both itself and the button onto two lines.
 
 Both pages also share one shell: a page header with two metric cards and the
 page actions, then a single panel with a toolbar, a scrolling body and a status

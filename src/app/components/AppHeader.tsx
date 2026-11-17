@@ -68,7 +68,7 @@ export function AppHeader({ onNewEvent, onOpenShortcuts }: AppHeaderProps) {
 
   return (
     <header className="relative z-30 shrink-0 border-b border-line bg-canvas/85 backdrop-blur">
-      <div className="mx-auto flex h-14 w-full max-w-[1600px] items-center gap-3 px-4 sm:gap-5">
+      <div className="relative mx-auto flex h-14 w-full max-w-[1600px] items-center gap-3 px-4 sm:gap-5">
         <NavLink to="/grid" className="flex items-center gap-2.5" aria-label="Event Console home">
           <span className="grid size-8 place-items-center rounded-sm border border-line-strong bg-raised">
             <Activity aria-hidden="true" className="size-4 text-accent" />
@@ -79,14 +79,17 @@ export function AppHeader({ onNewEvent, onOpenShortcuts }: AppHeaderProps) {
         </NavLink>
 
         {/* A capsule, not a framed pair of buttons: the two lenses share one
-            track and the accent surface slides between them. At 38px it sits
-            level with the 36px controls beside it instead of towering over the
-            row the way the old 44px track did. */}
+            track and the accent surface slides between them. From `xl` it takes
+            the middle of the bar, so the header reads brand | lens | actions and
+            the switch stops looking stranded in the gap after the wordmark. */}
         <nav
           aria-label="Event views"
           className={cn(
-            'relative grid shrink-0 grid-cols-2 rounded-full border border-line bg-canvas p-1',
-            'shadow-[inset_0_1px_3px_rgb(0_0_0_/_0.5)]',
+            // `overflow-hidden` keeps the selected surface's glow inside the
+            // track instead of blooming over its hairline onto the header.
+            'relative grid shrink-0 grid-cols-2 overflow-hidden rounded-full border border-line bg-canvas p-1',
+            'shadow-[inset_0_1px_3px_rgb(0_0_0_/_0.55)]',
+            'xl:absolute xl:top-1/2 xl:left-1/2 xl:-translate-x-1/2 xl:-translate-y-1/2',
           )}
         >
           {/* One surface slides between the two modes, so the control reads
@@ -110,7 +113,7 @@ export function AppHeader({ onNewEvent, onOpenShortcuts }: AppHeaderProps) {
                 aria-keyshortcuts={item.shortcut.toLowerCase()}
                 className={({ isActive }) =>
                   cn(
-                    'relative z-10 inline-flex h-7 items-center justify-center gap-1.5 rounded-full px-2.5 text-[11px] whitespace-nowrap transition-[color,background-color,scale] duration-150 active:scale-[0.97] sm:px-3 sm:text-xs',
+                    'relative z-10 inline-flex h-7 items-center justify-center gap-1.5 rounded-full px-2.5 text-[11px] whitespace-nowrap transition-[color,background-color,scale] duration-150 active:scale-[0.97] sm:h-8 sm:gap-2 sm:px-3.5 sm:text-xs',
                     // Inset so the focus ring is drawn inside the track instead
                     // of being clipped by it — and ink on the selected segment,
                     // whose own edge is already the accent, or the ring would
@@ -118,7 +121,7 @@ export function AppHeader({ onNewEvent, onOpenShortcuts }: AppHeaderProps) {
                     'focus-visible:outline-2 focus-visible:-outline-offset-2',
                     isActive
                       ? 'font-semibold text-ink focus-visible:outline-ink'
-                      : 'font-medium text-muted hover:bg-raised/60 hover:text-ink focus-visible:outline-accent',
+                      : 'font-medium text-muted hover:bg-accent/[0.07] hover:text-ink focus-visible:outline-accent',
                   )
                 }
               >
@@ -127,7 +130,7 @@ export function AppHeader({ onNewEvent, onOpenShortcuts }: AppHeaderProps) {
                     <Icon
                       aria-hidden="true"
                       className={cn(
-                        'size-4 transition-colors sm:size-3.5',
+                        'size-4 transition-colors sm:size-3.5 xl:size-[15px]',
                         isActive ? 'text-accent' : 'text-faint',
                       )}
                     />
@@ -149,7 +152,10 @@ export function AppHeader({ onNewEvent, onOpenShortcuts }: AppHeaderProps) {
         </nav>
 
         <div className="ml-auto flex items-center gap-2 sm:gap-3">
-          <span className="hidden items-center gap-2 font-mono text-[10px] tracking-wide text-faint md:inline-flex">
+          {/* `lg`, not `md`: between 768 and 1023 the count had to share a 736px
+              bar with the wordmark, the switch, Shortcuts and New event, and
+              wrapped both itself and the button onto two lines. */}
+          <span className="hidden items-center gap-2 font-mono text-[10px] tracking-wide whitespace-nowrap text-faint lg:inline-flex">
             <Database aria-hidden="true" className="size-3.5" />
             {formatCount(events.length)} events
           </span>

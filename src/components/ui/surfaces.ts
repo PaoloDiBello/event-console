@@ -26,11 +26,11 @@ export const footerClass =
  * the registry/agenda lens and the agenda's day window — speak it.
  */
 export const selectedSegmentClass =
-  'bg-accent/[0.14] text-ink ring-1 ring-accent/70 ring-inset'
+  'bg-gradient-to-b from-accent/20 to-accent/[0.07] text-ink ring-1 ring-accent/60 ring-inset shadow-[inset_0_1px_0_rgb(255_255_255_/_0.06),0_0_16px_-8px_var(--color-accent)]'
 
 /** Track that holds the segments of a view switcher: recessed capsule. */
 export const segmentTrackClass =
-  'flex h-8 items-center rounded-full border border-line bg-canvas p-0.5 shadow-[inset_0_1px_2px_rgb(0_0_0_/_0.4)]'
+  'flex h-8 items-center overflow-hidden rounded-full border border-line bg-canvas p-0.5 shadow-[inset_0_1px_2px_rgb(0_0_0_/_0.4)]'
 
 /** One segment inside a switcher track. */
 export const segmentClass = 'h-7 rounded-full px-2.5 transition-colors'
