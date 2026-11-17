@@ -42,7 +42,7 @@ describe('RegistryHeader', () => {
     const onOpenAgenda = vi.fn()
     render(<RegistryHeader {...baseProps} onOpenAgenda={onOpenAgenda} />)
 
-    await user.click(screen.getByRole('button', { name: /10,400\s*Next 45 days/ }))
+    await user.click(screen.getByRole('button', { name: /10,400\s*45 days/ }))
 
     expect(onOpenAgenda).toHaveBeenCalledTimes(1)
   })

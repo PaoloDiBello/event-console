@@ -174,6 +174,26 @@ describe('EventForm', () => {
     expect(screen.queryByRole('button', { name: 'Delete event' })).not.toBeInTheDocument()
   })
 
+  it('closes without turning the empty title into an error', async () => {
+    const user = userEvent.setup()
+    renderForm()
+
+    // A pick in another control leaves the auto-focused title, which is exactly
+    // what blur validation reports — and what clicking the X does too.
+    await user.click(screen.getByRole('button', { name: 'Category' }))
+    const menu = await screen.findByRole('menu', { name: 'Category options' })
+    await user.click(within(menu).getByRole('menuitemradio', { name: 'Incident' }))
+    expect(screen.getByText('Title is required')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Close dialog' }))
+
+    // Leaving is not submitting: the discard prompt must not argue about a
+    // field the user is abandoning.
+    expect(await screen.findByText('Discard your unsaved changes?')).toBeInTheDocument()
+    expect(screen.queryByText('Title is required')).not.toBeInTheDocument()
+    expect(screen.getByLabelText(/Title/)).toHaveAttribute('aria-invalid', 'false')
+  })
+
   it('asks before discarding changes and keeps focus inside the dialog', async () => {
     const user = userEvent.setup()
     const { onOpenChange } = renderForm()

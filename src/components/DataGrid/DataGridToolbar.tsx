@@ -69,7 +69,9 @@ export function DataGridToolbar<TData>({
           ) : null}
         </div>
 
-        <div className="ml-auto flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto">
+        {/* Tighter gaps on a phone so the five controls share one row instead
+            of leaving a single button stranded on a second line. */}
+        <div className="ml-auto flex w-full flex-wrap items-center justify-end gap-1.5 sm:w-auto sm:gap-2">
           {/* The in-table filter row is hidden below `md`, so the sheet is the
               only place to reach a column filter on a phone. */}
           <DataGridFilterPanel

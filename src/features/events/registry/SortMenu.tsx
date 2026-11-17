@@ -64,7 +64,9 @@ export function SortMenu({ value, onValueChange }: SortMenuProps) {
           className={buttonClass({ size: 'md', className: 'gap-2 px-2 sm:px-3' })}
         >
           <ArrowUpDown aria-hidden="true" className="size-3.5" />
-          <span>Sort</span>
+          {/* Icon-only on a phone: the label is in the accessible name, and the
+              toolbar has to fit five controls on one row there. */}
+          <span className="hidden sm:inline">Sort</span>
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent

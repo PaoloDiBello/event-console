@@ -18,7 +18,10 @@ interface StatProps {
   trailing?: ReactNode
 }
 
-const BASE = 'flex h-9 items-center gap-2 rounded-sm border px-2.5 text-left'
+// `shrink-0` keeps a card from squashing its label: on a narrow header the row
+// wraps instead, which is readable where half a label is not.
+const BASE =
+  'flex h-9 shrink-0 items-center gap-1.5 rounded-sm border px-2 text-left sm:gap-2 sm:px-2.5'
 
 /**
  * One metric, one height, on every page. The registry and the agenda show
@@ -48,7 +51,11 @@ export function Stat({
       >
         {label}
       </span>
-      {trailing ? <span className="ml-0.5 shrink-0 text-faint">{trailing}</span> : null}
+      {/* Decorative on a phone: the card is still a button, and the row has to
+          fit two of them. */}
+      {trailing ? (
+        <span className="ml-0.5 hidden shrink-0 text-faint sm:inline">{trailing}</span>
+      ) : null}
     </>
   )
 

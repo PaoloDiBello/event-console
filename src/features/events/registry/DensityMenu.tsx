@@ -45,7 +45,9 @@ export function DensityMenu({ value, onValueChange }: DensityMenuProps) {
           className={buttonClass({ size: 'md', className: 'gap-2 px-2 sm:px-3' })}
         >
           <current.Icon aria-hidden="true" className="size-3.5" />
-          <span>Density</span>
+          {/* Icon-only on a phone; the trigger's accessible name still says
+              which density is active. */}
+          <span className="hidden sm:inline">Density</span>
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent

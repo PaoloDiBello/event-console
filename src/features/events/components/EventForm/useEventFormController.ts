@@ -53,6 +53,9 @@ export function useEventFormController({
   })
 
   const { isDirty } = form.formState
+  // `form.clearErrors` is stable, so depending on it keeps the effect below
+  // tied to the prompt opening rather than to every render.
+  const { clearErrors } = form
 
   useEffect(() => {
     // Reopening on a different event must start from that event's values.
@@ -65,12 +68,16 @@ export function useEventFormController({
   useEffect(() => {
     if (confirmDiscard) {
       wasConfirming.current = true
+      // The blur that opened this prompt validates asynchronously; clear once
+      // more after it settles so the prompt cannot appear with a field error
+      // the user is in the middle of discarding.
+      clearErrors()
       keepEditingRef.current?.focus()
     } else if (wasConfirming.current) {
       wasConfirming.current = false
       cancelRef.current?.focus()
     }
-  }, [confirmDiscard])
+  }, [clearErrors, confirmDiscard])
 
   // Same focus contract as the discard prompt: land on the safe answer, and
   // put focus back on Delete when the prompt is dismissed.
@@ -94,6 +101,12 @@ export function useEventFormController({
 
   const requestClose = () => {
     if (isSaving) return
+    // Leaving is not submitting. Blur validation fires the moment focus leaves
+    // the auto-focused title — which is exactly what clicking the X does — so
+    // without this the close path argues about a field the user is abandoning
+    // anyway. Anything still wrong is reported again on the next change or on
+    // submit.
+    form.clearErrors()
     // Escape or Cancel while either prompt is up means "back to the form".
     if (confirmingDelete) {
       setConfirmingDelete(false)

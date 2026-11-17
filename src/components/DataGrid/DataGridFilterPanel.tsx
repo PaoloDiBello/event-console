@@ -48,7 +48,7 @@ export function DataGridFilterPanel<TData>({
           disabled={disabled}
           aria-label={activeCount > 0 ? `Filters, ${activeCount} applied` : 'Filters'}
           title="Filter by column"
-          className={buttonClass({ size: 'md', className: 'gap-2 px-2 sm:px-3 md:hidden' })}
+          className={buttonClass({ size: 'md', className: 'gap-1.5 px-2 sm:gap-2 sm:px-3 md:hidden' })}
         >
           <SlidersHorizontal aria-hidden="true" className="size-3.5" />
           <span>Filters</span>

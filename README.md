@@ -140,8 +140,8 @@ or an ISO timestamp key, so the same sort is a plain comparison. Formatting
   days** metric deliberately opens a clean agenda, because its count is
   unfiltered.
 - The header metrics are live: **At risk** toggles the registry's status quick
-  filter and narrows the agenda to at-risk events, while **Next 45 days** opens
-  the   agenda window it counts. The number, the pressed card, the chip and the
+  filter and narrows the agenda to at-risk events, while **45 days** opens
+  the agenda window it counts. The number, the pressed card, the chip and the
   filter row therefore always agree: the card reads pressed only while the
   status filter is exactly that one value, so it never claims a count the grid
   is not showing.
@@ -174,9 +174,13 @@ actions collapse to icons, so the panel — the actual work — keeps the screen
 Page descriptions are one short line, because a paragraph that wraps to four
 lines pushes the work below the fold. The panel toolbars tighten the same way:
 search takes a full row of its own, with the `/` hint hidden (no keyboard to
-press it), the Columns trigger becomes an icon plus its visible/total count,
-the agenda keeps its previous/next day buttons — now full-size 40 px targets —
-and drops the date picker's “Jump” label.
+press it); **Sort**, **Density** and **Columns** become icon-only tools (the
+Columns one keeps an accent dot while the table is hiding columns) so all five
+panel controls share a single row down to 320 px; Reload and the overflow menu
+wrap as one right-aligned pair instead of stranding the “…” on its own line;
+the agenda keeps its previous/next day buttons — full-size 40 px targets — and
+drops the date picker's “Jump” label. Metric cards are `shrink-0` and their row
+wraps: a 320 px header shows both numbers whole rather than half of “AT RISK”.
 
 Below `md` the grid stops pretending it has room for a desktop header. The
 filter row — one control per column, a few dozen pixels high — is replaced by a
@@ -250,7 +254,10 @@ calendar date, time `HH:mm`, duration bounds).
 - Submit runs validation, focuses the **first invalid field**, and keeps the
   dialog open.
 - Closing a dirty form opens a second confirmation step (“Keep editing” /
-  “Discard changes”); “Keep editing” returns focus to the form.
+  “Discard changes”); “Keep editing” returns focus to the form. Leaving is not
+  submitting: the close path clears validation first, because blurring the
+  auto-focused title is what clicking the X does, and the prompt has no business
+  arguing about a field the user is abandoning.
 - The opener element is captured before the dialog opens and focused again on
   close, including after a successful save.
 - Save errors render in a `role="alert"` region; the dialog and the entered
@@ -365,7 +372,7 @@ mutations only pay for the sort/filter pass.
 ## Tests and quality checks
 
 ```bash
-npm test          # 163 tests, 28 files
+npm test          # 164 tests, 28 files
 npm run build     # tsc -b (strict) + vite build
 npm run lint      # oxlint
 ```
@@ -379,7 +386,8 @@ view round-tripping and validation (including the nearest-to-today default and
 its sort menu), the phone filter sheet and the media-query hook, the
 quick-filter metrics, timeline grouping /
 windowing / keyboard navigation / announcements, the shortcut cheatsheet, form
-validation, draft mapping plus the discard flow, the debounced-search hook, the
+validation, draft mapping plus the discard flow (and closing without a
+validation argument), the debounced-search hook, the
 visual-viewport hook, the date-filter calendar, the registry view, the registry
 header stats, scroll-edge detection, the shared search field's Escape contract,
 the in-app select menu, the agenda's load-failure panel, and the event columns.

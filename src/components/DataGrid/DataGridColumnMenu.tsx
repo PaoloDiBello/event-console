@@ -36,11 +36,19 @@ export function DataGridColumnMenu<TData>({
           type="button"
           disabled={disabled}
           aria-label={`Columns, ${visibleCount} of ${hideableColumns.length} visible`}
-          className={buttonClass({ size: 'md', className: 'gap-2 px-2 sm:px-3' })}
+          className={buttonClass({ size: 'md', className: 'relative gap-2 px-2 sm:px-3' })}
         >
           <Columns3 aria-hidden="true" className="size-3.5" />
           <span className="hidden sm:inline">Columns</span>
-          <span className="rounded-xs bg-canvas px-1.5 py-0.5 font-mono text-[10px] text-faint">
+          {/* On a phone the count is a dot: five controls have to share one
+              row, and the exact number is in the accessible name and the menu. */}
+          {visibleCount < hideableColumns.length ? (
+            <span
+              aria-hidden="true"
+              className="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-accent sm:hidden"
+            />
+          ) : null}
+          <span className="hidden rounded-xs bg-canvas px-1.5 py-0.5 font-mono text-[10px] text-faint sm:inline">
             {visibleCount}/{hideableColumns.length}
           </span>
         </button>
