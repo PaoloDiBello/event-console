@@ -95,6 +95,7 @@ export function RegistryPage({ onEdit, highlightedId }: RegistryPageProps) {
 
   const stats = useRegistryStats(events)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [density, setDensity] = useState<'compact' | 'comfortable' | 'spacious'>('comfortable')
   const [removedBulk, setRemovedBulk] = useState<{ event: any; index: number }[] | null>(null)
   const [bulkSuccess, setBulkSuccess] = useTransientValue<string>(6000)
   const columns = useMemo(
@@ -220,6 +221,21 @@ export function RegistryPage({ onEdit, highlightedId }: RegistryPageProps) {
           onRowActivate={onEdit}
           onExport={handleExport}
           onSelectionChange={setSelectedIds}
+          rowHeight={density === 'compact' ? 32 : density === 'spacious' ? 56 : 44}
+          toolbarActions={
+            <div className="flex items-center gap-1">
+              {(['compact', 'comfortable', 'spacious'] as const).map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => setDensity(d)}
+                  className={`rounded-sm px-2 py-1 text-xs ${density === d ? 'bg-accent/20 text-accent' : 'text-muted hover:text-ink'}`}
+                >
+                  {d[0].toUpperCase() + d.slice(1, 4)}
+                </button>
+              ))}
+            </div>
+          }
           focusRowId={highlightedId}
           emptyTitle="No events in the registry"
           emptyHint="Load the dataset, or add the first event with the New event button."
