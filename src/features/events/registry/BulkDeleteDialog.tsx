@@ -14,6 +14,12 @@ interface BulkDeleteDialogProps {
   outsideCount?: number
   onOpenChange: (open: boolean) => void
   onConfirm: () => void
+  /**
+   * Where focus goes when the opener no longer exists. Deleting clears the
+   * selection, which unmounts the bar's Delete button, so the usual return
+   * would drop the user on `<body>` and cost them their place in the table.
+   */
+  fallbackFocus?: () => HTMLElement | null
 }
 
 /** Enough to recognise the selection without turning the dialog into a table. */
@@ -30,6 +36,7 @@ export function BulkDeleteDialog({
   outsideCount = 0,
   onOpenChange,
   onConfirm,
+  fallbackFocus,
 }: BulkDeleteDialogProps) {
   const count = events.length
   const preview = events.slice(0, PREVIEW_LIMIT)
@@ -53,9 +60,12 @@ export function BulkDeleteDialog({
           <Dialog.Content
             className="dialog-content pointer-events-auto w-full max-w-md overflow-hidden rounded-lg border border-line-strong bg-surface shadow-2xl shadow-black/70"
             onCloseAutoFocus={(event) => {
-              if (!openerRef.current?.isConnected) return
+              const target = openerRef.current?.isConnected
+                ? openerRef.current
+                : (fallbackFocus?.() ?? null)
+              if (!target) return
               event.preventDefault()
-              openerRef.current.focus({ preventScroll: true })
+              target.focus({ preventScroll: true })
             }}
           >
             <div className="flex items-start gap-3 border-b border-line px-5 py-4">

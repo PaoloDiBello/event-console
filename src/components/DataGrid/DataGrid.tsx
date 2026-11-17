@@ -103,6 +103,16 @@ export function DataGrid<TData>({
     onSelectionSummaryChange?.(grid.selectionSummary)
   }, [grid.selectionSummary, onSelectionSummaryChange])
 
+  // `x` is only offered where the page opted into selection, so a grid that
+  // never shows checkboxes cannot quietly accumulate a selection.
+  const selectableRows = selectedRowIds !== undefined || selectionBar !== undefined
+
+  // Export what the footer counts, not what the page happens to hold: the
+  // control says "filtered rows", so it has to be the filtered rows.
+  const handleExport = useCallback(() => {
+    onExport?.(grid.displayRows)
+  }, [onExport, grid.displayRows])
+
   useGridScrollReset({ scrollRef, resetKey: grid.resetKey, skipRef: skipScrollResetRef })
   useDataGridShortcuts(searchRef, scrollRef)
   // The selection gutter is pinned at every width, so it always owns the left
@@ -171,7 +181,7 @@ export function DataGrid<TData>({
         searchPlaceholder={searchPlaceholder}
         searchRef={searchRef}
         toolbarActions={toolbarActions}
-        onExport={onExport}
+        onExport={onExport ? handleExport : undefined}
         disabled={isLoading || Boolean(error)}
       />
 
@@ -202,6 +212,7 @@ export function DataGrid<TData>({
                 pageSize={grid.pagination.pageSize}
                 getRowClassName={getRowClassName}
                 activeRowIndex={activeRowIndex}
+                selectableRows={selectableRows}
                 onRowFocus={focusRowAt}
                 onRowActivate={onRowActivate}
                 onSort={grid.sortByColumn}
@@ -249,6 +260,15 @@ export function DataGrid<TData>({
                 </span>
                 <Kbd className="inline-flex size-4 items-center justify-center p-0">↵</Kbd>
                 <span>open</span>
+                {selectableRows ? (
+                  <span className="hidden items-center gap-1.5 xl:flex">
+                    <span aria-hidden="true" className="text-line-strong">
+                      /
+                    </span>
+                    <Kbd className="inline-flex size-4 items-center justify-center p-0">X</Kbd>
+                    <span>select</span>
+                  </span>
+                ) : null}
               </>
             ) : undefined
           }

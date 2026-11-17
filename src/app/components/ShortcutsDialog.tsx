@@ -30,6 +30,7 @@ const GROUPS: { title: string; shortcuts: Shortcut[] }[] = [
       { keys: ['Esc'], label: 'Clear search, or leave the field' },
       { keys: ['↑', '↓'], label: 'Move between rows' },
       { keys: ['Home', 'End'], label: 'First or last row on the page' },
+      { keys: ['X'], label: 'Select or deselect the focused row' },
       { keys: ['↵'], label: 'Edit the focused event' },
     ],
   },

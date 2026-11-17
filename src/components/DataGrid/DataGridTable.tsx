@@ -23,6 +23,8 @@ interface DataGridTableProps<TData> {
   emptyState: ReactNode
   getRowClassName?: (row: TData) => string
   activeRowIndex: number
+  /** Enables `x` to toggle the focused row, where the page has a selection. */
+  selectableRows: boolean
   onRowFocus: (index: number) => void
   onRowActivate?: (row: TData) => void
   onSort: (column: Column<TData, unknown>, event: unknown) => void
@@ -51,6 +53,7 @@ export function DataGridTable<TData>({
   emptyState,
   getRowClassName,
   activeRowIndex,
+  selectableRows,
   onRowFocus,
   onRowActivate,
   onSort,
@@ -109,6 +112,7 @@ export function DataGridTable<TData>({
         emptyState={emptyState}
         getRowClassName={getRowClassName}
         activeRowIndex={activeRowIndex}
+        selectableRows={selectableRows}
         onRowFocus={onRowFocus}
         onRowActivate={onRowActivate}
       />

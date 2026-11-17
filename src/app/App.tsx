@@ -8,6 +8,7 @@ import { useEventEditor } from '@/app/hooks/useEventEditor'
 import type { EventRecord } from '@/features/events/model'
 import { useEventStore } from '@/features/events/store'
 import { useGlobalKeydown } from '@/shared/hooks/useGlobalKeydown'
+import { useTransientValue } from '@/shared/hooks/useTransientValue'
 import { useVisualViewport } from '@/shared/hooks/useVisualViewport'
 import { hasCommandModifier, isShortcutBlocked } from '@/shared/lib/keyboard'
 
@@ -53,6 +54,8 @@ export function App() {
     undoAction,
   } = useEventEditor()
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
+  /** Page-level confirmations (an export, say) share the one toast. */
+  const [notice, setNotice] = useTransientValue<string>(5000)
   // Keeps the phone sheet sized to the visible area when the keyboard opens.
   useVisualViewport()
 
@@ -90,6 +93,7 @@ export function App() {
                   onEdit={openEdit}
                   onBulkDelete={handleBulkDelete}
                   highlightedId={highlightedId}
+                  onNotify={setNotice}
                 />
               }
             />
@@ -119,7 +123,14 @@ export function App() {
 
       <ShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
 
-      <AppToast message={success} action={undoAction} onDismiss={dismissSuccess} />
+      <AppToast
+        message={notice ?? success}
+        action={undoAction}
+        onDismiss={() => {
+          setNotice(null)
+          dismissSuccess()
+        }}
+      />
     </div>
   )
 }

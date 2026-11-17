@@ -20,6 +20,8 @@ interface DataGridBodyProps<TData> {
   getRowClassName?: (row: TData) => string
   /** Index within the page that owns the grid's single tab stop. */
   activeRowIndex: number
+  /** Whether `x` may toggle the focused row's selection. */
+  selectableRows?: boolean
   onRowFocus: (index: number) => void
   onRowActivate?: (row: TData) => void
 }
@@ -38,6 +40,7 @@ export function DataGridBody<TData>({
   emptyState,
   getRowClassName,
   activeRowIndex,
+  selectableRows = false,
   onRowFocus,
   onRowActivate,
 }: DataGridBodyProps<TData>) {
@@ -62,6 +65,14 @@ export function DataGridBody<TData>({
       case 'ArrowUp':
         event.preventDefault()
         onRowFocus(Math.max(0, virtualRowIndexOf(event) - 1))
+        break
+      case 'x':
+      case 'X':
+        // Keyboard parity with the checkbox: tick the row you are on instead of
+        // tabbing out of the row model and back in for every record.
+        if (!selectableRows || !row.getCanSelect()) break
+        event.preventDefault()
+        row.toggleSelected()
         break
       case 'Home':
         event.preventDefault()

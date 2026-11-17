@@ -241,7 +241,11 @@ set that failed to load is not an action worth offering.
 
 Filtered results stay explainable: the grid footer reads “filtered from
 100,000” whenever search or column filters narrow the set, and the agenda keeps
-its own total in the same footer slot.
+its own total in the same footer slot. **Export** writes that same set, not the
+whole data store — the control says “filtered rows”, so a narrowed view now
+produces a narrowed CSV — and confirms it in the toast (“Exported 3,797 events
+to events.csv.”). Exporting 100,000 rows while the footer said 3,797 was a
+silent contradiction the download could not explain.
 
 Press `?` anywhere outside a field or overlay — or use the **Shortcuts** button
 in the header — to open the keyboard cheatsheet. It groups shortcuts by where
@@ -354,9 +358,10 @@ mutations only pay for the sort/filter pass.
 - **Reduced motion:** the global stylesheet collapses animations/transitions
   under `prefers-reduced-motion: reduce`.
 - **Keyboard shortcuts:** `/` focuses grid search, `f` focuses the first column
-  filter, `Escape` clears an active search, `n` opens the new-event dialog, `?`
-  opens the shortcut cheatsheet, `g` and `t` switch between the Registry and
-  Agenda views, and all dialogs close with Escape. Shortcuts are ignored while
+  filter, `x` ticks or unticks the focused row, `Escape` clears an active search,
+  `n` opens the new-event dialog, `?` opens the shortcut cheatsheet, `g` and `t`
+  switch between the Registry and Agenda views, and all dialogs close with
+  Escape. Shortcuts are ignored while
   typing in a field or when a dialog or menu owns the keyboard.
 - **One Escape contract for search:** `SearchField` owns it, so both search
   boxes behave the same — Escape clears what is typed and keeps the caret in the
@@ -395,6 +400,11 @@ mutations only pay for the sort/filter pass.
 - **Row selection and bulk delete:** ticking a row (or the header, which selects
   the page and shows a mixed state for a partial selection) floats a compact
   action bar above the footer instead of adding a strip that shifts the table.
+  The row itself is the keyboard surface, so `x` toggles the row you are on: fill
+  a selection with `↓` and `x` instead of tabbing into and out of every checkbox.
+  After a delete, focus returns to the row the user was on, because the bar's
+  Delete button unmounts with the selection and Radix then had nowhere to send
+  it — which dropped keyboard users on `<body>` and cost them their place.
   The bar names the count, clears the selection, and opens a confirmation that
   previews the first few selected events — the check that matters when the
   selection has survived a page or filter change. Deleting goes through the same

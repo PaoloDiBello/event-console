@@ -121,7 +121,11 @@ export interface DataGridProps<TData> {
   toolbarActions?: ReactNode
   /** Floating strip pinned above the footer, e.g. bulk actions for selected rows. */
   selectionBar?: ReactNode
-  onExport?: () => void
+  /**
+   * Receives the rows the current search and filters leave, in the visible
+   * order — the set the footer counts, not the source array.
+   */
+  onExport?: (rows: TData[]) => void
   /**
    * Controlled selection. Supply both props when the page needs to clear the
    * selection after a bulk action; omit them to let the grid own it.

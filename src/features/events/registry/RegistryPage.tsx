@@ -12,6 +12,7 @@ import { Checkbox } from '@/components/ui/Checkbox'
 import type { EventRecord } from '@/features/events/model'
 import { useEventFeed } from '@/features/events/store'
 import { exportToCsv } from '@/shared/lib/exportCsv'
+import { formatCount, pluralize } from '@/shared/lib/format'
 import { usePersistentState } from '@/shared/hooks/usePersistentState'
 import { BulkActionBar } from './BulkActionBar'
 import { BulkDeleteDialog } from './BulkDeleteDialog'
@@ -34,6 +35,8 @@ interface RegistryPageProps {
   /** Remove the selected records through the app's shared delete + undo path. */
   onBulkDelete: (ids: string[]) => void
   highlightedId: string | null
+  /** Page-level confirmation, shown in the app's one toast. */
+  onNotify: (message: string) => void
 }
 
 /** Stable reference: TanStack rebuilds its row model when `getRowId` changes. */
@@ -62,10 +65,12 @@ function isColumnVisibility(value: unknown): boolean {
   )
 }
 
-export function RegistryPage({ onEdit, onBulkDelete, highlightedId }: RegistryPageProps) {
+export function RegistryPage({ onEdit, onBulkDelete, highlightedId, onNotify }: RegistryPageProps) {
   const { events, status, error, isLoading, reload, simulateError } = useEventFeed()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
+  /** The grid's wrapper: where focus goes when the control that had it is gone. */
+  const gridRef = useRef<HTMLDivElement>(null)
 
   // The URL seeds the view once; after that the grid owns search, sort and
   // paging, and the page owns the filters so a metric can toggle one.
@@ -190,23 +195,42 @@ export function RegistryPage({ onEdit, onBulkDelete, highlightedId }: RegistryPa
     return events.filter((event) => wanted.has(event.id))
   }, [confirmOpen, events, selectedIds])
 
-  const handleExport = useCallback(() => {
-    exportToCsv(
-      events,
-      [
-        { id: 'title', header: 'Event', accessor: (e) => e.title },
-        { id: 'when', header: 'When', accessor: (e) => `${e.date} ${String(e.startMinute).padStart(4, '0')}` },
-        { id: 'category', header: 'Category', accessor: (e) => e.category },
-        { id: 'status', header: 'Status', accessor: (e) => e.status },
-        { id: 'priority', header: 'Priority', accessor: (e) => e.priority },
-        { id: 'owner', header: 'Owner', accessor: (e) => e.owner },
-        { id: 'duration', header: 'Length (min)', accessor: (e) => String(e.durationMin) },
-        { id: 'location', header: 'Location', accessor: (e) => e.location },
-        { id: 'notes', header: 'Notes', accessor: (e) => e.notes ?? '' },
-      ],
-      'events.csv',
-    )
-  }, [events])
+  // The button says "filtered rows", so it exports the rows the footer counts.
+  // Exporting the whole 100k set behind a narrowed view looked like a download
+  // that ignored the search, which is exactly the wrong thing to doubt.
+  const handleExport = useCallback(
+    (rows: EventRecord[]) => {
+      if (rows.length === 0) {
+        onNotify('Nothing to export: no rows match the current search and filters.')
+        return
+      }
+      exportToCsv(
+        rows,
+        [
+          { id: 'title', header: 'Event', accessor: (e) => e.title },
+          {
+            id: 'when',
+            header: 'When',
+            accessor: (e) => `${e.date} ${String(e.startMinute).padStart(4, '0')}`,
+          },
+          { id: 'category', header: 'Category', accessor: (e) => e.category },
+          { id: 'status', header: 'Status', accessor: (e) => e.status },
+          { id: 'priority', header: 'Priority', accessor: (e) => e.priority },
+          { id: 'owner', header: 'Owner', accessor: (e) => e.owner },
+          { id: 'duration', header: 'Length (min)', accessor: (e) => String(e.durationMin) },
+          { id: 'location', header: 'Location', accessor: (e) => e.location },
+          { id: 'notes', header: 'Notes', accessor: (e) => e.notes ?? '' },
+        ],
+        'events.csv',
+      )
+      // Say what was written: a download that happens in silence is a download
+      // the user has to go and verify themselves.
+      onNotify(
+        `Exported ${formatCount(rows.length)} ${pluralize(rows.length, 'event')} to events.csv.`,
+      )
+    },
+    [onNotify],
+  )
 
   // Selected rows that the current search and filters no longer show. The
   // selection is kept on purpose, so the count has to cover the whole of it.
@@ -237,7 +261,7 @@ export function RegistryPage({ onEdit, onBulkDelete, highlightedId }: RegistryPa
         onSimulateError={simulateError}
       />
 
-      <div className="min-h-0 flex-1">
+      <div ref={gridRef} className="min-h-0 flex-1">
         <DataGrid
           key={seedKey}
           data={events}
@@ -302,6 +326,13 @@ export function RegistryPage({ onEdit, onBulkDelete, highlightedId }: RegistryPa
         outsideCount={outsideCount}
         onOpenChange={setConfirmOpen}
         onConfirm={confirmBulkDelete}
+        // The bar that opened this dialog unmounts with the selection, so Radix
+        // has nowhere to send focus. Land on the row the user was last on.
+        fallbackFocus={() =>
+          gridRef.current?.querySelector<HTMLElement>('tbody tr[tabindex="0"]') ??
+          gridRef.current?.querySelector<HTMLElement>('input[aria-label="Search all columns"]') ??
+          null
+        }
       />
     </div>
   )
