@@ -18,17 +18,19 @@ export const footerClass =
   'flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-line bg-surface/80 px-3 py-2.5 text-xs text-muted'
 
 /**
- * The selected segment of a switcher: a raised chip, not a tinted one. The
- * track is recessed (`segmentTrackClass`), so the chip has to sit visibly above
- * it — border ring, top highlight, drop shadow — or the two read as a box
- * inside a box and the current choice has to be hunted for.
+ * The selected segment of a switcher: the accent itself, not a slightly lighter
+ * grey. A raised chip inside a recessed track reads as a box in a box, and on a
+ * dark surface the 6% step between `raised` and `canvas` is almost invisible, so
+ * the choice had to be hunted for in the label weight. A tinted capsule with a
+ * one-pixel accent edge says "you are here" at a glance, and both switchers —
+ * the registry/agenda lens and the agenda's day window — speak it.
  */
 export const selectedSegmentClass =
-  'bg-raised text-ink shadow-[inset_0_0_0_1px_var(--color-line-strong),inset_0_1px_0_rgb(255_255_255_/_0.06),0_1px_2px_rgb(0_0_0_/_0.5)]'
+  'bg-accent/[0.14] text-ink ring-1 ring-accent/70 ring-inset'
 
-/** Track that holds the segments of a view switcher: recessed, not just outlined. */
+/** Track that holds the segments of a view switcher: recessed capsule. */
 export const segmentTrackClass =
-  'flex h-9 items-center rounded-md border border-line bg-canvas p-0.5 shadow-[inset_0_1px_2px_rgb(0_0_0_/_0.4)]'
+  'flex h-8 items-center rounded-full border border-line bg-canvas p-0.5 shadow-[inset_0_1px_2px_rgb(0_0_0_/_0.4)]'
 
 /** One segment inside a switcher track. */
-export const segmentClass = 'h-8 rounded-[5px] px-2.5 transition-colors'
+export const segmentClass = 'h-7 rounded-full px-2.5 transition-colors'

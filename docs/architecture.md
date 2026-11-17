@@ -294,8 +294,10 @@ toolbar, a scrolling body and a status footer.
 - `Stat` is the only metric card. Both headers show two of them at the same
   height as the adjacent buttons.
 - `components/ui/surfaces.ts` owns `panelClass`, `toolbarClass`, `footerClass`
-  and the segmented-control classes. `DataGrid`, `Timeline`, `AgendaSkeleton`
-  and `RouteFallback` all use `panelClass`.
+  and the segmented-control classes, which is why the header's Registry/Agenda
+  lens and the agenda's 7/30/45-day window select with the same accent capsule.
+  `DataGrid`, `Timeline`, `AgendaSkeleton` and `RouteFallback` all use
+  `panelClass`.
 - `Timeline` accepts `toolbar` and `footer` slots, which is how the agenda gets
   the same anatomy as the grid without duplicating panel markup.
 

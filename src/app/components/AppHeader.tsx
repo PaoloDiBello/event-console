@@ -78,69 +78,75 @@ export function AppHeader({ onNewEvent, onOpenShortcuts }: AppHeaderProps) {
           </span>
         </NavLink>
 
-        <div className="flex min-w-0 items-center gap-2">
-          <span
-            aria-hidden="true"
-            className="hidden font-mono text-[9px] uppercase tracking-[0.18em] text-faint lg:inline"
-          >
-            View
+        {/* A capsule, not a framed pair of buttons: the two lenses share one
+            track and the accent surface slides between them. At 38px it sits
+            level with the 36px controls beside it instead of towering over the
+            row the way the old 44px track did. */}
+        <nav
+          aria-label="Event views"
+          className={cn(
+            'relative grid shrink-0 grid-cols-2 rounded-full border border-line bg-canvas p-1',
+            'shadow-[inset_0_1px_3px_rgb(0_0_0_/_0.5)]',
+          )}
+        >
+          {/* One surface slides between the two modes, so the control reads
+              as a lens rather than two adjacent buttons. */}
+          <span aria-hidden="true" className="pointer-events-none absolute inset-1 grid grid-cols-2">
+            <span
+              className={cn(
+                'col-start-1 row-start-1 rounded-full transition-transform duration-300 ease-out motion-reduce:transition-none',
+                selectedSegmentClass,
+                isTimeline && 'translate-x-full',
+              )}
+            />
           </span>
-          <nav
-            aria-label="Event views"
-            className={cn(
-              'relative grid grid-cols-2 rounded-md border border-line bg-canvas p-0.5',
-              'shadow-[inset_0_1px_2px_rgb(0_0_0_/_0.4)]',
-            )}
-          >
-            {/* One surface slides between the two modes, so the control reads
-                as a lens rather than two adjacent buttons. */}
-            <span aria-hidden="true" className="pointer-events-none absolute inset-0.5 grid grid-cols-2">
-              <span
-                className={cn(
-                  'col-start-1 row-start-1 rounded-[5px] transition-transform duration-200 ease-out motion-reduce:transition-none',
-                  selectedSegmentClass,
-                  isTimeline && 'translate-x-full',
+          {navItems.map((item) => {
+            const Icon = item.icon
+            return (
+              <NavLink
+                key={item.to}
+                to={withSharedQuery(item.to)}
+                title={`${item.description} (${item.shortcut})`}
+                aria-keyshortcuts={item.shortcut.toLowerCase()}
+                className={({ isActive }) =>
+                  cn(
+                    'relative z-10 inline-flex h-7 items-center justify-center gap-1.5 rounded-full px-2.5 text-[11px] whitespace-nowrap transition-[color,background-color,scale] duration-150 active:scale-[0.97] sm:px-3 sm:text-xs',
+                    // Inset so the focus ring is drawn inside the track instead
+                    // of being clipped by it — and ink on the selected segment,
+                    // whose own edge is already the accent, or the ring would
+                    // be invisible exactly where the user's focus sits.
+                    'focus-visible:outline-2 focus-visible:-outline-offset-2',
+                    isActive
+                      ? 'font-semibold text-ink focus-visible:outline-ink'
+                      : 'font-medium text-muted hover:bg-raised/60 hover:text-ink focus-visible:outline-accent',
+                  )
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    <Icon
+                      aria-hidden="true"
+                      className={cn(
+                        'size-4 transition-colors sm:size-3.5',
+                        isActive ? 'text-accent' : 'text-faint',
+                      )}
+                    />
+                    {item.label}
+                    {/* The keys that switch views, shown only where the
+                        header has room for them. */}
+                    <Kbd
+                      ariaHidden
+                      tone={isActive ? 'accent' : 'faint'}
+                      className="ml-0.5 hidden px-1 py-0 font-normal xl:inline-flex"
+                    >
+                      {item.shortcut}
+                    </Kbd>
+                  </>
                 )}
-              />
-            </span>
-            {navItems.map((item) => {
-              const Icon = item.icon
-              return (
-                <NavLink
-                  key={item.to}
-                  to={withSharedQuery(item.to)}
-                  title={`${item.description} (${item.shortcut})`}
-                  aria-keyshortcuts={item.shortcut.toLowerCase()}
-                  className={({ isActive }) =>
-                    cn(
-                      // A full 40px target on touch, the tighter 36px elsewhere.
-                      'relative z-10 inline-flex h-10 items-center justify-center gap-1.5 rounded-[5px] px-2.5 text-[11px] transition-colors sm:h-9 sm:px-3 sm:text-xs',
-                      // Inset so the focus ring is drawn inside the track
-                      // instead of being clipped by it.
-                      'focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent',
-                      isActive
-                        ? 'font-semibold text-ink'
-                        : 'font-medium text-muted hover:bg-raised/60 hover:text-ink',
-                    )
-                  }
-                >
-                  {({ isActive }) => (
-                    <>
-                      <Icon
-                        aria-hidden="true"
-                        className={cn(
-                          'size-4 transition-colors sm:size-3.5',
-                          isActive ? 'text-accent' : 'text-faint',
-                        )}
-                      />
-                      {item.label}
-                    </>
-                  )}
-                </NavLink>
-              )
-            })}
-          </nav>
-        </div>
+              </NavLink>
+            )
+          })}
+        </nav>
 
         <div className="ml-auto flex items-center gap-2 sm:gap-3">
           <span className="hidden items-center gap-2 font-mono text-[10px] tracking-wide text-faint md:inline-flex">

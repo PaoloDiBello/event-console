@@ -154,13 +154,23 @@ store, not separate destinations. A shared surface makes that relationship
 visible, gives the active mode one consistent treatment, and keeps both targets
 reachable at 320 px without a navigation drawer. The labels match the page
 headings (“Event registry” / “Agenda”), so the control names the user's mental
-model instead of the widget behind it; the icons carry the representation. The
-track is recessed and the active lens is a raised chip — ring, top highlight,
-drop shadow, semibold label, accent icon — because on a dark surface a slightly
-lighter fill is not a selection cue you can find at a glance. Segments are 40 px
-tall on a phone and 36 px elsewhere, the focus ring is drawn inside the track so
-it is never clipped, and the same chip marks the agenda's 7/30/45-day window.
-`G` and `T` switch modes from anywhere that is not already capturing text input.
+model instead of the widget behind it; the icons carry the representation.
+
+The track is a recessed capsule and the active lens is an accent surface — a
+tinted fill with a one-pixel accent edge, semibold label, accent icon — so the
+current mode is a colour you can find without reading. The previous treatment
+(a raised chip with a ring and a drop shadow) put a box inside a box, and on a
+dark surface the 6% step between `raised` and `canvas` was not a selection cue
+at all: the only real signal was the icon's colour. A tinted capsule says it
+outright, and the agenda's 7/30/45-day window wears the same one.
+
+The control is 38 px tall — level with the 36 px buttons beside it instead of
+towering over the row — the surface slides between the two cells in 300 ms
+(disabled under `prefers-reduced-motion`), and it presses in slightly on tap.
+The focus ring is drawn inside the track so it is never clipped, and it turns
+from accent to ink on the selected segment, whose own edge is already accent.
+Above `xl` each segment also shows the key that reaches it (`G` / `T`), which
+switch modes from anywhere that is not already capturing text input.
 
 Both pages also share one shell: a page header with two metric cards and the
 page actions, then a single panel with a toolbar, a scrolling body and a status
@@ -169,8 +179,9 @@ the same slot the grid uses for search and the column menu. `Button`,
 `SearchField`, `Stat` and the classes in `components/ui/surfaces.ts` keep the
 control heights, radii and states identical across both views.
 
-On a phone the header drops its explanatory paragraph and the two maintenance
-actions collapse to icons, so the panel — the actual work — keeps the screen.
+On a phone the header drops its wordmark and the Shortcuts button, and the
+page's own maintenance actions collapse to icons, so the switcher, the counts
+and the panel — the actual work — keep the screen.
 Page descriptions are one short line, because a paragraph that wraps to four
 lines pushes the work below the fold. The panel toolbars tighten the same way:
 search takes a full row of its own, with the `/` hint hidden (no keyboard to
