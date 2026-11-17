@@ -99,11 +99,13 @@ export function DataGridBody<TData>({
             if (!row) return null
             const rowNumber = pageIndex * pageSize + virtualRow.index + 1
             const isActive = virtualRow.index === activeRowIndex
+            const isSelected = row.getIsSelected()
             const rowClassName = getRowClassName?.(row.original) ?? ''
             return (
               <tr
                 key={row.id}
                 data-row-index={virtualRow.index}
+                data-selected={isSelected ? '' : undefined}
                 aria-rowindex={rowNumber + headerRowCount}
                 aria-keyshortcuts={activatable ? 'Enter Space' : undefined}
                 tabIndex={activatable ? (isActive ? 0 : -1) : undefined}
@@ -123,20 +125,28 @@ export function DataGridBody<TData>({
                   'group transition-colors hover:bg-raised',
                   'focus-visible:bg-raised focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent/60',
                   activatable && 'cursor-pointer',
+                  isSelected && 'bg-accent/[0.045]',
                   rowClassName,
                 )}
               >
                 {row.getVisibleCells().map((cell, cellIndex) => {
                   const align = cell.column.columnDef.meta?.align
+                  const compact = cell.column.columnDef.meta?.compact
                   const pinned = cellIndex === 0
                   return (
                     <td
                       key={cell.id}
                       data-pinned={pinned ? '' : undefined}
                       className={cn(
-                        'overflow-hidden border-b border-line/60 px-3 text-muted',
+                        'overflow-hidden border-b border-line/60 text-muted',
+                        compact ? 'px-1' : 'px-3',
                         pinned &&
-                          `${pinnedColumnClass} sm:z-10 sm:bg-surface sm:group-hover:bg-raised sm:group-focus-visible:bg-raised`,
+                          `${pinnedColumnClass} border-l-2 sm:z-10 sm:bg-surface sm:group-hover:bg-raised sm:group-focus-visible:bg-raised`,
+                        // The selection gutter lives on the pinned cell: the
+                        // row tint sits behind it, and the sticky cell paints
+                        // its own opaque background. The 2px border is always
+                        // present so selecting never nudges the checkbox.
+                        pinned && (isSelected ? 'border-l-accent' : 'border-l-transparent'),
                         // Mirror the row's own highlight (the saved-event tint)
                         // onto the pinned cell, which paints over it otherwise.
                         pinned && rowClassName,

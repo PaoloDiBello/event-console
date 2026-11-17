@@ -44,7 +44,7 @@ Zod · date-fns · Vitest + Testing Library.
 
 | Component | Responsibility |
 | --- | --- |
-| `src/components/DataGrid` | Generic table: configurable columns, visibility, per-column text, multi-select facet and date filters (with per-option counts), global search, sorting, pagination, virtualized rows, row activation with a roving tab stop, loading/empty/error states, row reveal. |
+| `src/components/DataGrid` | Generic table: configurable columns, resizing, visibility, per-column text, multi-select facet and date filters (with per-option counts), global search, sorting, pagination, virtualized rows, row activation with a roving tab stop, optional controlled row selection with a floating bulk-action slot, loading/empty/error states, row reveal. |
 | `src/components/Timeline` | Generic grouped timeline: variable-height day groups, virtualization, roving `tabindex`, arrow-key navigation, live announcements. |
 | `src/features/events/components/EventForm` | Event-specific create/edit dialog: validation, focus management, dirty-state discard confirmation, delete confirmation, save error region. |
 
@@ -317,6 +317,20 @@ mutations only pay for the sort/filter pass.
   check, stays open so several columns can be toggled in a row, and “Show all
   columns” reveals every hideable column instead of resetting to the initial
   set.
+- **Row selection and bulk delete:** ticking a row (or the header, which selects
+  the page and shows a mixed state for a partial selection) floats a compact
+  action bar above the footer instead of adding a strip that shifts the table.
+  The bar names the count, clears the selection, and opens a confirmation that
+  previews the first few selected events — the check that matters when the
+  selection has survived a page or filter change. Deleting goes through the same
+  toast + Undo path as the single-event delete, and clearing the selection
+  actually unchecks the boxes because the page owns the ids. The checkbox column
+  is sized like the utility it is, not like a data column.
+- **Row density:** one named **Density** menu replaces the old “Comp / Comf /
+  Spac” buttons. It spells out Compact, Comfortable and Spacious, previews each
+  with a row-count icon and its pixel height, and checks the active choice; the
+  trigger names the current value for assistive tech (`Row density:
+  Comfortable`).
 - **One menu language:** every menu in the panel — select filters, the form's
   four choice fields, rows per page, column visibility — is an in-app Radix menu
   on the raised surface with a check on the current choice. No control hands the
@@ -325,7 +339,7 @@ mutations only pay for the sort/filter pass.
 ## Tests and quality checks
 
 ```bash
-npm test          # 144 tests, 23 files
+npm test          # 158 tests, 27 files
 npm run build     # tsc -b (strict) + vite build
 npm run lint      # oxlint
 ```
@@ -333,7 +347,8 @@ npm run lint      # oxlint
 Coverage includes dataset determinism, search-text construction, store
 create/update, grid sorting / filtering / pagination (including typed page jumps
 and clamping) / focus-row reveal / filter-row clearing / the select and
-date-filter menus / seeded and controlled filter state, registry and agenda URL
+date-filter menus / seeded and controlled filter state / controlled selection
+and bulk delete (dialog preview, shared toast undo), registry and agenda URL
 view round-tripping and validation, the quick-filter metrics, timeline grouping /
 windowing / keyboard navigation / announcements, the shortcut cheatsheet, form
 validation, draft mapping plus the discard flow, the debounced-search hook, the
@@ -354,7 +369,8 @@ the in-app select menu, the agenda's load-failure panel, and the event columns.
 - **Global search searches all columns**, not only visible ones. That is a
   deliberate simplification; scoping it to visible columns would be a small
   follow-up.
-- **Fixed column widths + visibility.** No resizing or reordering yet.
+- **Columns resize** from the header handle; a column's default width comes from
+  its `meta.width`. Reordering is not implemented.
 - **Date filtering is exact-day**, not a range.
 - **No persistence.** Refresh regenerates the deterministic data set and drops
   created/edited events. That keeps the demo self-contained.
@@ -376,12 +392,12 @@ src/
     model/                   types, seeded generator, search text, tests
     store/                   Zustand events store, useEventFeed, tests
     components/              EventLabels, EventForm (controller/fields/footer/schema/values)
-    registry/                RegistryPage, header/stats, columns, URL view
+    registry/                RegistryPage, header/stats, columns, bulk bar/dialog, URL view
     agenda/                  AgendaPage, header, toolbar/footer, card, empty/skeleton, data
   components/
-    DataGrid/                composition, hooks/, table/header/body, toolbar, model/
+    DataGrid/                composition, hooks/, table/header/body, toolbar, selection slot, model/
     Timeline/                composition, hooks/, rows, model
-    ui/                      PageHeader, EmptyState, ErrorState, SelectMenu, Kbd, Button, SearchField, Stat, surfaces
+    ui/                      PageHeader, EmptyState, ErrorState, SelectMenu, Kbd, Button, Checkbox, SearchField, Stat, surfaces
   shared/
     hooks/                   useGlobalKeydown, useTransientValue
     lib/                     dates, formatting, cn, keyboard guards

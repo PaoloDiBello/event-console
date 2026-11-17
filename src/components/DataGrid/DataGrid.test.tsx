@@ -66,6 +66,31 @@ const columns: ColumnDef<Row>[] = [
   },
 ]
 
+/** The selection column the registry prepends, without importing the page. */
+const selectionColumns: ColumnDef<Row>[] = [
+  {
+    id: 'select',
+    header: ({ table }) => (
+      <input
+        type="checkbox"
+        aria-label="Select all rows on this page"
+        checked={table.getIsAllPageRowsSelected()}
+        onChange={(event) => table.toggleAllPageRowsSelected(event.target.checked)}
+      />
+    ),
+    cell: ({ row }) => (
+      <input
+        type="checkbox"
+        aria-label={`Select ${row.original.name}`}
+        checked={row.getIsSelected()}
+        onChange={(event) => row.toggleSelected(event.target.checked)}
+      />
+    ),
+    enableSorting: false,
+  },
+  ...columns,
+]
+
 function renderGrid(overrides: Partial<DataGridProps<Row>> = {}) {
   return render(
     <DataGrid
@@ -73,6 +98,19 @@ function renderGrid(overrides: Partial<DataGridProps<Row>> = {}) {
       columns={columns}
       getRowId={(row) => row.id}
       caption="Test rows"
+      initialPageSize={10}
+      {...overrides}
+    />,
+  )
+}
+
+function renderSelectionGrid(overrides: Partial<DataGridProps<Row>> = {}) {
+  return render(
+    <DataGrid
+      data={rows}
+      columns={selectionColumns}
+      getRowId={(row) => row.id}
+      caption="Selectable rows"
       initialPageSize={10}
       {...overrides}
     />,
@@ -738,5 +776,86 @@ describe('DataGrid', () => {
     renderGrid()
 
     expect(dataRows()[0]).not.toHaveAttribute('tabindex')
+  })
+
+  it('reports a row toggle and reflects a controlled selection', async () => {
+    const user = userEvent.setup()
+    const onSelectionChange = vi.fn()
+    const { rerender } = renderSelectionGrid({
+      selectedRowIds: [],
+      onSelectionChange,
+    })
+
+    await user.click(screen.getByRole('checkbox', { name: 'Select Row 01' }))
+    expect(onSelectionChange).toHaveBeenLastCalledWith(['r1'])
+
+    // The page owns the ids, so only handing them back checks the box.
+    rerender(
+      <DataGrid
+        data={rows}
+        columns={selectionColumns}
+        getRowId={(row) => row.id}
+        caption="Selectable rows"
+        initialPageSize={10}
+        selectedRowIds={['r1']}
+        onSelectionChange={onSelectionChange}
+      />,
+    )
+
+    expect(screen.getByRole('checkbox', { name: 'Select Row 01' })).toBeChecked()
+    expect(screen.getByRole('checkbox', { name: 'Select Row 00' })).not.toBeChecked()
+    expect(screen.getByText('Row 01').closest('tr')).toHaveAttribute('data-selected')
+    expect(screen.getByText('Row 00').closest('tr')).not.toHaveAttribute('data-selected')
+  })
+
+  it('selects the whole page from the header checkbox', async () => {
+    const user = userEvent.setup()
+    const onSelectionChange = vi.fn()
+    renderSelectionGrid({ onSelectionChange })
+
+    const header = screen.getByRole('checkbox', { name: 'Select all rows on this page' })
+    await user.click(header)
+
+    expect(onSelectionChange).toHaveBeenLastCalledWith(rows.slice(0, 10).map((row) => row.id))
+    expect(header).toBeChecked()
+
+    await user.click(header)
+    expect(onSelectionChange).toHaveBeenLastCalledWith([])
+    expect(header).not.toBeChecked()
+  })
+
+  it('clears every checkbox when the controlled ids are emptied', () => {
+    const onSelectionChange = vi.fn()
+    const { rerender } = renderSelectionGrid({
+      selectedRowIds: ['r0', 'r1'],
+      onSelectionChange,
+    })
+
+    expect(screen.getByRole('checkbox', { name: 'Select Row 00' })).toBeChecked()
+
+    rerender(
+      <DataGrid
+        data={rows}
+        columns={selectionColumns}
+        getRowId={(row) => row.id}
+        caption="Selectable rows"
+        initialPageSize={10}
+        selectedRowIds={[]}
+        onSelectionChange={onSelectionChange}
+      />,
+    )
+
+    expect(screen.getByRole('checkbox', { name: 'Select Row 00' })).not.toBeChecked()
+    expect(screen.queryByText('Row 00')?.closest('tr')).not.toHaveAttribute('data-selected')
+  })
+
+  it('uses meta.width as the column size', () => {
+    renderGrid({
+      columns: [{ accessorKey: 'name', header: 'Name', meta: { width: 120 } }],
+    })
+
+    // Without this, TanStack falls back to its 150px default and a narrow
+    // utility column (selection, actions) silently reserves too much room.
+    expect(document.querySelector('colgroup col')).toHaveStyle({ width: '120px' })
   })
 })

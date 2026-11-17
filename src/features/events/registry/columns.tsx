@@ -186,7 +186,8 @@ export function createEventColumns(
       header: '',
       enableSorting: false,
       enableHiding: false,
-      meta: { width: 44, align: 'right' },
+      enableResizing: false,
+      meta: { width: 36, align: 'right', compact: true },
       // The row itself opens the editor; this is the visible cue for that,
       // so it stays out of the tab order to avoid a second stop per row.
       cell: ({ row }) => (

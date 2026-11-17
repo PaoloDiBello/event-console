@@ -8,6 +8,7 @@ type EditorState = { mode: 'create' } | { mode: 'edit'; event: EventRecord }
 
 type UndoAction =
   | { kind: 'delete'; event: EventRecord; index: number }
+  | { kind: 'bulkDelete'; items: { event: EventRecord; index: number }[] }
   | { kind: 'create'; eventId: string }
   | { kind: 'update'; previous: EventRecord }
 
@@ -32,7 +33,9 @@ export function useEventEditor() {
   const createEvent = useEventStore((state) => state.createEvent)
   const updateEvent = useEventStore((state) => state.updateEvent)
   const deleteEvent = useEventStore((state) => state.deleteEvent)
+  const deleteEvents = useEventStore((state) => state.deleteEvents)
   const restoreEvent = useEventStore((state) => state.restoreEvent)
+  const restoreEvents = useEventStore((state) => state.restoreEvents)
 
   const [editor, setEditor] = useState<EditorState | null>(null)
   // The editor chunk is fetched on first use. Once loaded it stays mounted
@@ -100,12 +103,43 @@ export function useEventEditor() {
     [deleteEvent, setSuccess],
   )
 
+  /**
+   * Bulk delete shares the single-delete toast and undo slot, so both paths
+   * confirm the same way and the undo affordance never has to live in the page
+   * that happened to start the action.
+   */
+  const handleBulkDelete = useCallback(
+    (ids: string[]) => {
+      if (ids.length === 0) return
+      const removed = deleteEvents(ids)
+      if (removed.length === 0) return
+      setUndo({ kind: 'bulkDelete', items: removed })
+      setSuccess(
+        removed.length === 1
+          ? `Event “${removed[0]!.event.title}” deleted.`
+          : `${removed.length} events deleted.`,
+      )
+    },
+    [deleteEvents, setSuccess],
+  )
+
   const undoAction = useCallback(() => {
     if (!undo) return
     if (undo.kind === 'delete') {
       restoreEvent(undo.event, undo.index)
       setHighlightedId(undo.event.id)
       setSuccess(`Event “${undo.event.title}” restored.`)
+    } else if (undo.kind === 'bulkDelete') {
+      restoreEvents(undo.items)
+      const first = undo.items[0]?.event
+      // Unlike a single restore, do not jump the grid to the first restored
+      // row: a bulk undo is about putting the records back, not about moving
+      // the reader away from wherever they were.
+      setSuccess(
+        undo.items.length === 1
+          ? `Event “${first?.title}” restored.`
+          : `${undo.items.length} events restored.`,
+      )
     } else if (undo.kind === 'create') {
       const removed = deleteEvent(undo.eventId)
       if (removed) {
@@ -129,7 +163,7 @@ export function useEventEditor() {
       setSuccess(`Event “${previous.title}” reverted.`)
     }
     setUndo(null)
-  }, [undo, deleteEvent, restoreEvent, updateEvent, setHighlightedId, setSuccess])
+  }, [undo, deleteEvent, restoreEvent, restoreEvents, updateEvent, setHighlightedId, setSuccess])
 
   return {
     editor,
@@ -142,6 +176,7 @@ export function useEventEditor() {
     closeEditor,
     handleSubmit,
     handleDelete,
+    handleBulkDelete,
     /** Undo affordance for the toast, present only after a create, update, or delete. */
     undoAction: undo ? { label: 'Undo', onClick: undoAction } : undefined,
   }

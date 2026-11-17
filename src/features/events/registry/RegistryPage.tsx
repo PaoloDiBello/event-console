@@ -1,8 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { DataGrid, type DataGridViewState } from '@/components/DataGrid'
+import {
+  DataGrid,
+  type DataGridColumn,
+  type DataGridViewState,
+} from '@/components/DataGrid'
+import { Checkbox } from '@/components/ui/Checkbox'
 import type { EventRecord } from '@/features/events/model'
-import { useEventFeed, useEventStore } from '@/features/events/store'
+import { useEventFeed } from '@/features/events/store'
+import { exportToCsv } from '@/shared/lib/exportCsv'
+import { BulkActionBar } from './BulkActionBar'
+import { BulkDeleteDialog } from './BulkDeleteDialog'
+import { DensityMenu } from './DensityMenu'
+import { ROW_HEIGHT, type RowDensity } from './density'
 import { createEventColumns, eventGlobalFilter } from './columns'
 import { RegistryHeader } from './RegistryHeader'
 import {
@@ -13,12 +23,11 @@ import {
   type RegistryView,
 } from './registryView'
 import { useRegistryStats } from './useRegistryStats'
-import { useTransientValue } from '@/shared/hooks/useTransientValue'
-import * as Dialog from '@radix-ui/react-dialog'
-import { exportToCsv } from '@/shared/lib/exportCsv'
 
 interface RegistryPageProps {
   onEdit: (event: EventRecord) => void
+  /** Remove the selected records through the app's shared delete + undo path. */
+  onBulkDelete: (ids: string[]) => void
   highlightedId: string | null
 }
 
@@ -27,10 +36,8 @@ function getEventRowId(event: EventRecord) {
   return event.id
 }
 
-export function RegistryPage({ onEdit, highlightedId }: RegistryPageProps) {
+export function RegistryPage({ onEdit, onBulkDelete, highlightedId }: RegistryPageProps) {
   const { events, status, error, isLoading, reload, simulateError } = useEventFeed()
-  const deleteEvents = useEventStore((s) => s.deleteEvents)
-  const restoreEvents = useEventStore((s) => s.restoreEvents)
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -39,6 +46,10 @@ export function RegistryPage({ onEdit, highlightedId }: RegistryPageProps) {
   const [seed, setSeed] = useState(() => readRegistryView(searchParams))
   const [seedKey, setSeedKey] = useState(0)
   const [columnFilters, setColumnFilters] = useState(seed.columnFilters)
+  // The page owns the selection so a bulk delete can clear the checkboxes,
+  // not just hide the action bar. The grid reports every toggle back here.
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [confirmOpen, setConfirmOpen] = useState(false)
 
   const viewRef = useRef<RegistryView>(seed)
   const lastUrlRef = useRef(searchParams.toString())
@@ -67,6 +78,7 @@ export function RegistryPage({ onEdit, highlightedId }: RegistryPageProps) {
     viewRef.current = next
     setSeed(next)
     setColumnFilters(next.columnFilters)
+    setSelectedIds([])
     setSeedKey((key) => key + 1)
   }, [searchParams])
 
@@ -95,40 +107,45 @@ export function RegistryPage({ onEdit, highlightedId }: RegistryPageProps) {
   }, [])
 
   const stats = useRegistryStats(events)
-  const [selectedIds, setSelectedIds] = useState<string[]>([])
-  const [confirmOpen, setConfirmOpen] = useState(false)
-  const [density, setDensity] = useState<'compact' | 'comfortable' | 'spacious'>('comfortable')
-  const [removedBulk, setRemovedBulk] = useState<{ event: any; index: number }[] | null>(null)
-  const [bulkSuccess, setBulkSuccess] = useTransientValue<string>(6000)
-  const columns = useMemo(
+  const [density, setDensity] = useState<RowDensity>('comfortable')
+  const columns = useMemo<DataGridColumn<EventRecord>[]>(
     () => [
       {
         id: 'select',
-        header: ({ table }: { table: any }) => (
-          <input
-            type="checkbox"
+        header: ({ table }) => (
+          <Checkbox
             aria-label="Select all rows on this page"
             checked={table.getIsAllPageRowsSelected()}
-            onChange={(e: any) => table.toggleAllPageRowsSelected(e.target.checked)}
+            indeterminate={table.getIsSomePageRowsSelected()}
+            onChange={(event) => table.toggleAllPageRowsSelected(event.target.checked)}
           />
         ),
-        cell: ({ row }: { row: any }) => (
-          <input
-            type="checkbox"
+        cell: ({ row }) => (
+          <Checkbox
             aria-label={`Select ${row.original.title}`}
             checked={row.getIsSelected()}
-            onChange={(e: any) => row.toggleSelected(e.target.checked)}
-            onClick={(e: any) => e.stopPropagation()}
+            onChange={(event) => row.toggleSelected(event.target.checked)}
+            onClick={(event) => event.stopPropagation()}
           />
         ),
-        size: 40,
         enableSorting: false,
         enableColumnFilter: false,
+        enableHiding: false,
+        enableResizing: false,
+        meta: { width: 32, align: 'center', hideable: false, compact: true },
       },
       ...createEventColumns(onEdit, { owners: stats.owners, locations: stats.locations }),
     ],
     [onEdit, stats.owners, stats.locations],
   )
+
+  // Only the rows the dialog is about to name; built on open so ticking a
+  // checkbox does not walk the 100k-row set on every click.
+  const selectedEvents = useMemo(() => {
+    if (!confirmOpen || selectedIds.length === 0) return []
+    const wanted = new Set(selectedIds)
+    return events.filter((event) => wanted.has(event.id))
+  }, [confirmOpen, events, selectedIds])
 
   const handleExport = useCallback(() => {
     exportToCsv(
@@ -149,24 +166,16 @@ export function RegistryPage({ onEdit, highlightedId }: RegistryPageProps) {
   }, [events])
 
   const handleBulkDelete = useCallback(() => {
+    if (selectedIds.length === 0) return
     setConfirmOpen(true)
-  }, [])
+  }, [selectedIds.length])
 
   const confirmBulkDelete = useCallback(() => {
     if (selectedIds.length === 0) return
-    const removed = deleteEvents(selectedIds)
-    setRemovedBulk(removed)
-    setBulkSuccess(`${removed.length} event${removed.length === 1 ? '' : 's'} deleted.`)
+    onBulkDelete(selectedIds)
     setSelectedIds([])
     setConfirmOpen(false)
-  }, [selectedIds, deleteEvents, setBulkSuccess])
-
-  const undoBulkDelete = useCallback(() => {
-    if (!removedBulk) return
-    restoreEvents(removedBulk)
-    setRemovedBulk(null)
-    setBulkSuccess(null)
-  }, [removedBulk, restoreEvents, setBulkSuccess])
+  }, [onBulkDelete, selectedIds])
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
@@ -182,28 +191,6 @@ export function RegistryPage({ onEdit, highlightedId }: RegistryPageProps) {
       />
 
       <div className="min-h-0 flex-1">
-        {selectedIds.length > 0 ? (
-          <div className="flex items-center gap-3 rounded-md border border-destructive/30 bg-destructive/5 px-4 py-2.5 text-sm">
-            <span className="font-semibold text-destructive">{selectedIds.length} selected</span>
-            <button
-              type="button"
-              onClick={handleBulkDelete}
-              className="rounded-md bg-destructive px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-destructive/90"
-            >
-              Delete {selectedIds.length} selected
-            </button>
-            {bulkSuccess ? (
-              <span className="ml-auto text-xs text-muted">
-                {bulkSuccess}{' '}
-                {removedBulk ? (
-                  <button type="button" onClick={undoBulkDelete} className="font-medium underline">
-                    Undo
-                  </button>
-                ) : null}
-              </span>
-            ) : null}
-          </div>
-        ) : null}
         <DataGrid
           key={seedKey}
           data={events}
@@ -227,22 +214,19 @@ export function RegistryPage({ onEdit, highlightedId }: RegistryPageProps) {
           initialColumnVisibility={{ notes: false }}
           onRowActivate={onEdit}
           onExport={handleExport}
+          selectedRowIds={selectedIds}
           onSelectionChange={setSelectedIds}
-          rowHeight={density === 'compact' ? 32 : density === 'spacious' ? 56 : 44}
-          toolbarActions={
-            <div className="flex items-center gap-1">
-              {(['compact', 'comfortable', 'spacious'] as const).map((d) => (
-                <button
-                  key={d}
-                  type="button"
-                  onClick={() => setDensity(d)}
-                  className={`rounded-sm px-2 py-1 text-xs ${density === d ? 'bg-accent/20 text-accent' : 'text-muted hover:text-ink'}`}
-                >
-                  {d[0].toUpperCase() + d.slice(1, 4)}
-                </button>
-              ))}
-            </div>
+          selectionBar={
+            selectedIds.length > 0 ? (
+              <BulkActionBar
+                count={selectedIds.length}
+                onClear={() => setSelectedIds([])}
+                onDelete={handleBulkDelete}
+              />
+            ) : undefined
           }
+          rowHeight={ROW_HEIGHT[density]}
+          toolbarActions={<DensityMenu value={density} onValueChange={setDensity} />}
           focusRowId={highlightedId}
           emptyTitle="No events in the registry"
           emptyHint="Load the dataset, or add the first event with the New event button."
@@ -254,36 +238,12 @@ export function RegistryPage({ onEdit, highlightedId }: RegistryPageProps) {
         />
       </div>
 
-      <Dialog.Root open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm" />
-          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[90vw] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg border border-line bg-surface p-6 shadow-lg">
-            <Dialog.Title className="text-base font-semibold text-ink">
-              Delete {selectedIds.length} event{selectedIds.length === 1 ? '' : 's'}?
-            </Dialog.Title>
-            <Dialog.Description className="mt-2 text-sm text-muted">
-              This action can be undone with the Undo button that appears after deletion.
-            </Dialog.Description>
-            <div className="mt-5 flex justify-end gap-2">
-              <Dialog.Close asChild>
-                <button
-                  type="button"
-                  className="rounded-md border border-line px-3 py-1.5 text-sm text-muted hover:text-ink"
-                >
-                  Cancel
-                </button>
-              </Dialog.Close>
-              <button
-                type="button"
-                onClick={confirmBulkDelete}
-                className="rounded-md bg-destructive px-3 py-1.5 text-sm font-medium text-white hover:bg-destructive/90"
-              >
-                Delete
-              </button>
-            </div>
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
+      <BulkDeleteDialog
+        open={confirmOpen}
+        events={selectedEvents}
+        onOpenChange={setConfirmOpen}
+        onConfirm={confirmBulkDelete}
+      />
     </div>
   )
 }

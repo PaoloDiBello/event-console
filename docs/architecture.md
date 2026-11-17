@@ -85,8 +85,12 @@ src/
         styles.ts                   shared input classes
         index.ts                    public form API
     registry/                       "records" lens
-      RegistryPage.tsx              data + DataGrid composition, URL-backed view
+      RegistryPage.tsx              data + DataGrid composition, URL-backed view, selection owner
       RegistryHeader.tsx            page header, quick-filter stats, actions
+      BulkActionBar.tsx             floating selection pill: count, clear, delete
+      BulkDeleteDialog.tsx          confirmation with an event preview and focus return
+      DensityMenu.tsx               named row-density menu
+      density.ts                    density values and row heights
       registryView.ts               shareable view <-> URL (read, validate, write)
       useRegistryStats.ts           one-pass header counters
       columns.tsx                   event columns and fast sort keys
@@ -107,9 +111,9 @@ src/
 
   components/                       reusable, domain-free
     DataGrid/
-      DataGrid.tsx                  composition: controller + virtualizer + reveal
+      DataGrid.tsx                  composition: controller + virtualizer + reveal + selection slot
       hooks/
-        useDataGridController.ts    search, sort, filters, pagination, table
+        useDataGridController.ts    search, sort, filters, pagination, table, selection
         useRowReveal.ts             jump to a row's page and scroll it into view
         useGridScrollReset.ts       top-of-list reset on view changes
         useScrollEdges.ts           which horizontal edges still hide content
@@ -155,6 +159,7 @@ src/
       EmptyState.tsx                shared empty-state layout
       ErrorState.tsx                shared load-failure layout with retry
       SelectMenu.tsx                one select control backed by the app menu
+      Checkbox.tsx                  native checkbox in the console palette, mixed state
       Kbd.tsx                       keyboard hint chip
       Button.tsx                    one button component
       buttonStyles.ts               variant/size classes for triggers and refs
@@ -228,6 +233,29 @@ write with `replace`, so filtering never fills the history stack, and an externa
 URL change (nav click, Back) re-seeds the view — the grid through a remount key,
 the agenda by adopting the link and jumping to its day.
 
+## Bulk selection
+
+Selection belongs to `RegistryPage`, not to `DataGrid`: a bulk delete has to
+uncheck the boxes after it runs, and a grid that owns its own selection can only
+hide the action bar. The grid accepts optional `selectedRowIds` /
+`onSelectionChange`; omit them and it stays uncontrolled for any other caller.
+
+`DataGrid` exposes a `selectionBar` slot inside its scroll wrapper. The bar is
+positioned above the footer instead of taking a row in the layout, so selecting a
+row never resizes the table under the pointer, and it cannot cover the
+pagination at narrow widths.
+
+The delete confirmation previews up to five selected events and counts the rest.
+A count alone is easy to trust and hard to verify, especially because selection
+survives paging and filtering. `BulkDeleteDialog` remembers the control that
+opened it (the bar's Delete button) and returns focus there on close, since the
+dialog is opened by state rather than by a Radix trigger.
+
+Both single and bulk delete write through `useEventEditor`'s one undo slot, so
+the toast, the Undo affordance and the restore semantics cannot drift. Bulk undo
+restores the records without moving the grid: the point is putting the data
+back, not jumping the reader to an arbitrary page.
+
 ## One visual system
 
 Registry and agenda are two lenses on the same data, so they share one shell:
@@ -250,10 +278,11 @@ toolbar, a scrolling body and a status footer.
   trigger's width. The form's four choice fields use it; the grid's select
   filters share the same menu treatment. No control hands the keyboard to the
   operating-system `<select>` popup.
-- The grid pins its first visible column from `sm` up (`pinnedColumn.ts`), so
-  the event title holds still while the other columns scroll under it. Below
-  `sm` the column would be most of the viewport, so nothing is pinned and both
-  edges keep their fade.
+- The grid pins its first visible column from `sm` up (`pinnedColumn.ts`). In
+  the registry that is the selection gutter, so the checkboxes stay reachable
+  while the data columns scroll under them; a grid whose first column is the
+  title keeps the title still instead. Below `sm` nothing is pinned, because the
+  first column is most of the viewport, and both edges keep their fade.
 - `Stat` is the only metric card. Both headers show two of them at the same
   height as the adjacent buttons.
 - `components/ui/surfaces.ts` owns `panelClass`, `toolbarClass`, `footerClass`
@@ -339,8 +368,14 @@ Tests are colocated with the unit they exercise:
   and validation.
 - `features/events/registry/RegistryHeader.test.tsx` — quick-filter stats.
 - `features/events/registry/columns.test.tsx` — column labels and sort keys.
+- `features/events/registry/BulkDeleteDialog.test.tsx` — count-aware copy,
+  preview cap, cancel/confirm, initial focus.
+- `features/events/registry/DensityMenu.test.tsx` — full density labels and the
+  selected option.
+- `app/hooks/useEventEditor.test.ts` — bulk delete through the shared toast and
+  undo path.
 - `components/DataGrid/DataGrid.test.tsx` — sorting, filtering, pagination,
-  page jump, focus reveal.
+  page jump, focus reveal, controlled selection, `meta.width` sizing.
 - `components/DataGrid/DataGridDateFilter.test.tsx` — date filter menu.
 - `components/DataGrid/hooks/useScrollEdges.test.ts` — clipped-edge detection.
 - `components/Timeline/Timeline.test.tsx` — navigation and announcements.

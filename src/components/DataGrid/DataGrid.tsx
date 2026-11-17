@@ -37,6 +37,8 @@ export function DataGrid<TData>({
   onColumnFiltersChange,
   onViewStateChange,
   initialColumnVisibility,
+  selectedRowIds,
+  onSelectionChange,
   pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS,
   emptyTitle = 'Nothing here yet',
   emptyHint = 'Rows will appear here once data is available.',
@@ -44,8 +46,8 @@ export function DataGrid<TData>({
   onRowActivate,
   focusRowId,
   toolbarActions,
+  selectionBar,
   onExport,
-  onSelectionChange,
   rowHeight = DEFAULT_ROW_HEIGHT,
 }: DataGridProps<TData>) {
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -64,6 +66,8 @@ export function DataGrid<TData>({
     onColumnFiltersChange,
     onViewStateChange,
     initialColumnVisibility,
+    selectedRowIds,
+    onSelectionChange,
   })
 
   // TanStack Virtual intentionally exposes non-memoizable instance methods;
@@ -120,9 +124,6 @@ export function DataGrid<TData>({
     [grid.rows.length, rowVirtualizer],
   )
 
-  useEffect(() => {
-    onSelectionChange?.(grid.selectedRowIds)
-  }, [grid.selectedRowIds, onSelectionChange])
   const virtualRows = rowVirtualizer.getVirtualItems()
   const paddingTop = virtualRows.length > 0 ? virtualRows[0]!.start : 0
   const paddingBottom =
@@ -196,6 +197,7 @@ export function DataGrid<TData>({
             </div>
             {canScrollLeft ? <DataGridScrollFade side="left" className="sm:hidden" /> : null}
             {canScrollRight ? <DataGridScrollFade side="right" /> : null}
+            {selectionBar}
           </>
         )}
       </div>

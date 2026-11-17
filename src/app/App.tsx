@@ -48,6 +48,7 @@ export function App() {
     closeEditor,
     handleSubmit,
     handleDelete,
+    handleBulkDelete,
     undoAction,
   } = useEventEditor()
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
@@ -83,7 +84,13 @@ export function App() {
           <Routes>
             <Route
               path="/grid"
-              element={<RegistryPage onEdit={openEdit} highlightedId={highlightedId} />}
+              element={
+                <RegistryPage
+                  onEdit={openEdit}
+                  onBulkDelete={handleBulkDelete}
+                  highlightedId={highlightedId}
+                />
+              }
             />
             <Route path="/timeline" element={<AgendaPage onEdit={openEdit} />} />
             <Route path="*" element={<Navigate to="/grid" replace />} />

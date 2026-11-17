@@ -38,6 +38,12 @@ interface DataGridControllerOptions<TData> {
   onColumnFiltersChange?: (filters: ColumnFiltersState) => void
   onViewStateChange?: (state: DataGridViewState) => void
   initialColumnVisibility?: VisibilityState
+  /**
+   * Controlled selection. Supply both props when the page needs to clear the
+   * selection after a bulk action; omit them to let the grid own it.
+   */
+  selectedRowIds?: string[]
+  onSelectionChange?: (ids: string[]) => void
 }
 
 /**
@@ -60,6 +66,8 @@ export function useDataGridController<TData>({
   onColumnFiltersChange,
   onViewStateChange,
   initialColumnVisibility,
+  selectedRowIds,
+  onSelectionChange,
 }: DataGridControllerOptions<TData>) {
   const [sorting, setSorting] = useState<SortingState>(initialSorting ?? [])
   const [internalColumnFilters, setInternalColumnFilters] = useState<ColumnFiltersState>(
@@ -71,11 +79,43 @@ export function useDataGridController<TData>({
     initialColumnVisibility ?? {},
   )
   const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({})
-  const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
+  const [internalRowSelection, setInternalRowSelection] = useState<RowSelectionState>({})
+  // A page that owns the selection passes ids; the table still needs the
+  // record shape TanStack expects. The memo keeps that object stable between
+  // renders, so the row model does not rebuild for no reason.
+  const rowSelection = useMemo<RowSelectionState>(
+    () =>
+      selectedRowIds === undefined
+        ? internalRowSelection
+        : Object.fromEntries(selectedRowIds.map((id) => [id, true])),
+    [internalRowSelection, selectedRowIds],
+  )
+  const setRowSelection = useCallback(
+    (updater: Updater<RowSelectionState>) => {
+      const next = functionalUpdate(updater, rowSelection)
+      const ids = Object.keys(next).filter((id) => next[id])
+      if (selectedRowIds === undefined) setInternalRowSelection(next)
+      onSelectionChange?.(ids)
+    },
+    [onSelectionChange, rowSelection, selectedRowIds],
+  )
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: initialPageIndex,
     pageSize: initialPageSize,
   })
+
+  // `meta.width` is the documented per-column width, but TanStack reads
+  // `columnDef.size`. Normalize once here, otherwise a narrow utility column
+  // silently falls back to TanStack's 150px default.
+  const sizedColumns = useMemo(
+    () =>
+      columns.map((column) =>
+        column.size === undefined && column.meta?.width !== undefined
+          ? { ...column, size: column.meta.width }
+          : column,
+      ),
+    [columns],
+  )
 
   // TanStack hands setters an updater, not always a value. Resolve it against
   // the filters the parent currently sees, then hand the result back.
@@ -128,8 +168,8 @@ export function useDataGridController<TData>({
   // Filter, sort and count the full data set here, then give TanStack only the
   // current page. Its row model stays small even when the source is 100k rows.
   const displayRows = useMemo(
-    () => buildRows(data, columns, columnFilters, globalFilter, globalFilterFn, sorting),
-    [data, columns, columnFilters, globalFilter, globalFilterFn, sorting],
+    () => buildRows(data, sizedColumns, columnFilters, globalFilter, globalFilterFn, sorting),
+    [data, sizedColumns, columnFilters, globalFilter, globalFilterFn, sorting],
   )
   const filteredCount = displayRows.length
   const pageCount = Math.max(1, Math.ceil(filteredCount / pagination.pageSize))
@@ -153,7 +193,7 @@ export function useDataGridController<TData>({
   // oxlint-disable-next-line react/incompatible-library
   const table = useReactTable({
     data: pageRows,
-    columns,
+    columns: sizedColumns,
     getRowId,
     state: { sorting, columnFilters, globalFilter, columnVisibility, pagination, columnSizing, rowSelection },
     onSortingChange: setSorting,
@@ -190,10 +230,10 @@ export function useDataGridController<TData>({
   const chips = useMemo(
     () =>
       filterChips(
-        columns,
+        sizedColumns,
         columnFilters,
       ),
-    [columns, columnFilters],
+    [sizedColumns, columnFilters],
   )
   const hasSearch = globalFilter.length > 0
   const hasFilters = filterCount > 0
@@ -301,8 +341,8 @@ export function useDataGridController<TData>({
    */
   const getFacetCounts = useCallback(
     (columnId: string) =>
-      collectFacetCounts(data, columns, columnFilters, globalFilter, globalFilterFn, columnId),
-    [columnFilters, columns, data, globalFilter, globalFilterFn],
+      collectFacetCounts(data, sizedColumns, columnFilters, globalFilter, globalFilterFn, columnId),
+    [columnFilters, sizedColumns, data, globalFilter, globalFilterFn],
   )
 
   const setPage = useCallback((pageIndex: number) => {
@@ -357,7 +397,7 @@ export function useDataGridController<TData>({
     rangeStart,
     rangeEnd,
     rowSelection,
-    selectedRowIds: Object.keys(rowSelection).filter((k) => rowSelection[k]),
+    selectedRowIds: Object.keys(rowSelection).filter((id) => rowSelection[id]),
     clearRowSelection: () => setRowSelection({}),
   }
 }

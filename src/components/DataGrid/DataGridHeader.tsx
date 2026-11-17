@@ -40,6 +40,7 @@ export function DataGridHeader<TData>({
             const filterValue = header.column.getFilterValue()
             const filtered = !isBlank(filterValue)
             const align = header.column.columnDef.meta?.align
+            const compact = header.column.columnDef.meta?.compact
             // The first visible column stays put horizontally so a row keeps
             // its identity while the rest of the table scrolls under it. Only
             // from `sm` up: on a phone the column is most of the viewport, and
@@ -65,7 +66,8 @@ export function DataGridHeader<TData>({
                         disabled={isLoading}
                         onClick={(event) => onSort(header.column, event)}
                         className={cn(
-                          'flex h-10 w-full items-center gap-1.5 px-3 text-inherit',
+                          'flex h-10 w-full items-center gap-1.5 text-inherit',
+                          compact ? 'px-1' : 'px-3',
                           align === 'right' && 'justify-end',
                           align === 'center' && 'justify-center',
                           'cursor-pointer transition-colors hover:text-ink',
@@ -86,7 +88,8 @@ export function DataGridHeader<TData>({
                     ) : (
                       <div
                         className={cn(
-                          'flex h-10 w-full items-center gap-1.5 px-3 text-inherit',
+                          'flex h-10 w-full items-center gap-1.5 text-inherit',
+                          compact ? 'px-1' : 'px-3',
                           align === 'right' && 'justify-end',
                           align === 'center' && 'justify-center',
                         )}
@@ -129,7 +132,8 @@ export function DataGridHeader<TData>({
               scope="col"
               data-pinned={headerIndex === 0 ? '' : undefined}
               className={cn(
-                'sticky top-10 z-20 border-b border-line bg-surface px-2 py-1.5 font-normal',
+                'sticky top-10 z-20 border-b border-line bg-surface py-1.5 font-normal',
+                header.column.columnDef.meta?.compact ? 'px-1' : 'px-2',
                 headerIndex === 0 && `${pinnedColumnClass} sm:z-30`,
               )}
             >

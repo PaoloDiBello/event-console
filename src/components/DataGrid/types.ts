@@ -24,6 +24,8 @@ declare module '@tanstack/react-table' {
     align?: 'left' | 'center' | 'right'
     /** Fixed pixel width. Columns without a width share the remaining space. */
     width?: number
+    /** Tighten horizontal padding for narrow utility columns (selection, actions). */
+    compact?: boolean
     /** Set false to keep a column out of the visibility menu. */
     hideable?: boolean
     /**
@@ -88,7 +90,14 @@ export interface DataGridProps<TData> {
   /** Row to reveal (e.g. the event just created): jumps to its page and scrolls it into view. */
   focusRowId?: string | null
   toolbarActions?: ReactNode
+  /** Floating strip pinned above the footer, e.g. bulk actions for selected rows. */
+  selectionBar?: ReactNode
   onExport?: () => void
+  /**
+   * Controlled selection. Supply both props when the page needs to clear the
+   * selection after a bulk action; omit them to let the grid own it.
+   */
+  selectedRowIds?: string[]
   onSelectionChange?: (ids: string[]) => void
   rowHeight?: number
 }
