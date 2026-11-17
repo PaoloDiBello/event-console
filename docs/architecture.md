@@ -128,6 +128,7 @@ src/
       DataGridBody.tsx              skeleton/empty/virtual rows + row keyboard model
       DataGridToolbar.tsx           toolbar composition
       DataGridSearch.tsx            global search control
+      DataGridFilterPanel.tsx       phone filter sheet over the same controls
       DataGridColumnMenu.tsx        visibility menu
       DataGridPagination.tsx        footer and navigation
       DataGridPageJump.tsx          typed page input
@@ -136,7 +137,7 @@ src/
       DataGridError.tsx             load-failure copy over ErrorState
       DataGridScrollFade.tsx        gradient cue on a clipped edge
       DataGridSkeleton.tsx          loading rows
-      pinnedColumn.ts               frozen first column (sticky from sm up)
+      pinnedColumn.ts               frozen first column (pinned at every width)
       model/                        pure filter/sort pipeline
         accessors.ts                column access and row shims
         filter.ts                   per-column and global filters
@@ -278,11 +279,18 @@ toolbar, a scrolling body and a status footer.
   trigger's width. The form's four choice fields use it; the grid's select
   filters share the same menu treatment. No control hands the keyboard to the
   operating-system `<select>` popup.
-- The grid pins its first visible column from `sm` up (`pinnedColumn.ts`). In
-  the registry that is the selection gutter, so the checkboxes stay reachable
-  while the data columns scroll under them; a grid whose first column is the
-  title keeps the title still instead. Below `sm` nothing is pinned, because the
-  first column is most of the viewport, and both edges keep their fade.
+- The grid pins its first rendered column at every width (`pinnedColumn.ts`).
+  In the registry that is the 32 px selection gutter, so the checkboxes stay
+  reachable while the data columns scroll under them; a grid whose first column
+  is the title keeps the title still instead. Because the left edge is always
+  occupied, only the right edge fades.
+- Responsive layout is split between CSS and `shared/hooks/useMediaQuery`:
+  spacing and visibility that CSS can express stay in classes, while the two
+  decisions that change what is rendered — dropping `meta.hideBelow` columns and
+  replacing the filter row with `DataGridFilterPanel` below `md` — are read in
+  JS so the header, body, skeleton and `colgroup` are filtered from one list.
+  Without `matchMedia` the hook reports the wide layout, so tests and older
+  browsers get the desktop surface.
 - `Stat` is the only metric card. Both headers show two of them at the same
   height as the adjacent buttons.
 - `components/ui/surfaces.ts` owns `panelClass`, `toolbarClass`, `footerClass`
@@ -375,7 +383,10 @@ Tests are colocated with the unit they exercise:
 - `app/hooks/useEventEditor.test.ts` — bulk delete through the shared toast and
   undo path.
 - `components/DataGrid/DataGrid.test.tsx` — sorting, filtering, pagination,
-  page jump, focus reveal, controlled selection, `meta.width` sizing.
+  page jump, focus reveal, controlled selection, `meta.width` sizing, and the
+  phone filter sheet.
+- `shared/hooks/useMediaQuery.test.ts` — the width query, its change events and
+  the wide-layout fallback.
 - `components/DataGrid/DataGridDateFilter.test.tsx` — date filter menu.
 - `components/DataGrid/hooks/useScrollEdges.test.ts` — clipped-edge detection.
 - `components/Timeline/Timeline.test.tsx` — navigation and announcements.

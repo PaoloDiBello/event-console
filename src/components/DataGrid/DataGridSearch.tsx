@@ -31,11 +31,15 @@ export function DataGridSearch({
       disabled={disabled}
       aria-label="Search all columns"
       aria-keyshortcuts="/"
-      wrapperClassName="sm:max-w-sm"
+      // Full row on a phone: the primary tool on a 100k-row table should not be
+      // two characters wide. The shortcut hint is meaningless on touch.
+      wrapperClassName="w-full sm:w-auto sm:max-w-sm sm:flex-1"
       shortcut={
-        <Kbd ariaHidden title="Press / to focus search" tone="faint" className="px-1.5 py-0.5">
-          /
-        </Kbd>
+        <span className="hidden sm:inline-flex">
+          <Kbd ariaHidden title="Press / to focus search" tone="faint" className="px-1.5 py-0.5">
+            /
+          </Kbd>
+        </span>
       }
       onKeyDown={(event) => {
         // "/" focuses this field. If it was already focused and empty,

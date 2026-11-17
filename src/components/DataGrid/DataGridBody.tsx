@@ -43,6 +43,7 @@ export function DataGridBody<TData>({
 }: DataGridBodyProps<TData>) {
   const columnCount = Math.max(visibleColumns.length, 1)
   const activatable = Boolean(onRowActivate)
+  const visibleIds = new Set(visibleColumns.map((column) => column.id))
 
   /**
    * Roving focus: only the active row is in the tab order, and the arrows move
@@ -129,7 +130,10 @@ export function DataGridBody<TData>({
                   rowClassName,
                 )}
               >
-                {row.getVisibleCells().map((cell, cellIndex) => {
+                {row
+                  .getVisibleCells()
+                  .filter((cell) => visibleIds.has(cell.column.id))
+                  .map((cell, cellIndex) => {
                   const align = cell.column.columnDef.meta?.align
                   const compact = cell.column.columnDef.meta?.compact
                   const pinned = cellIndex === 0
@@ -141,7 +145,7 @@ export function DataGridBody<TData>({
                         'overflow-hidden border-b border-line/60 text-muted',
                         compact ? 'px-1' : 'px-3',
                         pinned &&
-                          `${pinnedColumnClass} border-l-2 sm:z-10 sm:bg-surface sm:group-hover:bg-raised sm:group-focus-visible:bg-raised`,
+                          `${pinnedColumnClass} z-10 border-l-2 bg-surface group-hover:bg-raised group-focus-visible:bg-raised`,
                         // The selection gutter lives on the pinned cell: the
                         // row tint sits behind it, and the sticky cell paints
                         // its own opaque background. The 2px border is always

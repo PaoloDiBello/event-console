@@ -59,15 +59,20 @@ export function DataGridTable<TData>({
 }: DataGridTableProps<TData>) {
   const headerRowCount = showFilterRow ? 2 : 1
   const bodyRowCount = isLoading ? 10 : rows.length === 0 ? 1 : filteredCount
-  const sortDescription =
-    sorting.length > 0
-      ? `by ${sorting[0]!.id} ${sorting[0]!.desc ? 'descending' : 'ascending'}`
-      : 'by default'
+  const firstSort = sorting[0]
+  const sortColumn = firstSort ? table.getColumn(firstSort.id) : undefined
+  const sortHeader = sortColumn?.columnDef.header
+  // Prefer the visible header ("Nearest to today") over the internal id
+  // ("relevance"), so the caption reads like the UI.
+  const sortLabel = typeof sortHeader === 'string' ? sortHeader : firstSort?.id
+  const sortDescription = firstSort
+    ? `by ${sortLabel} ${firstSort.desc ? 'descending' : 'ascending'}`
+    : 'by default'
 
   return (
     <table
       aria-rowcount={bodyRowCount + headerRowCount}
-      className="w-full min-w-[1040px] table-fixed border-separate border-spacing-0 text-sm"
+      className="w-full min-w-[640px] table-fixed border-separate border-spacing-0 text-sm sm:min-w-[1040px]"
     >
       <caption className="sr-only">
         {caption}. {formatCount(filteredCount)} rows, sorted {sortDescription}.
@@ -83,6 +88,7 @@ export function DataGridTable<TData>({
 
       <DataGridHeader
         table={table}
+        visibleColumns={visibleColumns}
         showFilterRow={showFilterRow}
         isLoading={isLoading}
         onSort={onSort}

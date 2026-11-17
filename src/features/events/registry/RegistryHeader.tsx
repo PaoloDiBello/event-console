@@ -1,5 +1,7 @@
-import { AlertTriangle, CalendarClock, Gauge, RefreshCw } from 'lucide-react'
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
+import { AlertTriangle, ArrowUpRight, CalendarClock, Ellipsis, Filter, Gauge, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { buttonClass } from '@/components/ui/buttonStyles'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Stat } from '@/components/ui/Stat'
 import { AGENDA_WINDOW_DAYS } from '@/features/events/model'
@@ -31,10 +33,11 @@ export function RegistryHeader({
   return (
     <PageHeader
       title="Event registry"
-      description="Every meeting, deploy, incident and release in one sortable archive. Filters run in the browser against all 100,000 rows — no server round-trips."
+      description="Every meeting, deploy, incident and release, filtered in your browser."
       actions={
         <>
-          {/* Peer metrics: same card, same height, on both views. */}
+          {/* Peer metrics: same card, same height, on both views. The trailing
+              icon says what a click does — open the agenda, or narrow to at-risk. */}
           <div className="flex items-center gap-2">
             <Stat
               icon={<CalendarClock aria-hidden="true" className="size-4" />}
@@ -43,6 +46,7 @@ export function RegistryHeader({
               tone="text-sky"
               onClick={onOpenAgenda}
               title={`Open the ${AGENDA_WINDOW_DAYS}-day agenda`}
+              trailing={<ArrowUpRight aria-hidden="true" className="size-3.5" />}
             />
             <Stat
               icon={<AlertTriangle aria-hidden="true" className="size-4" />}
@@ -52,6 +56,7 @@ export function RegistryHeader({
               active={atRiskActive}
               onClick={onToggleAtRisk}
               title={atRiskActive ? 'Show every status again' : 'Show only at-risk events'}
+              trailing={<Filter aria-hidden="true" className="size-3.5" />}
             />
           </div>
           <Button
@@ -66,15 +71,43 @@ export function RegistryHeader({
             />
             <span className="hidden sm:inline">Reload</span>
           </Button>
-          <Button
-            onClick={onSimulateError}
-            aria-label="Simulate a load error"
-            title="Demonstrates the DataGrid error state"
-            className="bg-transparent text-faint hover:border-rose/30 hover:bg-transparent hover:text-rose"
-          >
-            <Gauge aria-hidden="true" className="size-3.5" />
-            <span className="hidden sm:inline">Simulate error</span>
-          </Button>
+          {/* The demo control no longer competes with Reload: it lives in a
+              menu, so the header reads as product actions only. */}
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger asChild>
+              <button
+                type="button"
+                aria-label="More registry actions"
+                title="More actions"
+                className={buttonClass({
+                  variant: 'ghost',
+                  size: 'icon',
+                  className: 'text-faint hover:text-ink',
+                })}
+              >
+                <Ellipsis aria-hidden="true" className="size-4" />
+              </button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Portal>
+              <DropdownMenu.Content
+                align="end"
+                sideOffset={6}
+                aria-label="More registry actions"
+                className="z-50 min-w-52 rounded-md border border-line-strong bg-raised p-1 shadow-2xl shadow-black/60"
+              >
+                <DropdownMenu.Label className="px-2 py-1.5 font-mono text-[10px] tracking-widest text-faint uppercase">
+                  Demo
+                </DropdownMenu.Label>
+                <DropdownMenu.Item
+                  onSelect={onSimulateError}
+                  className="flex cursor-pointer items-center gap-2 rounded-xs px-2 py-1.5 text-xs text-muted outline-none select-none data-[highlighted]:bg-canvas data-[highlighted]:text-ink"
+                >
+                  <Gauge aria-hidden="true" className="size-3.5 text-faint" />
+                  Simulate load error
+                </DropdownMenu.Item>
+              </DropdownMenu.Content>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Root>
         </>
       }
     />

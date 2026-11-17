@@ -1,9 +1,10 @@
-import type { Table } from '@tanstack/react-table'
+import type { Column, Table } from '@tanstack/react-table'
 import { Download, Loader2 } from 'lucide-react'
 import type { ReactNode, RefObject } from 'react'
 import { toolbarClass } from '@/components/ui/surfaces'
 import { DataGridColumnMenu } from './DataGridColumnMenu'
 import { DataGridFilterChips } from './DataGridFilterChips'
+import { DataGridFilterPanel } from './DataGridFilterPanel'
 import { DataGridSearch } from './DataGridSearch'
 import type { FilterChip } from './utils'
 
@@ -13,7 +14,14 @@ interface DataGridToolbarProps<TData> {
   onSearchChange: (value: string) => void
   onClearColumnFilters: () => void
   onRemoveColumnFilter: (columnId: string, raw?: string) => void
+  onFilterChange: (
+    column: Column<TData, unknown>,
+    value: string | string[] | undefined,
+  ) => void
+  getFacetCounts?: (columnId: string) => Record<string, number>
   chips: readonly FilterChip[]
+  /** Number of columns with an applied filter, shown on the mobile Filters button. */
+  filterCount: number
   isPending: boolean
   searchPlaceholder?: string
   searchRef: RefObject<HTMLInputElement | null>
@@ -28,7 +36,10 @@ export function DataGridToolbar<TData>({
   onSearchChange,
   onClearColumnFilters,
   onRemoveColumnFilter,
+  onFilterChange,
+  getFacetCounts,
   chips,
+  filterCount,
   isPending,
   searchPlaceholder,
   searchRef,
@@ -38,6 +49,8 @@ export function DataGridToolbar<TData>({
 }: DataGridToolbarProps<TData>) {
   return (
     <>
+      {/* Search takes the first row on a phone and shares it with the actions
+          from `sm` up, where there is room for both. */}
       <div className={toolbarClass}>
         <DataGridSearch
           search={search}
@@ -56,7 +69,17 @@ export function DataGridToolbar<TData>({
           ) : null}
         </div>
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto">
+          {/* The in-table filter row is hidden below `md`, so the sheet is the
+              only place to reach a column filter on a phone. */}
+          <DataGridFilterPanel
+            table={table}
+            activeCount={filterCount}
+            disabled={disabled}
+            onFilterChange={onFilterChange}
+            onClearAll={onClearColumnFilters}
+            getFacetCounts={getFacetCounts}
+          />
           {onExport ? (
             <button
               type="button"

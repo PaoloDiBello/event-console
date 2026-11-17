@@ -38,6 +38,7 @@ const MULTI_FILTER_IDS = new Set<FilterId>([
 
 /** Sortable columns, including the ones without a filter. */
 const SORT_IDS = new Set([
+  'relevance',
   'title',
   'when',
   'category',
@@ -50,7 +51,13 @@ const SORT_IDS = new Set([
 ])
 
 const PAGE_SIZES = new Set<number>(DEFAULT_PAGE_SIZE_OPTIONS)
-const DEFAULT_SORTING: SortingState = [{ id: 'when', desc: true }]
+/**
+ * Nearest-to-today, not newest-first. "Newest" on a 45-day future window opens
+ * on the far edge of the schedule, 44 pages away from what is happening now;
+ * the relevance key puts today first and then walks forward, with history
+ * behind it.
+ */
+const DEFAULT_SORTING: SortingState = [{ id: 'relevance', desc: true }]
 const DEFAULT_PAGE_SIZE = 50
 
 export interface RegistryView {

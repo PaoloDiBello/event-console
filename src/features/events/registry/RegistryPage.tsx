@@ -15,6 +15,7 @@ import { DensityMenu } from './DensityMenu'
 import { ROW_HEIGHT, type RowDensity } from './density'
 import { createEventColumns, eventGlobalFilter } from './columns'
 import { RegistryHeader } from './RegistryHeader'
+import { SortMenu } from './SortMenu'
 import {
   isExactlyColumnFilter,
   readRegistryView,
@@ -46,6 +47,9 @@ export function RegistryPage({ onEdit, onBulkDelete, highlightedId }: RegistryPa
   const [seed, setSeed] = useState(() => readRegistryView(searchParams))
   const [seedKey, setSeedKey] = useState(0)
   const [columnFilters, setColumnFilters] = useState(seed.columnFilters)
+  // Sorting is controlled so the toolbar menu and the header arrows write to
+  // the same state, and so a hidden sort column can still be chosen.
+  const [sorting, setSorting] = useState(seed.sorting)
   // The page owns the selection so a bulk delete can clear the checkboxes,
   // not just hide the action bar. The grid reports every toggle back here.
   const [selectedIds, setSelectedIds] = useState<string[]>([])
@@ -202,7 +206,8 @@ export function RegistryPage({ onEdit, onBulkDelete, highlightedId }: RegistryPa
           onRetry={reload}
           globalFilterFn={eventGlobalFilter}
           searchPlaceholder="Search 100,000 events…"
-          initialSorting={seed.sorting}
+          sorting={sorting}
+          onSortingChange={setSorting}
           initialPageSize={seed.pageSize}
           initialPageIndex={seed.pageIndex}
           initialGlobalFilter={seed.globalFilter}
@@ -210,8 +215,10 @@ export function RegistryPage({ onEdit, onBulkDelete, highlightedId }: RegistryPa
           onColumnFiltersChange={setColumnFilters}
           onViewStateChange={handleViewStateChange}
           // Location stays visible: its select filter only exists where the
-          // column does, and a facet nobody can reach is not a facet.
-          initialColumnVisibility={{ notes: false }}
+          // column does, and a facet nobody can reach is not a facet. The
+          // relevance column is sort-only — it has no cells, so it must never
+          // take a column slot in the table.
+          initialColumnVisibility={{ notes: false, relevance: false }}
           onRowActivate={onEdit}
           onExport={handleExport}
           selectedRowIds={selectedIds}
@@ -226,7 +233,14 @@ export function RegistryPage({ onEdit, onBulkDelete, highlightedId }: RegistryPa
             ) : undefined
           }
           rowHeight={ROW_HEIGHT[density]}
-          toolbarActions={<DensityMenu value={density} onValueChange={setDensity} />}
+          toolbarActions={
+            <>
+              {/* The default order is a hidden column, so without this menu the
+                  only way out of it would be to hand-edit the URL. */}
+              <SortMenu value={sorting} onValueChange={setSorting} />
+              <DensityMenu value={density} onValueChange={setDensity} />
+            </>
+          }
           focusRowId={highlightedId}
           emptyTitle="No events in the registry"
           emptyHint="Load the dataset, or add the first event with the New event button."

@@ -166,17 +166,30 @@ control heights, radii and states identical across both views.
 
 On a phone the header drops its explanatory paragraph and the two maintenance
 actions collapse to icons, so the panel — the actual work — keeps the screen.
-The panel toolbars tighten the same way: the Columns trigger becomes an icon
-plus its visible/total count, the agenda hides its previous/next day arrows
-(day headings still carry them) and drops the date picker's “Jump” label, so
-search and the primary controls stay on one row down to 320 px.
+Page descriptions are one short line, because a paragraph that wraps to four
+lines pushes the work below the fold. The panel toolbars tighten the same way:
+search takes a full row of its own, with the `/` hint hidden (no keyboard to
+press it), the Columns trigger becomes an icon plus its visible/total count,
+the agenda keeps its previous/next day buttons — now full-size 40 px targets —
+and drops the date picker's “Jump” label.
 
-When the table is wider than its viewport, the grid fades the edge that still
-has columns instead of cutting them off, so horizontal overflow reads as
-something you can swipe. From tablet width up the first visible column is
-pinned: the event title stays put while When, Status and Owner slide under it,
-so a row never loses its identity mid-scan. On a phone the first column is most
-of the screen, so nothing is pinned and both edges fade instead.
+Below `md` the grid stops pretending it has room for a desktop header. The
+filter row — one control per column, a few dozen pixels high — is replaced by a
+**Filters** button that opens a sheet listing every filterable column,
+including the ones the table itself hides on a narrow screen. It reuses the
+exact same controls as the desktop row, so the two surfaces cannot drift apart;
+the trigger carries the number of applied filters and the sheet pins **Clear
+all** and **Done** to its foot. Category, Owner, Length and Location leave the
+table below `md`, which is what removes the sideways hunt through eight columns;
+they stay in the grid's state, so a filter, a sort or a shared link that names
+them still works and still shows a chip.
+
+When the table is wider than its viewport, the grid fades the right edge
+instead of cutting it off, so horizontal overflow reads as something you can
+swipe. The first column is pinned at every width, and in the registry that is
+the 32 px selection gutter: the checkboxes never scroll away from the row they
+belong to, and on a phone that is all the horizontal space pinning costs. The
+left edge needs no fade because nothing ever hides under it.
 
 Load failures look the same in both lenses: `components/ui/ErrorState.tsx` owns
 the panel, the registry titles it “Could not load rows”, the agenda “Could not
@@ -302,6 +315,14 @@ mutations only pay for the sort/filter pass.
   strip under the toolbar; a quiet **Clear all** sits at the far end of that
   strip, so clearing filters never competes with the search field and never
   throws away the query.
+- **Sorting:** the registry opens on **nearest to today** — today first, then
+  forward, with history behind it — rather than newest-first, because “newest”
+  on a 45-day future window opens 44 pages away from what is happening now.
+  That order belongs to a hidden, sort-only column, so the toolbar **Sort** menu
+  names it in words (Nearest to today, Newest, Oldest, Title A–Z) and is the
+  only way back to the default once a header arrow has been clicked. The menu
+  and the header arrows write to the same `SortingState`, and only a
+  non-default order reaches the URL.
 - **Column filter row:** filters stay quiet until they are doing something. An
   applied control takes the accent border and a tinted fill, text and date
   filters grow a one-click clear button, and the column header marks a filtered
@@ -339,7 +360,7 @@ mutations only pay for the sort/filter pass.
 ## Tests and quality checks
 
 ```bash
-npm test          # 158 tests, 27 files
+npm test          # 163 tests, 28 files
 npm run build     # tsc -b (strict) + vite build
 npm run lint      # oxlint
 ```
@@ -349,7 +370,9 @@ create/update, grid sorting / filtering / pagination (including typed page jumps
 and clamping) / focus-row reveal / filter-row clearing / the select and
 date-filter menus / seeded and controlled filter state / controlled selection
 and bulk delete (dialog preview, shared toast undo), registry and agenda URL
-view round-tripping and validation, the quick-filter metrics, timeline grouping /
+view round-tripping and validation (including the nearest-to-today default and
+its sort menu), the phone filter sheet and the media-query hook, the
+quick-filter metrics, timeline grouping /
 windowing / keyboard navigation / announcements, the shortcut cheatsheet, form
 validation, draft mapping plus the discard flow, the debounced-search hook, the
 visual-viewport hook, the date-filter calendar, the registry view, the registry

@@ -142,28 +142,31 @@ export function AppHeader({ onNewEvent, onOpenShortcuts }: AppHeaderProps) {
             <Database aria-hidden="true" className="size-3.5" />
             {formatCount(events.length)} events
           </span>
-          <button
-            type="button"
-            onClick={onOpenShortcuts}
-            aria-label="Keyboard shortcuts"
-            title="Keyboard shortcuts (?)"
-            aria-keyshortcuts="?"
-            className={buttonClass({
-              variant: 'ghost',
-              size: 'md',
-              className: 'w-10 px-0 sm:w-auto sm:px-2.5',
-            })}
-          >
-            <Keyboard aria-hidden="true" className="size-6 sm:size-4" />
-            <span className="hidden sm:inline">Shortcuts</span>
-            <Kbd
-              ariaHidden
-              tone="faint"
-              className="ml-0.5 hidden px-1.5 py-0.5 font-normal lg:inline-flex"
+          {/* No physical keyboard on a phone, so the button would only be an
+              extra target; the `?` shortcut still works on desktop. The wrapper
+              carries the hiding: `buttonClass` already sets `inline-flex`, and
+              with a plain class merge the two display utilities would compete
+              in the stylesheet rather than here. */}
+          <div className="hidden sm:block">
+            <button
+              type="button"
+              onClick={onOpenShortcuts}
+              aria-label="Keyboard shortcuts"
+              title="Keyboard shortcuts (?)"
+              aria-keyshortcuts="?"
+              className={buttonClass({ variant: 'ghost', size: 'md', className: 'px-2.5' })}
             >
-              ?
-            </Kbd>
-          </button>
+              <Keyboard aria-hidden="true" className="size-4" />
+              <span className="hidden sm:inline">Shortcuts</span>
+              <Kbd
+                ariaHidden
+                tone="faint"
+                className="ml-0.5 hidden px-1.5 py-0.5 font-normal lg:inline-flex"
+              >
+                ?
+              </Kbd>
+            </button>
+          </div>
           <button
             type="button"
             onClick={onNewEvent}

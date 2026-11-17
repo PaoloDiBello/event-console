@@ -22,7 +22,7 @@ export function DataGridSkeleton<TData>({
               key={column.id}
               className={cn(
                 'border-b border-line/60 px-3',
-                columnIndex === 0 && `${pinnedColumnClass} sm:z-10 sm:bg-surface`,
+                columnIndex === 0 && `${pinnedColumnClass} z-10 bg-surface`,
               )}
             >
               <div

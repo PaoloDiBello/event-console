@@ -78,6 +78,23 @@ describe('registryView', () => {
     expect(writeRegistryView(DEFAULT_REGISTRY_VIEW).toString()).toBe('')
   })
 
+  it('opens nearest to today, and only writes a sort that differs from it', () => {
+    // The default is the hidden relevance column: today first, then forward.
+    expect(readRegistryView(params('')).sorting).toEqual([{ id: 'relevance', desc: true }])
+    // Spelling the default out in a link still serializes to the plain view.
+    expect(
+      writeRegistryView({ ...DEFAULT_REGISTRY_VIEW, sorting: [{ id: 'relevance', desc: true }] })
+        .toString(),
+    ).toBe('')
+    // The opposite direction is a real choice, so it survives the round trip.
+    const flipped = writeRegistryView({
+      ...DEFAULT_REGISTRY_VIEW,
+      sorting: [{ id: 'relevance', desc: false }],
+    })
+    expect(flipped.get('sort')).toBe('relevance:asc')
+    expect(readRegistryView(flipped).sorting).toEqual([{ id: 'relevance', desc: false }])
+  })
+
   it('writes the non-default parts of a view', () => {
     const search = writeRegistryView({
       globalFilter: 'incident',

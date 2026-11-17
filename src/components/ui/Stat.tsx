@@ -11,6 +11,11 @@ interface StatProps {
   /** Pressed state for a quick filter that is currently applied. */
   active?: boolean
   title?: string
+  /**
+   * A cue for what the card does: an arrow when it navigates, a funnel when it
+   * filters. Without one, a clickable metric and a plain one look identical.
+   */
+  trailing?: ReactNode
 }
 
 const BASE = 'flex h-9 items-center gap-2 rounded-sm border px-2.5 text-left'
@@ -29,6 +34,7 @@ export function Stat({
   onClick,
   active = false,
   title,
+  trailing,
 }: StatProps) {
   const content = (
     <>
@@ -42,6 +48,7 @@ export function Stat({
       >
         {label}
       </span>
+      {trailing ? <span className="ml-0.5 shrink-0 text-faint">{trailing}</span> : null}
     </>
   )
 

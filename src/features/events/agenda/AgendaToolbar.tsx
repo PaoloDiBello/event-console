@@ -48,10 +48,10 @@ export function AgendaToolbar({
         clearLabel="Clear timeline filter"
         placeholder="Filter the agenda…"
         aria-label="Filter timeline events"
-        wrapperClassName="sm:max-w-sm"
+        wrapperClassName="w-full sm:w-auto sm:max-w-sm sm:flex-1"
       />
 
-      <div className="ml-auto flex flex-wrap items-center gap-2">
+      <div className="ml-auto flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto">
         <div className="flex items-center gap-2">
           <span
             aria-hidden="true"
@@ -79,22 +79,22 @@ export function AgendaToolbar({
         </div>
 
         <div className="flex items-center gap-1">
-          <div className="hidden items-center gap-1 sm:flex">
-            <button
-              type="button"
-              disabled={jumpDate <= jumpMin}
-              onClick={() => onJumpDateChange(shiftIsoDay(jumpDate, -1))}
-              aria-label="Previous day"
-              title="Previous day"
-              className={buttonClass({
-                variant: 'secondary',
-                size: 'md',
-                className: 'size-9 p-0 justify-center disabled:opacity-30',
-              })}
-            >
-              <ChevronLeft aria-hidden="true" className="size-4" />
-            </button>
-          </div>
+          <button
+            type="button"
+            disabled={jumpDate <= jumpMin}
+            onClick={() => onJumpDateChange(shiftIsoDay(jumpDate, -1))}
+            aria-label="Previous day"
+            title="Previous day"
+            className={buttonClass({
+              variant: 'secondary',
+              size: 'md',
+              // Full-size on a phone; the same button the desktop keeps, one
+              // step larger than the surrounding controls.
+              className: 'h-10 w-10 justify-center p-0 disabled:opacity-30 sm:h-9 sm:w-9',
+            })}
+          >
+            <ChevronLeft aria-hidden="true" className="size-4" />
+          </button>
 
           <AgendaDatePicker
             value={jumpDate}
@@ -103,22 +103,20 @@ export function AgendaToolbar({
             onChange={onJumpDateChange}
           />
 
-          <div className="hidden items-center gap-1 sm:flex">
-            <button
-              type="button"
-              disabled={jumpDate >= jumpMax}
-              onClick={() => onJumpDateChange(shiftIsoDay(jumpDate, 1))}
-              aria-label="Next day"
-              title="Next day"
-              className={buttonClass({
-                variant: 'secondary',
-                size: 'md',
-                className: 'size-9 p-0 justify-center disabled:opacity-30',
-              })}
-            >
-              <ChevronRight aria-hidden="true" className="size-4" />
-            </button>
-          </div>
+          <button
+            type="button"
+            disabled={jumpDate >= jumpMax}
+            onClick={() => onJumpDateChange(shiftIsoDay(jumpDate, 1))}
+            aria-label="Next day"
+            title="Next day"
+            className={buttonClass({
+              variant: 'secondary',
+              size: 'md',
+              className: 'h-10 w-10 justify-center p-0 disabled:opacity-30 sm:h-9 sm:w-9',
+            })}
+          >
+            <ChevronRight aria-hidden="true" className="size-4" />
+          </button>
         </div>
 
         {jumpDate !== today ? (

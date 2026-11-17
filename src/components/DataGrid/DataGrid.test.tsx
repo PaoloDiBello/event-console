@@ -66,6 +66,28 @@ const columns: ColumnDef<Row>[] = [
   },
 ]
 
+/**
+ * Pretend the window is a phone (below `md`): every media query reports no
+ * match, which is what the grid reads to drop columns and swap the filter row
+ * for the filter sheet. Returns the restore function.
+ */
+function stubPhoneViewport() {
+  const original = window.matchMedia
+  window.matchMedia = ((query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: () => {},
+    removeListener: () => {},
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    dispatchEvent: () => false,
+  })) as unknown as typeof window.matchMedia
+  return () => {
+    window.matchMedia = original
+  }
+}
+
 /** The selection column the registry prepends, without importing the page. */
 const selectionColumns: ColumnDef<Row>[] = [
   {
@@ -468,6 +490,37 @@ describe('DataGrid', () => {
     await waitFor(() =>
       expect(screen.getByRole('status')).toHaveTextContent('23 rows match. Showing 1 to 10.'),
     )
+  })
+
+  it('swaps the filter row for a filter sheet on a phone', async () => {
+    const restore = stubPhoneViewport()
+    try {
+      const user = userEvent.setup()
+      renderGrid()
+
+      // One control per column does not fit: the row is gone, so the sheet is
+      // the only way to filter without scrolling the table sideways.
+      expect(screen.queryByLabelText('Filter by Name')).not.toBeInTheDocument()
+
+      await user.click(screen.getByRole('button', { name: 'Filters' }))
+
+      // Every filterable column is listed, not just the ones still rendered.
+      const sheet = await screen.findByRole('dialog', { name: 'Filters' })
+      expect(within(sheet).getByText('Name')).toBeInTheDocument()
+      expect(within(sheet).getByText('Status')).toBeInTheDocument()
+
+      await user.type(screen.getByLabelText('Filter by Name'), 'Row 01')
+      await user.click(screen.getByRole('button', { name: 'Done' }))
+
+      await waitFor(() =>
+        expect(screen.getByRole('status')).toHaveTextContent('1 row match. Showing 1 to 1.'),
+      )
+      // The trigger reports what the sheet applied, since the chips sit behind
+      // the closed sheet on a narrow screen.
+      expect(screen.getByRole('button', { name: 'Filters, 1 applied' })).toBeInTheDocument()
+    } finally {
+      restore()
+    }
   })
 
   it('hides a column from the column menu', async () => {

@@ -176,9 +176,9 @@ export function Timeline<TItem>({
                     onClick={() => scrollToGroup(activeGroupIndex - 1)}
                     aria-label={`Previous day from ${activeGroup.label}`}
                     title="Previous day"
-                    className="inline-flex size-6 items-center justify-center rounded-xs border border-line bg-canvas text-faint transition-colors hover:border-line-strong hover:bg-raised hover:text-ink disabled:pointer-events-none disabled:opacity-25"
+                    className="inline-flex size-9 items-center justify-center rounded-xs border border-line bg-canvas text-faint transition-colors hover:border-line-strong hover:bg-raised hover:text-ink disabled:pointer-events-none disabled:opacity-25"
                   >
-                    <ChevronLeft aria-hidden="true" className="size-3.5" />
+                    <ChevronLeft aria-hidden="true" className="size-4" />
                   </button>
                   <button
                     type="button"
@@ -186,9 +186,9 @@ export function Timeline<TItem>({
                     onClick={() => scrollToGroup(activeGroupIndex + 1)}
                     aria-label={`Next day from ${activeGroup.label}`}
                     title="Next day"
-                    className="inline-flex size-6 items-center justify-center rounded-xs border border-line bg-canvas text-faint transition-colors hover:border-line-strong hover:bg-raised hover:text-ink disabled:pointer-events-none disabled:opacity-25"
+                    className="inline-flex size-9 items-center justify-center rounded-xs border border-line bg-canvas text-faint transition-colors hover:border-line-strong hover:bg-raised hover:text-ink disabled:pointer-events-none disabled:opacity-25"
                   >
-                    <ChevronRight aria-hidden="true" className="size-3.5" />
+                    <ChevronRight aria-hidden="true" className="size-4" />
                   </button>
                 </div>
               ) : null}

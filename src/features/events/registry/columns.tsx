@@ -9,7 +9,7 @@ import {
 } from '@/features/events/model'
 import type { DataGridColumn } from '@/components/DataGrid'
 import { matchesSearch } from '@/features/events/model'
-import { formatGridDate, formatMinute } from '@/shared/lib/dates'
+import { daysFromToday, formatGridDate, formatMinute } from '@/shared/lib/dates'
 import { EventTitleCell } from './EventTitleCell'
 import { CategoryLabel, PriorityLabel, StatusBadge } from '@/features/events/components/EventLabels'
 
@@ -54,7 +54,39 @@ export function createEventColumns(
   onEdit: (event: EventRecord) => void,
   { owners = [], locations = [] }: EventColumnOptions = {},
 ): DataGridColumn<EventRecord>[] {
+  // The dataset repeats a few hundred distinct days across 100k rows, so the
+  // calendar parse is cached per day instead of per row.
+  const dayOffsets = new Map<string, number>()
+  /**
+   * Sort key for "nearest to today": today, then tomorrow, … then yesterday,
+   * then older. The grid can only sort ascending or descending, so the key is
+   * built to read correctly under a descending sort — future days count down
+   * from a high base, past days are negative, and the time-of-day is folded in
+   * so a day's events keep a sensible order.
+   */
+  const relevanceKey = (event: EventRecord): number => {
+    let offset = dayOffsets.get(event.date)
+    if (offset === undefined) {
+      offset = daysFromToday(event.date)
+      dayOffsets.set(event.date, offset)
+    }
+    const bucket = offset >= 0 ? 1_000_000 - offset : -1_000_000 + offset
+    const minute = offset >= 0 ? -event.startMinute : event.startMinute
+    return bucket * 10_000 + minute
+  }
+
   return [
+    {
+      // Sort-only: hidden from the table and the visibility menu, but it owns
+      // the default order and is offered by the toolbar sort menu.
+      id: 'relevance',
+      accessorFn: relevanceKey,
+      header: 'Nearest to today',
+      enableHiding: false,
+      enableResizing: false,
+      size: 0,
+      meta: { width: 0, hideable: false, sortValue: relevanceKey },
+    },
     {
       id: 'title',
       accessorKey: 'title',
@@ -103,6 +135,7 @@ export function createEventColumns(
       meta: {
         filter: 'select',
         width: 120,
+        hideBelow: 'md',
         filterOptions: EVENT_CATEGORIES.map((value) => ({ value, label: value })),
       },
       filterFn: 'equalsString',
@@ -142,6 +175,7 @@ export function createEventColumns(
       meta: {
         filter: 'select',
         width: 132,
+        hideBelow: 'md',
         filterOptions: owners.map((value) => ({ value, label: value })),
       },
       filterFn: 'equalsString',
@@ -151,7 +185,7 @@ export function createEventColumns(
       id: 'duration',
       accessorKey: 'durationMin',
       header: 'Length',
-      meta: { width: 88, align: 'right' },
+      meta: { width: 88, align: 'right', hideBelow: 'md' },
       cell: ({ row }) => (
         <span className="tnum font-mono text-xs text-faint">{row.original.durationMin}m</span>
       ),
@@ -164,6 +198,7 @@ export function createEventColumns(
       meta: {
         filter: 'select',
         width: 140,
+        hideBelow: 'md',
         filterOptions: locations.map((value) => ({ value, label: value })),
       },
       filterFn: 'equalsString',

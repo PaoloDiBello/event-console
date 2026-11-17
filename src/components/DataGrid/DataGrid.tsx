@@ -2,6 +2,7 @@ import { useVirtualizer } from '@tanstack/react-virtual'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Kbd } from '@/components/ui/Kbd'
 import { panelClass } from '@/components/ui/surfaces'
+import { useMediaQuery } from '@/shared/hooks/useMediaQuery'
 import { formatCount, pluralize } from '@/shared/lib/format'
 import { DataGridEmpty } from './DataGridEmpty'
 import { DataGridError } from './DataGridError'
@@ -30,6 +31,8 @@ export function DataGrid<TData>({
   globalFilterFn,
   searchPlaceholder,
   initialSorting,
+  sorting: controlledSorting,
+  onSortingChange,
   initialPageSize = 50,
   initialPageIndex,
   initialGlobalFilter,
@@ -59,6 +62,8 @@ export function DataGrid<TData>({
     getRowId,
     globalFilterFn,
     initialSorting,
+    controlledSorting,
+    onSortingChange,
     initialPageSize,
     initialPageIndex,
     initialGlobalFilter,
@@ -92,10 +97,20 @@ export function DataGrid<TData>({
 
   useGridScrollReset({ scrollRef, resetKey: grid.resetKey, skipRef: skipScrollResetRef })
   useDataGridShortcuts(searchRef, scrollRef)
-  // From `sm` up the first column is pinned, so it owns the left edge and only
-  // the right edge can hide content. Below `sm` nothing is pinned, so both
-  // edges need the hint.
-  const { canScrollLeft, canScrollRight } = useScrollEdges(scrollRef)
+  // The selection gutter is pinned at every width, so it always owns the left
+  // edge; only the right edge can hide content.
+  const { canScrollRight } = useScrollEdges(scrollRef)
+
+  // Columns marked `hideBelow` are dropped from the rendered table on a phone.
+  // They stay in the grid state, so sorting, filtering and the Columns menu
+  // still see them; only the markup gets narrower.
+  const wideLayout = useMediaQuery('(min-width: 768px)')
+  const renderedColumns = wideLayout
+    ? grid.visibleColumns
+    : grid.visibleColumns.filter((column) => column.columnDef.meta?.hideBelow !== 'md')
+  // Below `md` the filter row becomes the filter sheet, so the table header
+  // loses a row of controls that would be wider than the screen anyway.
+  const showFilterRow = grid.showFilterRow && wideLayout
 
   // One tab stop for the whole page of rows, moved with the arrow keys. A new
   // page, sort or filter invalidates the old position, so it starts at the top.
@@ -140,7 +155,10 @@ export function DataGrid<TData>({
         onSearchChange={grid.setSearch}
         onClearColumnFilters={grid.clearColumnFilters}
         onRemoveColumnFilter={grid.removeFilterValue}
+        onFilterChange={grid.filterByColumn}
+        getFacetCounts={grid.getFacetCounts}
         chips={grid.chips}
+        filterCount={grid.filterCount}
         isPending={grid.isPending}
         searchPlaceholder={searchPlaceholder}
         searchRef={searchRef}
@@ -161,12 +179,12 @@ export function DataGrid<TData>({
             >
               <DataGridTable
                 table={grid.table}
-                visibleColumns={grid.visibleColumns}
+                visibleColumns={renderedColumns}
                 caption={caption}
                 filteredCount={grid.filteredCount}
                 sorting={grid.sorting}
                 isLoading={isLoading}
-                showFilterRow={grid.showFilterRow}
+                showFilterRow={showFilterRow}
                 rows={grid.rows}
                 virtualRows={virtualRows}
                 paddingTop={paddingTop}
@@ -195,7 +213,6 @@ export function DataGrid<TData>({
                 }
               />
             </div>
-            {canScrollLeft ? <DataGridScrollFade side="left" className="sm:hidden" /> : null}
             {canScrollRight ? <DataGridScrollFade side="right" /> : null}
             {selectionBar}
           </>

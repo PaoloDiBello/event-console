@@ -1,10 +1,13 @@
 /**
- * The first visible column stays put while the rest of the table scrolls under
- * it, so a row keeps its identity mid-scan. The border is the frozen-pane cue:
- * it gives the passing columns a hard edge to disappear behind. (A drop shadow
- * is not an option — Chrome clips box-shadow on table cells.)
+ * The first rendered column stays put while the rest of the table scrolls
+ * under it, so a row keeps its identity mid-scan. The border is the frozen-pane
+ * cue: it gives the passing columns a hard edge to disappear behind. (A drop
+ * shadow is not an option — Chrome clips box-shadow on table cells.)
  *
- * Applied from `sm` up only. On a phone the first column is most of the
- * viewport, so pinning it would leave almost nothing to scroll through.
+ * Pinned at every width. In the registry the first column is the 32px
+ * selection gutter, so pinning it costs almost nothing on a phone and keeps
+ * the checkboxes from scrolling away with the data.
+ *
+ * The sticky cell must paint an opaque background; see the callers for that.
  */
-export const pinnedColumnClass = 'sm:sticky sm:left-0 sm:border-r sm:border-line'
+export const pinnedColumnClass = 'sticky left-0 border-r border-line'

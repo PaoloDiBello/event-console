@@ -11,7 +11,7 @@ import {
   type Updater,
   type VisibilityState,
 } from '@tanstack/react-table'
-import { useCallback, useEffect, useMemo, useState, useTransition } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue'
 import { buildRows, collectFacetCounts } from '../model'
 import { activeFilterCount, filterChips } from '../utils'
@@ -31,6 +31,9 @@ interface DataGridControllerOptions<TData> {
   getRowId: (row: TData) => string
   globalFilterFn?: FilterFn<TData>
   initialSorting?: SortingState
+  /** Controlled sorting, e.g. when a toolbar menu sets it from the page. */
+  controlledSorting?: SortingState
+  onSortingChange?: (sorting: SortingState) => void
   initialPageSize: number
   initialPageIndex?: number
   initialGlobalFilter?: string
@@ -59,6 +62,8 @@ export function useDataGridController<TData>({
   getRowId,
   globalFilterFn,
   initialSorting,
+  controlledSorting,
+  onSortingChange,
   initialPageSize,
   initialPageIndex = 0,
   initialGlobalFilter = '',
@@ -69,7 +74,8 @@ export function useDataGridController<TData>({
   selectedRowIds,
   onSelectionChange,
 }: DataGridControllerOptions<TData>) {
-  const [sorting, setSorting] = useState<SortingState>(initialSorting ?? [])
+  const [internalSorting, setInternalSorting] = useState<SortingState>(initialSorting ?? [])
+  const sorting = controlledSorting ?? internalSorting
   const [internalColumnFilters, setInternalColumnFilters] = useState<ColumnFiltersState>(
     controlledColumnFilters ?? [],
   )
@@ -138,6 +144,26 @@ export function useDataGridController<TData>({
       current.pageIndex === 0 ? current : { ...current, pageIndex: 0 },
     )
   }, [])
+
+  // Sorting can arrive from a header or from a page-level sort menu. Both go
+  // through here, so the resolved value is reported and the grid has one rule.
+  const setSorting = useCallback(
+    (updater: Updater<SortingState>) => {
+      const next = functionalUpdate(updater, sorting)
+      if (controlledSorting === undefined) setInternalSorting(next)
+      onSortingChange?.(next)
+    },
+    [controlledSorting, onSortingChange, sorting],
+  )
+
+  // Only a real change resets the page. On mount the sort is already the
+  // seeded one, and a link that points at page 4 must stay there.
+  const previousSortingRef = useRef(sorting)
+  useEffect(() => {
+    if (previousSortingRef.current === sorting) return
+    previousSortingRef.current = sorting
+    resetPage()
+  }, [resetPage, sorting])
 
   // Clearing must feel instant, so an empty box skips the debounce entirely
   // and drops the applied query now. Typing still waits for the pause below.
@@ -312,11 +338,10 @@ export function useDataGridController<TData>({
       const handler = column.getToggleSortingHandler()
       if (!handler) return
       // Sorting 100k rows is a non-urgent update: keep the UI responsive and
-      // show the pending hint.
+      // show the pending hint. The page reset follows the sort change itself.
       startTransition(() => handler(event))
-      resetPage()
     },
-    [resetPage],
+    [],
   )
 
   const filterByColumn = useCallback(
