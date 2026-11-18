@@ -339,6 +339,10 @@ calendar date, time `HH:mm`, duration bounds).
   `role="status"` is read out as part of the announcement and is awkward to
   reach while it plays. Dismissing also drops the undo it carried, so no later
   click can act on something the user can no longer see.
+- The dismiss clock stops while the pointer or keyboard focus is on the toast,
+  and resumes with the time that was left rather than restarting. A countdown
+  that cannot be held takes **Undo** away in the second it takes to reach it;
+  restarting it instead would let a hover keep the message on screen forever.
 
 ## Measured performance
 

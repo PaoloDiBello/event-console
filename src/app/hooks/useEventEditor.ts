@@ -29,7 +29,7 @@ function saveConfirmation(draft: EventDraft, mode: 'create' | 'edit'): string {
  * success feedback and the row highlight. The store remains the source of
  * truth for the event data itself.
  */
-export function useEventEditor() {
+export function useEventEditor(toastPaused = false) {
   const createEvent = useEventStore((state) => state.createEvent)
   const updateEvent = useEventStore((state) => state.updateEvent)
   const deleteEvent = useEventStore((state) => state.deleteEvent)
@@ -41,7 +41,9 @@ export function useEventEditor() {
   // The editor chunk is fetched on first use. Once loaded it stays mounted
   // while closed, so Radix can run its own close/focus-return sequence.
   const [editorMounted, setEditorMounted] = useState(false)
-  const [success, setSuccess] = useTransientValue<string>(6000)
+  // The confirmation (and its Undo) holds while the reader is on the toast; the
+  // row highlight is decoration and keeps its own fixed clock.
+  const [success, setSuccess] = useTransientValue<string>(6000, { paused: toastPaused })
   const [highlightedId, setHighlightedId] = useTransientValue<string>(4000)
   /** The control that opened the editor, so closing can return focus to it. */
   const [opener, setOpener] = useState<HTMLElement | null>(null)

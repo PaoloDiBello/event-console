@@ -38,6 +38,12 @@ export function App() {
   const events = useEventStore((state) => state.events)
   const ownerSuggestions = useMemo(() => distinctValues(events, 'owner'), [events])
   const locationSuggestions = useMemo(() => distinctValues(events, 'location'), [events])
+  /**
+   * True while the pointer or keyboard focus rests on the toast. The two
+   * confirmation clocks stop for that time so Undo cannot disappear under the
+   * cursor, and a page notice shares the setting with the editor's success.
+   */
+  const [toastPaused, setToastPaused] = useState(false)
   const {
     editor,
     editorMounted,
@@ -52,10 +58,10 @@ export function App() {
     handleBulkDelete,
     dismissSuccess,
     undoAction,
-  } = useEventEditor()
+  } = useEventEditor(toastPaused)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   /** Page-level confirmations (an export, say) share the one toast. */
-  const [notice, setNotice] = useTransientValue<string>(5000)
+  const [notice, setNotice] = useTransientValue<string>(5000, { paused: toastPaused })
   // Keeps the phone sheet sized to the visible area when the keyboard opens.
   useVisualViewport()
 
@@ -138,6 +144,7 @@ export function App() {
       <AppToast
         message={notice ?? success}
         action={undoAction}
+        onPausedChange={setToastPaused}
         onDismiss={() => {
           setNotice(null)
           dismissSuccess()

@@ -11,7 +11,9 @@ import { Button } from '@/components/ui/Button'
 import { Checkbox } from '@/components/ui/Checkbox'
 import type { EventRecord } from '@/features/events/model'
 import { useEventFeed } from '@/features/events/store'
+import { useGlobalKeydown } from '@/shared/hooks/useGlobalKeydown'
 import { exportToCsv } from '@/shared/lib/exportCsv'
+import { isShortcutBlocked } from '@/shared/lib/keyboard'
 import { formatCount, pluralize } from '@/shared/lib/format'
 import { usePersistentState } from '@/shared/hooks/usePersistentState'
 import { BulkActionBar } from './BulkActionBar'
@@ -116,6 +118,16 @@ export function RegistryPage({ onEdit, onBulkDelete, highlightedId, onNotify }: 
     },
     [setSearchParams],
   )
+
+  // Escape is the universal "drop what I picked". The bar's Clear button is the
+  // visible affordance; this is its keyboard twin, and it stays out of the way
+  // whenever a field, menu or dialog owns the key.
+  useGlobalKeydown((event) => {
+    if (event.key !== 'Escape' || event.defaultPrevented || event.repeat) return
+    if (selectedIds.length === 0 || isShortcutBlocked(event.target)) return
+    event.preventDefault()
+    setSelectedIds([])
+  })
 
   // A nav click or the browser's Back button can change the URL without the
   // grid knowing. When that happens, adopt the link's view and remount the

@@ -1,4 +1,5 @@
 import { X } from 'lucide-react'
+import { useEffect } from 'react'
 
 interface AppToastProps {
   message: string | null
@@ -6,6 +7,11 @@ interface AppToastProps {
   action?: { label: string; onClick: () => void }
   /** Puts the message away instead of waiting for it to expire. */
   onDismiss: () => void
+  /**
+   * Stops the dismiss clock while the pointer or keyboard focus is on the
+   * toast, so an undo cannot expire in the second it takes to reach it.
+   */
+  onPausedChange?: (paused: boolean) => void
 }
 
 /**
@@ -19,11 +25,28 @@ interface AppToastProps {
  * message can also be dismissed: six seconds is a long time to have something
  * sitting over the last rows, and the user may have already read it.
  */
-export function AppToast({ message, action, onDismiss }: AppToastProps) {
+export function AppToast({ message, action, onDismiss, onPausedChange }: AppToastProps) {
+  // A message that goes away while hovered never fires mouseleave, which would
+  // leave the next message frozen on screen.
+  useEffect(() => {
+    if (!message) onPausedChange?.(false)
+  }, [message, onPausedChange])
+
   return (
     <div className="pointer-events-none fixed right-[max(1rem,env(safe-area-inset-right))] bottom-[calc(5rem+env(safe-area-inset-bottom))] z-50 flex justify-end px-1 sm:bottom-[calc(6rem+env(safe-area-inset-bottom))]">
       {message ? (
-        <div className="pointer-events-auto flex max-w-lg items-center gap-2 rounded-md border border-accent/30 bg-[#0b1716] py-2 pr-1.5 pl-3.5 text-xs text-ink shadow-2xl shadow-black/60">
+        <div
+          onMouseEnter={() => onPausedChange?.(true)}
+          onMouseLeave={() => onPausedChange?.(false)}
+          onFocus={() => onPausedChange?.(true)}
+          onBlur={(event) => {
+            // Focus moving between Undo and Dismiss is still "on the toast".
+            if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+              onPausedChange?.(false)
+            }
+          }}
+          className="pointer-events-auto flex max-w-lg items-center gap-2 rounded-md border border-accent/30 bg-[#0b1716] py-2 pr-1.5 pl-3.5 text-xs text-ink shadow-2xl shadow-black/60"
+        >
           <span aria-hidden="true" className="size-1.5 shrink-0 rounded-full bg-accent" />
           <p role="status" aria-live="polite" className="min-w-0">
             {message}
