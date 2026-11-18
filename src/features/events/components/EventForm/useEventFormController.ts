@@ -31,8 +31,12 @@ export function useEventFormController({
 }: EventFormControllerOptions) {
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  /** Bumped on every blocked save, so the scroll effect runs each time. */
+  const [invalidAttempt, setInvalidAttempt] = useState(0)
   const [confirmDiscard, setConfirmDiscard] = useState(false)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
+  /** The scrolling middle of the dialog; see the failed-save scroll below. */
+  const fieldsRef = useRef<HTMLDivElement>(null)
   const keepEditingRef = useRef<HTMLButtonElement>(null)
   const cancelRef = useRef<HTMLButtonElement>(null)
   const deleteRef = useRef<HTMLButtonElement>(null)
@@ -143,27 +147,50 @@ export function useEventFormController({
     onDelete?.(target)
   }
 
-  const submit = form.handleSubmit(async (values) => {
-    setIsSaving(true)
-    setSaveError(null)
+  const submit = form.handleSubmit(
+    async (values) => {
+      setIsSaving(true)
+      setSaveError(null)
 
-    const draft = toEventDraft(values)
+      const draft = toEventDraft(values)
 
-    try {
-      await onSubmit(draft)
-      // Close directly: the save succeeded, so there is no dirty state to
-      // protect and no need to re-enter the discard prompt. `close` also
-      // clears the transient prompts and the save-error region.
-      close()
-    } catch (error) {
-      setSaveError(error instanceof Error ? error.message : 'Could not save the event. Try again.')
-    } finally {
-      setIsSaving(false)
-    }
-  })
+      try {
+        await onSubmit(draft)
+        // Close directly: the save succeeded, so there is no dirty state to
+        // protect and no need to re-enter the discard prompt. `close` also
+        // clears the transient prompts and the save-error region.
+        close()
+      } catch (error) {
+        setSaveError(error instanceof Error ? error.message : 'Could not save the event. Try again.')
+      } finally {
+        setIsSaving(false)
+      }
+    },
+    // react-hook-form focuses the first invalid field, but on a phone the
+    // dialog is a tall sheet that is often scrolled down to Notes, so the
+    // focused title and its error stayed offscreen above. Count the attempts
+    // and let the effect below bring the error into view.
+    () => setInvalidAttempt((attempt) => attempt + 1),
+  )
+
+  // Runs after the errors have rendered. Focus stays wherever react-hook-form
+  // put it; only the scroll position changes.
+  useEffect(() => {
+    if (invalidAttempt === 0) return
+    const frame = requestAnimationFrame(() => {
+      const container = fieldsRef.current
+      if (!container) return
+      const firstInvalid = container.querySelector<HTMLElement>('[aria-invalid="true"]')
+      const target = firstInvalid ?? container
+      // jsdom has no layout, so the call is optional rather than assumed.
+      target.scrollIntoView?.({ block: firstInvalid ? 'center' : 'start' })
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [invalidAttempt])
 
   return {
     form,
+    fieldsRef,
     isSaving,
     saveError,
     confirmDiscard,

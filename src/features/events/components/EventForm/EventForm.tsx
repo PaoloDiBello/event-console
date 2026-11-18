@@ -35,6 +35,7 @@ export function EventForm({
 }: EventFormProps) {
   const {
     form,
+    fieldsRef,
     isSaving,
     saveError,
     confirmDiscard,
@@ -111,7 +112,7 @@ export function EventForm({
 
             <form noValidate onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
               {/* Only the fields scroll; the footer stays reachable on short screens. */}
-              <div className="scrollbar-thin min-h-0 flex-1 overflow-y-auto">
+              <div ref={fieldsRef} className="scrollbar-thin min-h-0 flex-1 overflow-y-auto">
                 <EventFormFields
                   form={form}
                   ownerSuggestions={ownerSuggestions}

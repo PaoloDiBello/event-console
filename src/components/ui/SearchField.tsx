@@ -56,7 +56,10 @@ export function SearchField({
         onChange={(event) => onValueChange(event.target.value)}
         onKeyDown={handleKeyDown}
         className={cn(
-          'h-9 w-full rounded-sm border border-line bg-canvas pr-10 pl-9 text-sm text-ink',
+          // text-base below sm for the same reason as the form's controls: iOS
+          // Safari zooms the page when a focused field is under 16px, and the
+          // search box is the first thing a phone user taps.   
+          'h-9 w-full rounded-sm border border-line bg-canvas pr-10 pl-9 text-base text-ink sm:text-sm',
           'placeholder:text-faint transition-colors focus:border-accent/60 focus:ring-2',
           'focus:ring-accent/20 focus:outline-none disabled:opacity-50',
           '[&::-webkit-search-cancel-button]:hidden',

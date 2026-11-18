@@ -16,6 +16,8 @@ import type { TimelineProps } from './types'
 
 const DEFAULT_ITEM_HEIGHT = 84
 const DEFAULT_GROUP_HEIGHT = 56
+/** Height of the sticky day bar that covers the top of the scrollport. */
+const STICKY_DAY_HEIGHT = DEFAULT_GROUP_HEIGHT
 
 /**
  * A day-grouped, virtualized agenda with a roving tabindex.
@@ -60,6 +62,9 @@ export function Timeline<TItem>({
     estimateSize: (index) => (flatRows[index]?.kind === 'group' ? groupHeight : itemHeight),
     getItemKey: (index) => flatRows[index]?.key ?? index,
     overscan: 8,
+    // Rows aligned to the top of the list must clear the sticky day bar, or the
+    // focused event ends up hidden behind it.
+    scrollPaddingStart: STICKY_DAY_HEIGHT,
   })
 
   const virtualRows = virtualizer.getVirtualItems()
@@ -95,12 +100,16 @@ export function Timeline<TItem>({
     if (!jumpToDay || jumpRequestId === undefined) return
     if (lastJumpRequest.current === jumpRequestId) return
 
-    const index = indexByKey.get(`g:${jumpToDay}`)
+    const groupIndex = groups.findIndex((group) => group.key === jumpToDay)
+    if (groupIndex === -1) return
+    // Aim at the day's first event, not the heading row: the sticky padding
+    // then leaves the heading exactly at the top of the scrollport.
+    const index = firstItemIndexByGroup.get(groupIndex) ?? indexByKey.get(`g:${jumpToDay}`)
     if (index === undefined) return
 
     lastJumpRequest.current = jumpRequestId
     virtualizer.scrollToIndex(index, { align: 'start' })
-  }, [indexByKey, jumpRequestId, jumpToDay, virtualizer])
+  }, [firstItemIndexByGroup, groups, indexByKey, jumpRequestId, jumpToDay, virtualizer])
 
   const onKeyDown = useTimelineKeyboard({
     groups,
@@ -126,13 +135,15 @@ export function Timeline<TItem>({
     if (targetGroupIndex < 0 || targetGroupIndex >= groups.length) return
     const target = groups[targetGroupIndex]
     if (!target) return
+    const firstItem = firstItemIndexByGroup.get(targetGroupIndex)
+    if (firstItem !== undefined) {
+      // Focus the day's first event; the heading lands directly above it.
+      focusRow(firstItem, 'start')
+      return
+    }
     const index = indexByKey.get(`g:${target.key}`)
     if (index === undefined) return
     virtualizer.scrollToIndex(index, { align: 'start' })
-    const firstItem = firstItemIndexByGroup.get(targetGroupIndex)
-    if (firstItem !== undefined) {
-      focusRow(firstItem)
-    }
   }
 
   const empty = flatRows.length === 0

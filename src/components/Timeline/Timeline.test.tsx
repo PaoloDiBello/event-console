@@ -91,7 +91,7 @@ describe('Timeline', () => {
   it('scrolls to a requested day', () => {
     renderTimeline({ jumpToDay: '2026-10-30', jumpRequestId: 1 })
 
-    expect(virtualizerState.scrollToIndex).toHaveBeenCalledWith(3, { align: 'start' })
+    expect(virtualizerState.scrollToIndex).toHaveBeenCalledWith(4, { align: 'start' })
   })
 
   it('keeps exactly one item in the tab order', () => {
@@ -146,6 +146,34 @@ describe('Timeline', () => {
     const nextDayButton = screen.getByRole('button', { name: /Next day from Thursday, 29 October/i })
     await user.click(nextDayButton)
 
-    expect(virtualizerState.scrollToIndex).toHaveBeenCalledWith(3, { align: 'start' })
+    expect(virtualizerState.scrollToIndex).toHaveBeenCalledWith(4, { align: 'start' })
+  })
+
+  it('scrolls the list to follow keyboard focus', async () => {
+    const user = userEvent.setup()
+    renderTimeline()
+    const items = Array.from(document.querySelectorAll<HTMLElement>('[data-timeline-item]'))
+
+    act(() => items[0]!.focus())
+    virtualizerState.scrollToIndex.mockClear()
+
+    // Moving to the next event keeps the current scroll position when the row
+    // is already visible, but still asks the virtualizer to check.
+    await user.keyboard('{ArrowDown}')
+    expect(virtualizerState.scrollToIndex).toHaveBeenLastCalledWith(2, { align: 'auto' })
+
+    // Jumping a day aligns the new day's first event to the top, clearing the
+    // sticky day bar.
+    await user.keyboard('{ArrowRight}')
+    expect(virtualizerState.scrollToIndex).toHaveBeenLastCalledWith(4, { align: 'start' })
+
+    // End pins the last event to the bottom of the scrollport.
+    await user.keyboard('{End}')
+    expect(virtualizerState.scrollToIndex).toHaveBeenLastCalledWith(4, { align: 'end' })
+
+    // Home returns to the first event at the top.
+    await user.keyboard('{Home}')
+    expect(virtualizerState.scrollToIndex).toHaveBeenLastCalledWith(1, { align: 'start' })
+    expect(items[0]).toHaveFocus()
   })
 })

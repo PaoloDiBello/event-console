@@ -2,6 +2,9 @@ import type { VirtualItem, Virtualizer } from '@tanstack/react-virtual'
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react'
 import type { TimelineFlatRow } from '../timelineModel'
 
+/** `auto` only scrolls when the row is outside the viewport. */
+export type TimelineFocusAlign = 'auto' | 'start' | 'center' | 'end'
+
 interface TimelineFocusOptions<TItem> {
   flatRows: readonly TimelineFlatRow<TItem>[]
   virtualRows: readonly VirtualItem[]
@@ -58,26 +61,26 @@ export function useTimelineFocus<TItem>({
   const tabbableKey = activeKey && renderedKeys.has(activeKey) ? activeKey : firstRenderedItemKey
 
   const focusRow = useCallback(
-    (index: number) => {
+    (index: number, align: TimelineFocusAlign = 'auto') => {
       const row = flatRows[index]
       if (!row || row.kind !== 'item') return
 
-      const isRendered = virtualizer
-        .getVirtualItems()
-        .some((virtualRow) => virtualRow.index === index)
-      if (isRendered) {
-        const element = scrollRef.current?.querySelector<HTMLElement>(
-          `[data-timeline-item="${row.key}"]`,
-        )
-        if (element) {
-          element.focus({ preventScroll: true })
-          return
-        }
+      // Always let the virtualizer move the row into view first. Overscan rows
+      // are mounted while still offscreen, so focusing them without scrolling
+      // used to move focus below the scrollport and leave the list behind.
+      virtualizer.scrollToIndex(index, { align })
+
+      const element = scrollRef.current?.querySelector<HTMLElement>(
+        `[data-timeline-item="${row.key}"]`,
+      )
+      if (element) {
+        pendingFocusRef.current = null
+        element.focus({ preventScroll: true })
+        return
       }
 
-      // Not mounted: scroll it into view, then let the effect below focus it.
+      // Not mounted: the effect below focuses it as soon as it renders.
       pendingFocusRef.current = row.key
-      virtualizer.scrollToIndex(index, { align: 'center' })
     },
     [flatRows, virtualizer, scrollRef],
   )
