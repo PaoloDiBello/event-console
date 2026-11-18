@@ -4,6 +4,7 @@ import { useEffect, useId, useRef } from 'react'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { panelClass } from '@/components/ui/surfaces'
 import { cn } from '@/shared/lib/cn'
+import { formatDayShort } from '@/shared/lib/dates'
 import { formatCount, pluralize } from '@/shared/lib/format'
 import { useTimelineAnnouncement } from './hooks/useTimelineAnnouncement'
 import { useTimelineFocus } from './hooks/useTimelineFocus'
@@ -113,6 +114,13 @@ export function Timeline<TItem>({
   const activeGroupIndex = activeGroup
     ? groups.findIndex((candidate) => candidate.key === activeGroup.key)
     : -1
+  // "Today, Wednesday 18 November" is the right heading for the day itself, but
+  // it does not fit a phone's sticky bar next to the count and two chevrons —
+  // it was truncating mid-word. The short form keeps the orientation word.
+  const activeGroupShortLabel =
+    activeGroup && /^\d{4}-\d{2}-\d{2}$/.test(activeGroup.key)
+      ? formatDayShort(activeGroup.key)
+      : activeGroup?.label
 
   const scrollToGroup = (targetGroupIndex: number) => {
     if (targetGroupIndex < 0 || targetGroupIndex >= groups.length) return
@@ -164,7 +172,10 @@ export function Timeline<TItem>({
               )}
             >
               <CalendarDays className="size-3.5 shrink-0 text-accent" />
-              <span className="truncate text-xs font-semibold text-ink">{activeGroup.label}</span>
+              <span className="truncate text-xs font-semibold text-ink">
+                <span className="md:hidden">{activeGroupShortLabel}</span>
+                <span className="hidden md:inline">{activeGroup.label}</span>
+              </span>
               <span className="ml-auto shrink-0 font-mono text-[10px] tracking-wide text-faint">
                 {formatCount(activeGroup.items.length)} {pluralize(activeGroup.items.length, 'event')}
               </span>

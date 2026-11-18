@@ -44,7 +44,7 @@ Zod · date-fns · Vitest + Testing Library.
 
 | Component | Responsibility |
 | --- | --- |
-| `src/components/DataGrid` | Generic table: configurable columns, resizing, visibility, per-column text, multi-select facet and date filters (with per-option counts), global search, sorting, pagination, virtualized rows, row activation with a roving tab stop, optional controlled row selection with a floating bulk-action slot, loading/empty/error states, row reveal. |
+| `src/components/DataGrid` | Generic table: configurable columns, resizing, visibility, per-column text, multi-select facet and date filters (with per-option counts), global search, sorting, pagination, virtualized rows, row activation with a roving tab stop, optional controlled row selection with a floating bulk-action slot, loading/empty/error states, row reveal, and a narrow layout that drops breakpoint-hidden columns and hands the row to its primary cell. |
 | `src/components/Timeline` | Generic grouped timeline: variable-height day groups, virtualization, roving `tabindex`, arrow-key navigation, live announcements. |
 | `src/features/events/components/EventForm` | Event-specific create/edit dialog: validation, focus management, dirty-state discard confirmation, delete confirmation, save error region. |
 
@@ -194,16 +194,20 @@ and the panel — the actual work — keep the screen.
 Page descriptions are one short line, because a paragraph that wraps to four
 lines pushes the work below the fold. The panel toolbars tighten the same way:
 search takes a full row of its own, with the `/` hint hidden (no keyboard to
-press it); **Sort**, **Density** and **Columns** become icon-only tools (the
-Columns one keeps an accent dot while the table is hiding columns) so all five
-panel controls share a single row down to 320 px; Reload and the overflow menu
-wrap as one right-aligned pair instead of stranding the “…” on its own line;
-the agenda keeps its previous/next day buttons — full-size 40 px targets — and
-drops the date picker's “Jump” label. Sort, Density and Columns are uniform
-36 px tools there, and an applied filter is a dot on the Filters button rather
-than a number — a badge was enough to push Columns onto a second row at 320 px.
-The chip strip drops its “Filters” prefix at that width so the first chip and
-“Clear all” stay on one line.
+press it); **Filters**, **Export** and **Sort** keep their words, because a
+phone has no hover tooltips and four bare icons asked the reader to guess;
+**Density** is a desktop preference and leaves below `sm`, and **Columns** leaves
+below `md`, where the table no longer renders the columns that menu toggles.
+Reload and the overflow menu wrap as one right-aligned pair instead of
+stranding the “…” on its own line; the agenda keeps its previous/next day
+buttons — full-size 40 px targets — and drops the date picker's “Jump” label.
+An applied filter is a dot on the Filters button rather than a number, because a
+badge pushed the row onto a second line at 320 px. The chip strip drops its
+“Filters” prefix at that width so the first chip and “Clear all” stay on one
+line. The footer collapses to one 53 px row: `1–50 of 100,000`, a tappable page
+field, and previous/next. First/last and rows-per-page are hidden there — a
+thumb cannot usefully hit four chevrons, and the page field already jumps in one
+tap.
 
 A phone header reads title, then its two icon actions at the right edge, then
 the metric cards as an even two-up row filling the panel width; from `sm` up it
@@ -217,14 +221,27 @@ filter row — one control per column, a few dozen pixels high — is replaced b
 including the ones the table itself hides on a narrow screen. It reuses the
 exact same controls as the desktop row, so the two surfaces cannot drift apart;
 the trigger carries the number of applied filters and the sheet pins **Clear
-all** and **Done** to its foot. Category, Owner, Length and Location leave the
-table below `md`, which is what removes the sideways hunt through eight columns;
-they stay in the grid's state, so a filter, a sort or a shared link that names
-them still works and still shows a chip.
+all** and **Done** to its foot.
+
+The row changes shape at the same breakpoint. A phone cannot show eight columns,
+and scrolling right to reach Status carried the event title off screen — every
+row read “… 2026 SCHEDULED Low” with no way to tell which event it was. So
+`When`, `Status`, `Priority` and `Notes` leave the rendered table, and the
+primary cell becomes a two-line card: title and status badge on the first line,
+`day · time · category · priority · location` on the second. Only the checkbox
+gutter, that cell and the row's pencil are left, so the table fits a 360 px
+viewport exactly — no horizontal scroll at all. The hidden columns stay in the
+grid's state, so a filter, a sort or a shared link that names them still works,
+still shows a chip, and still sorts; only the markup gets narrower. The
+narrow/wide decision is published once through `GridLayoutContext`, so fifty
+rows do not mean fifty `matchMedia` listeners and the same fact is never in the
+DOM twice. The narrow row is two lines by construction, so it forces a 52 px
+height: density remains a wide-screen preference.
 
 When the table is wider than its viewport, the grid fades the right edge
 instead of cutting it off, so horizontal overflow reads as something you can
-swipe.   The empty state offers its own way out — the query variants clear the search or
+swipe. That is the `md`-and-up case, where the full column set returns. The
+empty state offers its own way out — the query variants clear the search or
   the filters, and an empty data set reloads the dataset in place instead of
   explaining which header button to press.
   The first column is pinned at every width, and in the registry that is
@@ -338,6 +355,13 @@ mutations only pay for the sort/filter pass.
   headers, labelled filter controls, and `aria-rowcount` / `aria-rowindex` that
   account for the header rows. Virtualized rows keep their real row number, so
   “row 10,352” is still announced as row 10,352.
+- **The header is one tab stop.** Sort buttons are individually focusable, which
+  put eight of them between the select-all checkbox and the first row. The
+  header now uses a roving tabindex: exactly one sort button is a stop, parked on
+  the column currently sorting (or the first one), and ←/→ move between the rest
+  without adding stops. A **Skip to content** link is the first thing Tab
+  reaches, so the header's nav and actions can be stepped over entirely; it
+  targets `<main>`, which takes focus without a visible outline of its own.
 - **Live counts:** the result count (“100,001 rows match. Showing 10,301 to
   10,350.”) is a polite status region.
 - **Rows are the control:** every row opens the editor — click it, or focus it
@@ -378,9 +402,9 @@ mutations only pay for the sort/filter pass.
   forward, with history behind it — rather than newest-first, because “newest”
   on a 45-day future window opens 44 pages away from what is happening now.
   That order belongs to a hidden, sort-only column, so the toolbar **Sort** menu
-  names it in words (Nearest to today, Newest, Oldest, Title A–Z) and is the
-  only way back to the default once a header arrow has been clicked. The menu
-  and the header arrows write to the same `SortingState`, and only a
+  names it in words (Nearest to today, Newest, Oldest, Title A–Z, Priority) and
+  is the only way back to the default once a header arrow has been clicked. The
+  menu and the header arrows write to the same `SortingState`, and only a
   non-default order reaches the URL.
 - **Column filter row:** filters stay quiet until they are doing something. An
   applied control takes the accent border and a tinted fill, text and date
@@ -396,7 +420,8 @@ mutations only pay for the sort/filter pass.
 - **Column visibility:** the Columns menu marks each visible column with a
   check, stays open so several columns can be toggled in a row, and “Show all
   columns” reveals every hideable column instead of resetting to the initial
-  set.
+  set. It is hidden below `md`, where the narrow row replaces those columns with
+  the primary cell, so it never offers a toggle that cannot change the screen.
 - **Row selection and bulk delete:** ticking a row (or the header, which selects
   the page and shows a mixed state for a partial selection) floats a compact
   action bar above the footer instead of adding a strip that shifts the table.
@@ -411,6 +436,18 @@ mutations only pay for the sort/filter pass.
   toast + Undo path as the single-event delete, and clearing the selection
   actually unchecks the boxes because the page owns the ids. The checkbox column
   is sized like the utility it is, not like a data column.
+- **Select all matching.** The header checkbox can only reach the page, which is
+  the wrong unit on a 2,000-page result set. Once a full page is ticked, the bar
+  offers **Select all 9,513 matching**: the grid publishes the rows the current
+  search and filters left (`filteredRowsRef`), and the page takes their ids — no
+  second filter pass over 100k rows. The offer only appears once the page is
+  fully selected, so it never competes with ticking a single row, and it
+  disappears when everything matching is already selected. The confirmation
+  spells out the split (“50 on this page, 9,463 elsewhere”) before the count it
+  is about to delete, and the bar writes counts with separators (`9,513`, not
+  `9513`) so a five-digit number stays readable. Its visible copy says “selected”
+  at every width; only the “outside this view” clause is dropped on a phone,
+  where the dialog carries the same warning.
 - **A selection that tells the truth.** The selection is kept when the search or
   filters change, because narrowing the list to check one row should not throw
   away the twenty already ticked. But an action must not then imply it only
@@ -429,7 +466,8 @@ mutations only pay for the sort/filter pass.
   Spac” buttons. It spells out Compact, Comfortable and Spacious, previews each
   with a row-count icon and its pixel height, and checks the active choice; the
   trigger names the current value for assistive tech (`Row density:
-  Comfortable`).
+  Comfortable`). It is hidden below `sm`, where the row is a fixed two-line card
+  and density would change nothing visible.
 - **One menu language:** every menu in the panel — select filters, the form's
   four choice fields, rows per page, column visibility — is an in-app Radix menu
   on the raised surface with a check on the current choice. No control hands the
@@ -438,7 +476,7 @@ mutations only pay for the sort/filter pass.
 ## Tests and quality checks
 
 ```bash
-npm test          # 164 tests, 28 files
+npm test          # 172 tests, 30 files
 npm run build     # tsc -b (strict) + vite build
 npm run lint      # oxlint
 ```
@@ -447,7 +485,9 @@ Coverage includes dataset determinism, search-text construction, store
 create/update, grid sorting / filtering / pagination (including typed page jumps
 and clamping) / focus-row reveal / filter-row clearing / the select and
 date-filter menus / seeded and controlled filter state / controlled selection
-and bulk delete (dialog preview, shared toast undo), registry and agenda URL
+and bulk delete (dialog preview, shared toast undo) / the select-all-matching
+prompt and its formatted counts / the narrow primary cell and the roving header
+tab stop, registry and agenda URL
 view round-tripping and validation (including the nearest-to-today default and
 its sort menu), the phone filter sheet and the media-query hook, the
 quick-filter metrics, timeline grouping /
@@ -494,10 +534,10 @@ src/
     model/                   types, seeded generator, search text, tests
     store/                   Zustand events store, useEventFeed, tests
     components/              EventLabels, EventForm (controller/fields/footer/schema/values)
-    registry/                RegistryPage, header/stats, columns, bulk bar/dialog, URL view
+    registry/                RegistryPage, header/stats, columns, primary cell, bulk bar/dialog, URL view
     agenda/                  AgendaPage, header, toolbar/footer, card, empty/skeleton, data
   components/
-    DataGrid/                composition, hooks/, table/header/body, toolbar, selection slot, model/
+    DataGrid/                composition, hooks/, table/header/body, toolbar, selection slot, layout context, model/
     Timeline/                composition, hooks/, rows, model
     ui/                      PageHeader, EmptyState, ErrorState, SelectMenu, Kbd, Button, Checkbox, SearchField, Stat, surfaces
   shared/

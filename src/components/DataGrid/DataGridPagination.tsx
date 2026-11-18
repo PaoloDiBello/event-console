@@ -77,7 +77,10 @@ export function DataGridPagination({
         <span className="font-mono text-ink">
           {formatCount(firstRow)}–{formatCount(lastRow)}
         </span>{' '}
-        of <span className="font-mono text-ink">{formatCount(totalRows)}</span> {itemLabel}
+        of <span className="font-mono text-ink">{formatCount(totalRows)}</span>{' '}
+        {/* The noun is the first thing a 360px footer can lose; the numbers
+            still read, and the page controls stay on the same line. */}
+        <span className="hidden sm:inline">{itemLabel}</span>
       </p>
 
       {sourceRows !== undefined && sourceRows !== totalRows ? (
@@ -90,11 +93,13 @@ export function DataGridPagination({
         <div className="hidden items-center gap-1.5 text-[10px] text-faint lg:flex">{hint}</div>
       ) : null}
 
-      <DataGridPageSize
-        pageSize={pageSize}
-        options={pageSizeOptions}
-        onChange={onPageSizeChange}
-      />
+      <div className="hidden sm:block">
+        <DataGridPageSize
+          pageSize={pageSize}
+          options={pageSizeOptions}
+          onChange={onPageSizeChange}
+        />
+      </div>
 
       <div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
         <DataGridPageJump
@@ -103,13 +108,17 @@ export function DataGridPagination({
           onPageChange={onPageChange}
         />
         <div className="flex items-center gap-1.5">
-          <NavButton
-            label="First page"
-            disabled={pageIndex === 0}
-            onClick={() => onPageChange(0)}
-          >
-            <ChevronsLeft aria-hidden="true" className="size-4" />
-          </NavButton>
+          {/* A phone needs previous and next; first and last are two more
+              targets for a jump the page field already makes in one tap. */}
+          <div className="hidden items-center gap-1.5 sm:flex">
+            <NavButton
+              label="First page"
+              disabled={pageIndex === 0}
+              onClick={() => onPageChange(0)}
+            >
+              <ChevronsLeft aria-hidden="true" className="size-4" />
+            </NavButton>
+          </div>
           <NavButton
             label="Previous page"
             disabled={pageIndex === 0}
@@ -124,13 +133,15 @@ export function DataGridPagination({
           >
             <ChevronRight aria-hidden="true" className="size-4" />
           </NavButton>
-          <NavButton
-            label="Last page"
-            disabled={pageIndex >= pageCount - 1}
-            onClick={() => onPageChange(Math.max(pageCount - 1, 0))}
-          >
-            <ChevronsRight aria-hidden="true" className="size-4" />
-          </NavButton>
+          <div className="hidden items-center gap-1.5 sm:flex">
+            <NavButton
+              label="Last page"
+              disabled={pageIndex >= pageCount - 1}
+              onClick={() => onPageChange(Math.max(pageCount - 1, 0))}
+            >
+              <ChevronsRight aria-hidden="true" className="size-4" />
+            </NavButton>
+          </div>
         </div>
       </div>
     </div>

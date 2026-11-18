@@ -271,14 +271,15 @@ export function useDataGridController<TData>({
   // Walk the filtered rows only when something is selected, and only when that
   // selection or the result set changed: an idle grid pays nothing for this.
   const selectionSummary = useMemo<SelectionSummary>(() => {
-    if (selectedIdsInGrid.length === 0) return { selected: 0, inView: 0 }
+    const base = { matching: displayRows.length, pageSize: pagination.pageSize }
+    if (selectedIdsInGrid.length === 0) return { selected: 0, inView: 0, ...base }
     const wanted = new Set(selectedIdsInGrid)
     let inView = 0
     for (const row of displayRows) {
       if (wanted.has(getRowId(row))) inView += 1
     }
-    return { selected: selectedIdsInGrid.length, inView }
-  }, [displayRows, getRowId, selectedIdsInGrid])
+    return { selected: selectedIdsInGrid.length, inView, ...base }
+  }, [displayRows, getRowId, pagination.pageSize, selectedIdsInGrid])
 
   const hasSearch = globalFilter.length > 0
   const hasFilters = filterCount > 0

@@ -1,5 +1,6 @@
 import { flexRender, type Column, type Table } from '@tanstack/react-table'
 import { ArrowDown, ArrowUp, ChevronsUpDown } from 'lucide-react'
+import type { KeyboardEvent } from 'react'
 import { cn } from '@/shared/lib/cn'
 import { DataGridColumnFilter } from './DataGridColumnFilter'
 import { isBlank } from './model/accessors'
@@ -35,6 +36,31 @@ export function DataGridHeader<TData>({
   getFacetCounts,
 }: DataGridHeaderProps<TData>) {
   const visibleIds = new Set(visibleColumns.map((column) => column.id))
+  /**
+   * One tab stop for the header row, parked on the column that is currently
+   * sorting. Tabbing through eight sort buttons to reach the rows was the cost
+   * of the arrows being individually focusable; the arrows now move between
+   * them instead.
+   */
+  const sortableIds = visibleColumns
+    .filter((column) => column.getCanSort())
+    .map((column) => column.id)
+  const sortedId = table.getState().sorting[0]?.id
+  const tabStopId = sortedId && sortableIds.includes(sortedId) ? sortedId : sortableIds[0]
+
+  const moveHeaderFocus = (event: KeyboardEvent<HTMLButtonElement>) => {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
+    const buttons = Array.from(
+      event.currentTarget.closest('tr')?.querySelectorAll<HTMLButtonElement>('[data-sort-header]') ??
+        [],
+    )
+    const index = buttons.indexOf(event.currentTarget)
+    if (index === -1) return
+    const next = buttons[index + (event.key === 'ArrowRight' ? 1 : -1)]
+    if (!next) return
+    event.preventDefault()
+    next.focus()
+  }
 
   return (
     <thead>
@@ -70,6 +96,9 @@ export function DataGridHeader<TData>({
                       <button
                         type="button"
                         disabled={isLoading}
+                        data-sort-header=""
+                        tabIndex={header.column.id === tabStopId ? 0 : -1}
+                        onKeyDown={moveHeaderFocus}
                         onClick={(event) => onSort(header.column, event)}
                         className={cn(
                           'flex h-10 w-full items-center gap-1.5 text-inherit',

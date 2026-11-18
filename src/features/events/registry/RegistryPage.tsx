@@ -92,7 +92,14 @@ export function RegistryPage({ onEdit, onBulkDelete, highlightedId, onNotify }: 
   )
   // The grid reports how much of the selection the current filters still show,
   // so the bulk bar and the confirm dialog can say what the action will touch.
-  const [selection, setSelection] = useState<SelectionSummary>({ selected: 0, inView: 0 })
+  const [selection, setSelection] = useState<SelectionSummary>({
+    selected: 0,
+    inView: 0,
+    matching: 0,
+    pageSize: 0,
+  })
+  /** The rows the grid's search and filters left, for "select all matching". */
+  const filteredRowsRef = useRef<EventRecord[]>([])
 
   const viewRef = useRef<RegistryView>(seed)
   const lastUrlRef = useRef(searchParams.toString())
@@ -241,6 +248,13 @@ export function RegistryPage({ onEdit, onBulkDelete, highlightedId, onNotify }: 
     setConfirmOpen(true)
   }, [selectedIds.length])
 
+  // The header checkbox can only reach the page. This is the other half of a
+  // bulk action on a 100k-row set: the whole filtered match, taken from the
+  // list the grid already built rather than filtering the source again here.
+  const handleSelectAllMatching = useCallback(() => {
+    setSelectedIds(filteredRowsRef.current.map(getEventRowId))
+  }, [])
+
   const confirmBulkDelete = useCallback(() => {
     if (selectedIds.length === 0) return
     onBulkDelete(selectedIds)
@@ -289,11 +303,15 @@ export function RegistryPage({ onEdit, onBulkDelete, highlightedId, onNotify }: 
           selectedRowIds={selectedIds}
           onSelectionChange={setSelectedIds}
           onSelectionSummaryChange={setSelection}
+          filteredRowsRef={filteredRowsRef}
           selectionBar={
             selectedIds.length > 0 ? (
               <BulkActionBar
                 count={selectedIds.length}
                 outsideCount={outsideCount}
+                matching={selection.matching}
+                pageSize={selection.pageSize}
+                onSelectAll={handleSelectAllMatching}
                 onClear={() => setSelectedIds([])}
                 onDelete={handleBulkDelete}
               />
@@ -305,7 +323,11 @@ export function RegistryPage({ onEdit, onBulkDelete, highlightedId, onNotify }: 
               {/* The default order is a hidden column, so without this menu the
                   only way out of it would be to hand-edit the URL. */}
               <SortMenu value={sorting} onValueChange={setSorting} />
-              <DensityMenu value={density} onValueChange={setDensity} />
+              {/* Row height is a desktop preference: on a phone the row is two
+                  fixed lines, so the menu would change nothing visible. */}
+              <div className="hidden sm:block">
+                <DensityMenu value={density} onValueChange={setDensity} />
+              </div>
             </>
           }
           focusRowId={highlightedId}

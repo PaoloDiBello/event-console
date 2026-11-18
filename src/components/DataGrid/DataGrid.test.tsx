@@ -911,4 +911,48 @@ describe('DataGrid', () => {
     // utility column (selection, actions) silently reserves too much room.
     expect(document.querySelector('colgroup col')).toHaveStyle({ width: '120px' })
   })
+
+  it('keeps one tab stop in the header and moves it with the arrow keys', async () => {
+    const user = userEvent.setup()
+    renderGrid()
+
+    const sortButtons = [...document.querySelectorAll<HTMLButtonElement>('thead button[data-sort-header]')]
+    expect(sortButtons).toHaveLength(3)
+    // Eight sort buttons in the tab order meant eight presses before the rows;
+    // only the current sort (or the first column) is a stop.
+    expect(sortButtons.map((button) => button.tabIndex)).toEqual([0, -1, -1])
+
+    sortButtons[0]!.focus()
+    await user.keyboard('{ArrowRight}')
+    expect(sortButtons[1]).toHaveFocus()
+    await user.keyboard('{ArrowLeft}')
+    expect(sortButtons[0]).toHaveFocus()
+  })
+
+  it('publishes the filtered rows and the match count for bulk selection', async () => {
+    const user = userEvent.setup()
+    const filteredRowsRef = { current: [] as Row[] }
+    const onSelectionSummaryChange = vi.fn()
+    renderSelectionGrid({ filteredRowsRef, onSelectionSummaryChange })
+
+    expect(filteredRowsRef.current).toHaveLength(rows.length)
+
+    await user.click(screen.getByRole('checkbox', { name: 'Select Row 00' }))
+    expect(onSelectionSummaryChange).toHaveBeenLastCalledWith({
+      selected: 1,
+      inView: 1,
+      matching: rows.length,
+      pageSize: 10,
+    })
+
+    // Narrowing the match also narrows what "select all matching" means, so the
+    // page can offer the rest of the filtered set rather than the whole source.
+    await user.type(screen.getByRole('searchbox', { name: 'Search all columns' }), 'Row 0')
+    await flushSearchDebounce()
+
+    await waitFor(() => expect(filteredRowsRef.current).toHaveLength(10))
+    expect(onSelectionSummaryChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({ matching: 10 }),
+    )
+  })
 })

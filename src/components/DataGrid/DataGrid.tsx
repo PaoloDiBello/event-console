@@ -10,6 +10,7 @@ import { DataGridPagination } from './DataGridPagination'
 import { DataGridScrollFade } from './DataGridScrollFade'
 import { DataGridTable } from './DataGridTable'
 import { DataGridToolbar } from './DataGridToolbar'
+import { GridLayoutContext } from './layoutContext'
 import { SearchQueryContext } from './searchContext'
 import { useDataGridShortcuts } from './hooks/useDataGridShortcuts'
 import { useGridScrollReset } from './hooks/useGridScrollReset'
@@ -43,6 +44,7 @@ export function DataGrid<TData>({
   selectedRowIds,
   onSelectionChange,
   onSelectionSummaryChange,
+  filteredRowsRef,
   pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS,
   emptyTitle = 'Nothing here yet',
   emptyHint = 'Rows will appear here once data is available.',
@@ -77,13 +79,24 @@ export function DataGrid<TData>({
     onSelectionChange,
   })
 
+  // Columns marked `hideBelow` are dropped from the rendered table on a phone.
+  // They stay in the grid state, so sorting, filtering and the Columns menu
+  // still see them; only the markup gets narrower.
+  const wideLayout = useMediaQuery('(min-width: 768px)')
+  const renderedColumns = wideLayout
+    ? grid.visibleColumns
+    : grid.visibleColumns.filter((column) => column.columnDef.meta?.hideBelow !== 'md')
+  // The narrow row is two lines by construction, so a compact desktop height
+  // would clip it. Density stays a wide-screen preference.
+  const rowHeightForLayout = wideLayout ? rowHeight : Math.max(rowHeight, 52)
+
   // TanStack Virtual intentionally exposes non-memoizable instance methods;
   // this component is not compiled by React Compiler.
   // oxlint-disable-next-line react/incompatible-library
   const rowVirtualizer = useVirtualizer({
     count: grid.rows.length,
     getScrollElement: () => scrollRef.current,
-    estimateSize: () => rowHeight,
+    estimateSize: () => rowHeightForLayout,
     overscan: 14,
   })
 
@@ -103,6 +116,14 @@ export function DataGrid<TData>({
     onSelectionSummaryChange?.(grid.selectionSummary)
   }, [grid.selectionSummary, onSelectionSummaryChange])
 
+  // "Select all matching" belongs to the page, but only the grid knows which
+  // rows the search and filters left. Publishing the reference keeps that list
+  // in one place instead of filtering 100k rows a second time in the page.
+  useEffect(() => {
+    if (!filteredRowsRef) return
+    filteredRowsRef.current = grid.displayRows
+  }, [filteredRowsRef, grid.displayRows])
+
   // `x` is only offered where the page opted into selection, so a grid that
   // never shows checkboxes cannot quietly accumulate a selection.
   const selectableRows = selectedRowIds !== undefined || selectionBar !== undefined
@@ -118,14 +139,6 @@ export function DataGrid<TData>({
   // The selection gutter is pinned at every width, so it always owns the left
   // edge; only the right edge can hide content.
   const { canScrollRight } = useScrollEdges(scrollRef)
-
-  // Columns marked `hideBelow` are dropped from the rendered table on a phone.
-  // They stay in the grid state, so sorting, filtering and the Columns menu
-  // still see them; only the markup gets narrower.
-  const wideLayout = useMediaQuery('(min-width: 768px)')
-  const renderedColumns = wideLayout
-    ? grid.visibleColumns
-    : grid.visibleColumns.filter((column) => column.columnDef.meta?.hideBelow !== 'md')
   // Below `md` the filter row becomes the filter sheet, so the table header
   // loses a row of controls that would be wider than the screen anyway.
   const showFilterRow = grid.showFilterRow && wideLayout
@@ -166,124 +179,127 @@ export function DataGrid<TData>({
 
   return (
     <SearchQueryContext.Provider value={grid.globalFilter}>
-      <section className={panelClass}>
-      <DataGridToolbar
-        table={grid.table}
-        search={grid.search}
-        onSearchChange={grid.setSearch}
-        onClearColumnFilters={grid.clearColumnFilters}
-        onRemoveColumnFilter={grid.removeFilterValue}
-        onFilterChange={grid.filterByColumn}
-        getFacetCounts={grid.getFacetCounts}
-        chips={grid.chips}
-        filterCount={grid.filterCount}
-        isPending={grid.isPending}
-        searchPlaceholder={searchPlaceholder}
-        searchRef={searchRef}
-        toolbarActions={toolbarActions}
-        onExport={onExport ? handleExport : undefined}
-        disabled={isLoading || Boolean(error)}
-      />
+      <GridLayoutContext.Provider value={wideLayout ? 'wide' : 'narrow'}>
+        <section className={panelClass}>
+          <DataGridToolbar
+            table={grid.table}
+            search={grid.search}
+            onSearchChange={grid.setSearch}
+            onClearColumnFilters={grid.clearColumnFilters}
+            onRemoveColumnFilter={grid.removeFilterValue}
+            onFilterChange={grid.filterByColumn}
+            getFacetCounts={grid.getFacetCounts}
+            chips={grid.chips}
+            filterCount={grid.filterCount}
+            isPending={grid.isPending}
+            searchPlaceholder={searchPlaceholder}
+            searchRef={searchRef}
+            toolbarActions={toolbarActions}
+            onExport={onExport ? handleExport : undefined}
+            disabled={isLoading || Boolean(error)}
+          />
 
-      <div className="relative min-h-0 flex-1">
-        {error ? (
-          <DataGridError error={error} onRetry={onRetry} />
-        ) : (
-          <>
-            <div
-              ref={scrollRef}
-              aria-busy={isLoading}
-              className="scrollbar-thin h-full overflow-auto"
-            >
-              <DataGridTable
-                table={grid.table}
-                visibleColumns={renderedColumns}
-                caption={caption}
-                filteredCount={grid.filteredCount}
-                sorting={grid.sorting}
-                isLoading={isLoading}
-                showFilterRow={showFilterRow}
-                rows={grid.rows}
-                virtualRows={virtualRows}
-                paddingTop={paddingTop}
-                paddingBottom={paddingBottom}
-                rowHeight={rowHeight}
-                pageIndex={grid.pagination.pageIndex}
-                pageSize={grid.pagination.pageSize}
-                getRowClassName={getRowClassName}
-                activeRowIndex={activeRowIndex}
-                selectableRows={selectableRows}
-                onRowFocus={focusRowAt}
-                onRowActivate={onRowActivate}
-                onSort={grid.sortByColumn}
-                onFilterChange={grid.filterByColumn}
-                getFacetCounts={grid.getFacetCounts}
-                emptyState={
-                  <DataGridEmpty
-                    totalRows={data.length}
-                    hasSearch={grid.hasSearch}
-                    hasFilters={grid.hasFilters}
-                    emptyTitle={emptyTitle}
-                    emptyHint={emptyHint}
-                    emptyAction={emptyAction}
-                    onClearSearch={grid.clearSearch}
-                    onClearFilters={grid.clearColumnFilters}
-                    onClearAll={grid.clearAll}
-                  />
-                }
-              />
-            </div>
-            {canScrollRight ? <DataGridScrollFade side="right" /> : null}
-            {selectionBar}
-          </>
-        )}
-      </div>
-
-      {error ? null : (
-        <DataGridPagination
-          pageIndex={grid.pagination.pageIndex}
-          pageSize={grid.pagination.pageSize}
-          pageCount={grid.pageCount}
-          totalRows={grid.filteredCount}
-          sourceRows={data.length}
-          pageSizeOptions={pageSizeOptions}
-          onPageChange={grid.setPage}
-          onPageSizeChange={grid.setPageSize}
-          hint={
-            onRowActivate ? (
+          <div className="relative min-h-0 flex-1">
+            {error ? (
+              <DataGridError error={error} onRetry={onRetry} />
+            ) : (
               <>
-                <Kbd className="inline-flex size-4 items-center justify-center p-0">↑</Kbd>
-                <Kbd className="inline-flex size-4 items-center justify-center p-0">↓</Kbd>
-                <span>move</span>
-                <span aria-hidden="true" className="text-line-strong">
-                  /
-                </span>
-                <Kbd className="inline-flex size-4 items-center justify-center p-0">↵</Kbd>
-                <span>open</span>
-                {selectableRows ? (
-                  <span className="hidden items-center gap-1.5 xl:flex">
+                <div
+                  ref={scrollRef}
+                  aria-busy={isLoading}
+                  className="scrollbar-thin h-full overflow-auto"
+                >
+                  <DataGridTable
+                    table={grid.table}
+                    visibleColumns={renderedColumns}
+                    caption={caption}
+                    filteredCount={grid.filteredCount}
+                    sorting={grid.sorting}
+                    isLoading={isLoading}
+                    showFilterRow={showFilterRow}
+                    rows={grid.rows}
+                    virtualRows={virtualRows}
+                    paddingTop={paddingTop}
+                    paddingBottom={paddingBottom}
+                    rowHeight={rowHeightForLayout}
+                    pageIndex={grid.pagination.pageIndex}
+                    pageSize={grid.pagination.pageSize}
+                    getRowClassName={getRowClassName}
+                    activeRowIndex={activeRowIndex}
+                    selectableRows={selectableRows}
+                    narrow={!wideLayout}
+                    onRowFocus={focusRowAt}
+                    onRowActivate={onRowActivate}
+                    onSort={grid.sortByColumn}
+                    onFilterChange={grid.filterByColumn}
+                    getFacetCounts={grid.getFacetCounts}
+                    emptyState={
+                      <DataGridEmpty
+                        totalRows={data.length}
+                        hasSearch={grid.hasSearch}
+                        hasFilters={grid.hasFilters}
+                        emptyTitle={emptyTitle}
+                        emptyHint={emptyHint}
+                        emptyAction={emptyAction}
+                        onClearSearch={grid.clearSearch}
+                        onClearFilters={grid.clearColumnFilters}
+                        onClearAll={grid.clearAll}
+                      />
+                    }
+                  />
+                </div>
+                {canScrollRight ? <DataGridScrollFade side="right" /> : null}
+                {selectionBar}
+              </>
+            )}
+          </div>
+
+          {error ? null : (
+            <DataGridPagination
+              pageIndex={grid.pagination.pageIndex}
+              pageSize={grid.pagination.pageSize}
+              pageCount={grid.pageCount}
+              totalRows={grid.filteredCount}
+              sourceRows={data.length}
+              pageSizeOptions={pageSizeOptions}
+              onPageChange={grid.setPage}
+              onPageSizeChange={grid.setPageSize}
+              hint={
+                onRowActivate ? (
+                  <>
+                    <Kbd className="inline-flex size-4 items-center justify-center p-0">↑</Kbd>
+                    <Kbd className="inline-flex size-4 items-center justify-center p-0">↓</Kbd>
+                    <span>move</span>
                     <span aria-hidden="true" className="text-line-strong">
                       /
                     </span>
-                    <Kbd className="inline-flex size-4 items-center justify-center p-0">X</Kbd>
-                    <span>select</span>
-                  </span>
-                ) : null}
-              </>
-            ) : undefined
-          }
-        />
-      )}
+                    <Kbd className="inline-flex size-4 items-center justify-center p-0">↵</Kbd>
+                    <span>open</span>
+                    {selectableRows ? (
+                      <span className="hidden items-center gap-1.5 xl:flex">
+                        <span aria-hidden="true" className="text-line-strong">
+                          /
+                        </span>
+                        <Kbd className="inline-flex size-4 items-center justify-center p-0">X</Kbd>
+                        <span>select</span>
+                      </span>
+                    ) : null}
+                  </>
+                ) : undefined
+              }
+            />
+          )}
 
-      {/* Screen readers get the result count without having to hunt for it. */}
-      <p className="sr-only" role="status">
-        {error
-          ? ''
-          : isLoading
-            ? 'Loading rows'
-            : `${formatCount(grid.filteredCount)} ${pluralize(grid.filteredCount, 'row')} match. Showing ${formatCount(grid.rangeStart)} to ${formatCount(grid.rangeEnd)}.`}
-      </p>
-    </section>
+          {/* Screen readers get the result count without having to hunt for it. */}
+          <p className="sr-only" role="status">
+            {error
+              ? ''
+              : isLoading
+                ? 'Loading rows'
+                : `${formatCount(grid.filteredCount)} ${pluralize(grid.filteredCount, 'row')} match. Showing ${formatCount(grid.rangeStart)} to ${formatCount(grid.rangeEnd)}.`}
+          </p>
+        </section>
+      </GridLayoutContext.Provider>
     </SearchQueryContext.Provider>
   )
 }

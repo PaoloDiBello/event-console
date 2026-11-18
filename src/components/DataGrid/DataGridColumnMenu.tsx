@@ -30,69 +30,66 @@ export function DataGridColumnMenu<TData>({
   const visibleCount = hideableColumns.filter((column) => column.getIsVisible()).length
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          disabled={disabled}
-          aria-label={`Columns, ${visibleCount} of ${hideableColumns.length} visible`}
-          className={buttonClass({
-            size: 'md',
-            className: 'relative w-9 justify-center gap-2 px-0 sm:w-auto sm:px-3',
-          })}
-        >
-          <Columns3 aria-hidden="true" className="size-3.5" />
-          <span className="hidden sm:inline">Columns</span>
-          {/* On a phone the count is a dot: five controls have to share one
-              row, and the exact number is in the accessible name and the menu. */}
-          {visibleCount < hideableColumns.length ? (
-            <span
-              aria-hidden="true"
-              className="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-accent sm:hidden"
-            />
-          ) : null}
-          <span className="hidden rounded-xs bg-canvas px-1.5 py-0.5 font-mono text-[10px] text-faint sm:inline">
-            {visibleCount}/{hideableColumns.length}
-          </span>
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="end"
-        sideOffset={6}
-        className="scrollbar-thin z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] min-w-52 overflow-y-auto overscroll-contain rounded-md border border-line-strong bg-raised p-1 shadow-2xl shadow-black/60"
-      >
-        <DropdownMenuLabel className="px-2 py-1.5 font-mono text-[10px] tracking-widest text-faint uppercase">
-          Visible columns
-        </DropdownMenuLabel>
-        {hideableColumns.map((column) => (
-          <DropdownMenuCheckboxItem
-            key={column.id}
-            checked={column.getIsVisible()}
-            onCheckedChange={() => column.toggleVisibility()}
-            // Keep the menu open so several columns can be toggled in a row.
-            onSelect={(event) => event.preventDefault()}
-            className="flex cursor-pointer items-center gap-2 rounded-xs py-1.5 pr-2 pl-1.5 text-xs text-muted outline-none select-none data-[highlighted]:bg-canvas data-[highlighted]:text-ink data-[state=checked]:text-ink"
+    // Hidden on a phone: below `md` the table paints its narrow row, which
+    // carries the same facts in the primary cell, so a visibility menu would
+    // list columns that cannot appear.
+    <div className="hidden md:block">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            disabled={disabled}
+            aria-label={`Columns, ${visibleCount} of ${hideableColumns.length} visible`}
+            className={buttonClass({
+              size: 'md',
+              className: 'relative justify-center gap-2 px-2.5',
+            })}
           >
-            {/* The item is the state; this slot makes it visible. Radix only
-                mounts the indicator while the item is checked. */}
-            <span className="flex size-3.5 shrink-0 items-center justify-center">
-              <DropdownMenuItemIndicator>
-                <Check aria-hidden="true" className="size-3.5 text-accent" />
-              </DropdownMenuItemIndicator>
+            <Columns3 aria-hidden="true" className="size-3.5" />
+            <span>Columns</span>
+            <span className="rounded-xs bg-canvas px-1.5 py-0.5 font-mono text-[10px] text-faint">
+              {visibleCount}/{hideableColumns.length}
             </span>
-            <span className="truncate">
-              {columnLabel(table.getColumn(column.id), column.id)}
-            </span>
-          </DropdownMenuCheckboxItem>
-        ))}
-        <DropdownMenuSeparator className="my-1 h-px bg-line" />
-        <DropdownMenuItem
-          onSelect={() => table.setColumnVisibility({})}
-          className="cursor-pointer rounded-xs px-2 py-1.5 text-xs text-faint outline-none data-[highlighted]:bg-canvas data-[highlighted]:text-ink"
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          align="end"
+          sideOffset={6}
+          className="scrollbar-thin z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] min-w-52 overflow-y-auto overscroll-contain rounded-md border border-line-strong bg-raised p-1 shadow-2xl shadow-black/60"
         >
-          Show all columns
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+          <DropdownMenuLabel className="px-2 py-1.5 font-mono text-[10px] tracking-widest text-faint uppercase">
+            Visible columns
+          </DropdownMenuLabel>
+          {hideableColumns.map((column) => (
+            <DropdownMenuCheckboxItem
+              key={column.id}
+              checked={column.getIsVisible()}
+              onCheckedChange={() => column.toggleVisibility()}
+              // Keep the menu open so several columns can be toggled in a row.
+              onSelect={(event) => event.preventDefault()}
+              className="flex cursor-pointer items-center gap-2 rounded-xs py-1.5 pr-2 pl-1.5 text-xs text-muted outline-none select-none data-[highlighted]:bg-canvas data-[highlighted]:text-ink data-[state=checked]:text-ink"
+            >
+              {/* The item is the state; this slot makes it visible. Radix only
+                  mounts the indicator while the item is checked. */}
+              <span className="flex size-3.5 shrink-0 items-center justify-center">
+                <DropdownMenuItemIndicator>
+                  <Check aria-hidden="true" className="size-3.5 text-accent" />
+                </DropdownMenuItemIndicator>
+              </span>
+              <span className="truncate">
+                {columnLabel(table.getColumn(column.id), column.id)}
+              </span>
+            </DropdownMenuCheckboxItem>
+          ))}
+          <DropdownMenuSeparator className="my-1 h-px bg-line" />
+          <DropdownMenuItem
+            onSelect={() => table.setColumnVisibility({})}
+            className="cursor-pointer rounded-xs px-2 py-1.5 text-xs text-faint outline-none data-[highlighted]:bg-canvas data-[highlighted]:text-ink"
+          >
+            Show all columns
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   )
 }

@@ -6,7 +6,7 @@ import type {
   SortingState,
   VisibilityState,
 } from '@tanstack/react-table'
-import type { ReactNode } from 'react'
+import type { ReactNode, RefObject } from 'react'
 
 /**
  * Column metadata the DataGrid understands.
@@ -68,6 +68,10 @@ export interface DataGridViewState {
 export interface SelectionSummary {
   selected: number
   inView: number
+  /** How many rows the current search and filters leave in total. */
+  matching: number
+  /** Rows on the page, so the bar can tell "this page" from "everything". */
+  pageSize: number
 }
 
 export interface DataGridProps<TData> {
@@ -137,5 +141,10 @@ export interface DataGridProps<TData> {
    * current search and filters, so a bulk action can say what it will touch.
    */
   onSelectionSummaryChange?: (summary: SelectionSummary) => void
+  /**
+   * Filled with the rows the current search and filters leave, so the page can
+   * offer "select all matching" without filtering the source a second time.
+   */
+  filteredRowsRef?: RefObject<TData[]>
   rowHeight?: number
 }

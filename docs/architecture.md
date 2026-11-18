@@ -94,6 +94,7 @@ src/
       registryView.ts               shareable view <-> URL (read, validate, write)
       useRegistryStats.ts           one-pass header counters
       columns.tsx                   event columns and fast sort keys
+      EventPrimaryCell.tsx          the row's title cell, wide and narrow shapes
       index.ts                      public page API
     agenda/                         "by day" lens
       AgendaPage.tsx                data + Timeline composition, URL-backed view
@@ -119,7 +120,7 @@ src/
         useScrollEdges.ts           which horizontal edges still hide content
         useDataGridShortcuts.ts     "/" focuses search, "f" the first filter
       DataGridTable.tsx             table/colgroup composition
-      DataGridHeader.tsx            sortable headers + filter row
+      DataGridHeader.tsx            sortable headers (one roving tab stop) + filter row
       DataGridColumnFilter.tsx      one filter-row control
       DataGridSelectFilter.tsx      multi-select facet: checkbox menu + row counts
       DataGridDateFilter.tsx        date filter trigger + shared calendar
@@ -137,6 +138,7 @@ src/
       DataGridError.tsx             load-failure copy over ErrorState
       DataGridScrollFade.tsx        gradient cue on a clipped edge
       DataGridSkeleton.tsx          loading rows
+      layoutContext.ts              wide/narrow row layout published once per grid
       pinnedColumn.ts               frozen first column (pinned at every width)
       model/                        pure filter/sort pipeline
         accessors.ts                column access and row shims
@@ -247,6 +249,15 @@ positioned above the footer instead of taking a row in the layout, so selecting 
 row never resizes the table under the pointer, and it cannot cover the
 pagination at narrow widths.
 
+The header checkbox can only reach the current page, so the grid also publishes
+the rows the applied search and filters left through `filteredRowsRef`. Once a
+full page is selected, `BulkActionBar` offers “Select all N matching”, and
+`RegistryPage` takes those ids instead of filtering 100k rows a second time. The
+offer is conditional on a full page (`count >= min(pageSize, matching)`), so it
+never appears beside a single tick, and it disappears once the whole match is
+selected. The confirmation can then say how much of the selection is off-screen,
+which is the number that matters when the action is irreversible apart from Undo.
+
 The delete confirmation previews up to five selected events and counts the rest.
 A count alone is easy to trust and hard to verify, especially because selection
 survives paging and filtering. `BulkDeleteDialog` remembers the control that
@@ -286,12 +297,22 @@ toolbar, a scrolling body and a status footer.
   is the title keeps the title still instead. Because the left edge is always
   occupied, only the right edge fades.
 - Responsive layout is split between CSS and `shared/hooks/useMediaQuery`:
-  spacing and visibility that CSS can express stay in classes, while the two
-  decisions that change what is rendered — dropping `meta.hideBelow` columns and
-  replacing the filter row with `DataGridFilterPanel` below `md` — are read in
-  JS so the header, body, skeleton and `colgroup` are filtered from one list.
-  Without `matchMedia` the hook reports the wide layout, so tests and older
-  browsers get the desktop surface.
+  spacing and visibility that CSS can express stay in classes, while the
+  decisions that change what is rendered — dropping `meta.hideBelow` columns,
+  replacing the filter row with `DataGridFilterPanel` below `md`, and telling
+  cells which row shape they are painting — are read in JS so the header, body,
+  skeleton and `colgroup` are filtered from one list. Without `matchMedia` the
+  hook reports the wide layout, so tests and older browsers get the desktop
+  surface.
+- The narrow decision is published once through `GridLayoutContext` rather than
+  re-read by every cell: fifty rows should not mean fifty `matchMedia`
+  subscriptions, and a cell that swapped markup on its own would put the same
+  fact in the DOM twice. `EventPrimaryCell` reads it to choose between the wide
+  title/id line and the two-line phone card that carries the day, time, status
+  and priority the hidden columns no longer show. The same flag tells the table
+  to leave non-compact columns at `auto` width, so the phone table cannot end up
+  two pixels wider than its viewport, and forces a 52 px row height, because the
+  two-line card would be clipped by a compact desktop density.
 - `Stat` is the only metric card. Both headers show two of them at the same
   height as the adjacent buttons.
 - `components/ui/surfaces.ts` owns `panelClass`, `toolbarClass`, `footerClass`
@@ -386,12 +407,17 @@ Tests are colocated with the unit they exercise:
 - `features/events/registry/columns.test.tsx` — column labels and sort keys.
 - `features/events/registry/BulkDeleteDialog.test.tsx` — count-aware copy,
   preview cap, cancel/confirm, initial focus.
+- `features/events/registry/BulkActionBar.test.tsx` — the select-all-matching
+  prompt, when it appears and disappears, and formatted counts.
+- `features/events/registry/EventPrimaryCell.test.tsx` — the narrow card carries
+  the facts its hidden columns used to, and the wide line keeps the id.
 - `features/events/registry/DensityMenu.test.tsx` — full density labels and the
   selected option.
 - `app/hooks/useEventEditor.test.ts` — bulk delete through the shared toast and
   undo path.
 - `components/DataGrid/DataGrid.test.tsx` — sorting, filtering, pagination,
-  page jump, focus reveal, controlled selection, `meta.width` sizing, and the
+  page jump, focus reveal, controlled selection, the published filtered rows and
+  selection summary, the roving header tab stop, `meta.width` sizing, and the
   phone filter sheet.
 - `shared/hooks/useMediaQuery.test.ts` — the width query, its change events and
   the wide-layout fallback.

@@ -10,7 +10,7 @@ import {
 import type { DataGridColumn } from '@/components/DataGrid'
 import { matchesSearch } from '@/features/events/model'
 import { daysFromToday, formatGridDate, formatMinute } from '@/shared/lib/dates'
-import { EventTitleCell } from './EventTitleCell'
+import { EventPrimaryCell } from './EventPrimaryCell'
 import { CategoryLabel, PriorityLabel, StatusBadge } from '@/features/events/components/EventLabels'
 
 /**
@@ -94,16 +94,7 @@ export function createEventColumns(
       sortingFn: 'text',
       size: 268,
       meta: { filter: 'text', width: 268 },
-      cell: ({ row }) => (
-        <div className="min-w-0">
-          <p className="truncate font-medium text-ink" title={row.original.title}>
-            <EventTitleCell title={row.original.title} />
-          </p>
-          <p className="truncate font-mono text-[10px] text-faint">
-            {row.original.id} · {row.original.location}
-          </p>
-        </div>
-      ),
+      cell: ({ row }) => <EventPrimaryCell event={row.original} />,
     },
     {
       // One column, two sortable pieces of information: ISO day + zero-padded
@@ -115,6 +106,9 @@ export function createEventColumns(
       meta: {
         filter: 'date',
         width: 132,
+        // The phone row carries the day and time inside the Event cell, so the
+        // column would only cost a scroll that hides the title.
+        hideBelow: 'md',
         sortValue: (event) => `${event.date}T${String(event.startMinute).padStart(4, '0')}`,
       },
       filterFn: (row, _columnId, value) => row.original.date === value,
@@ -148,6 +142,7 @@ export function createEventColumns(
       meta: {
         filter: 'select',
         width: 126,
+        hideBelow: 'md',
         filterOptions: EVENT_STATUSES.map((value) => ({ value, label: STATUS_LABEL[value] })),
         sortValue: (event) => STATUS_RANK[event.status],
       },
@@ -161,6 +156,7 @@ export function createEventColumns(
       meta: {
         filter: 'select',
         width: 104,
+        hideBelow: 'md',
         filterOptions: EVENT_PRIORITIES.map((value) => ({ value, label: PRIORITY_LABEL[value] })),
         sortValue: (event) => PRIORITY_RANK[event.priority],
       },
@@ -209,7 +205,7 @@ export function createEventColumns(
       accessorKey: 'notes',
       header: 'Notes',
       sortingFn: 'text',
-      meta: { filter: 'text', width: 240 },
+      meta: { filter: 'text', width: 240, hideBelow: 'md' },
       cell: ({ row }) => (
         <span className="truncate text-xs text-faint" title={row.original.notes}>
           {row.original.notes ?? '—'}

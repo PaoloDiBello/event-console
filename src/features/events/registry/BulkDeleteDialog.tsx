@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/Button'
 import type { EventRecord } from '@/features/events/model'
 import { formatDayShort, formatMinute } from '@/shared/lib/dates'
-import { pluralize } from '@/shared/lib/format'
+import { formatCount, pluralize } from '@/shared/lib/format'
 
 interface BulkDeleteDialogProps {
   open: boolean
@@ -74,7 +74,7 @@ export function BulkDeleteDialog({
               </span>
               <div className="min-w-0">
                 <Dialog.Title className="text-sm font-semibold text-ink">
-                  Delete {count} {pluralize(count, 'event')}?
+                  Delete {formatCount(count)} {pluralize(count, 'event')}?
                 </Dialog.Title>
                 <Dialog.Description className="mt-1 text-xs text-muted">
                   {count === 1 ? 'It is' : 'They are'} removed from the registry and the agenda.
@@ -102,7 +102,7 @@ export function BulkDeleteDialog({
               ))}
               {remaining > 0 ? (
                 <li className="pt-1 font-mono text-[10px] tracking-wide text-faint">
-                  and {remaining} more…
+                  and {formatCount(remaining)} more…
                 </li>
               ) : null}
             </ul>
@@ -120,7 +120,7 @@ export function BulkDeleteDialog({
                 className="gap-1.5 px-4 font-semibold"
               >
                 <Trash2 aria-hidden="true" className="size-3.5" />
-                Delete {count} {pluralize(count, 'event')}
+                Delete {formatCount(count)} {pluralize(count, 'event')}
               </Button>
             </div>
           </Dialog.Content>

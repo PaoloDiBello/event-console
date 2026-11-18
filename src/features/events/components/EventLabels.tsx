@@ -24,9 +24,15 @@ export function StatusBadge({ status, className }: { status: EventStatus; classN
   )
 }
 
-export function PriorityLabel({ priority }: { priority: EventPriority }) {
+export function PriorityLabel({
+  priority,
+  className,
+}: {
+  priority: EventPriority
+  className?: string
+}) {
   return (
-    <span className={cn('inline-flex items-center gap-1.5 text-xs', PRIORITY_TONE[priority])}>
+    <span className={cn('inline-flex items-center gap-1.5 text-xs', PRIORITY_TONE[priority], className)}>
       <span aria-hidden="true" className="size-1.5 rounded-full bg-current" />
       {PRIORITY_LABEL[priority]}
     </span>

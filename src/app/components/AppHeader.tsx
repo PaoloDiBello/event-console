@@ -192,10 +192,13 @@ export function AppHeader({ onNewEvent, onOpenShortcuts }: AppHeaderProps) {
             className={buttonClass({
               variant: 'primary',
               size: 'md',
-              className: 'w-9 px-0 font-semibold sm:w-auto sm:px-3',
+              className: 'px-2.5 font-semibold sm:px-3',
             })}
           >
             <Plus aria-hidden="true" className="size-4" />
+            {/* A bare plus asked the reader to know what it adds. "New" fits
+                the phone bar; the full label returns as soon as there is room. */}
+            <span className="sm:hidden">New</span>
             <span className="hidden sm:inline">New event</span>
             <Kbd
               ariaHidden

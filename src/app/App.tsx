@@ -81,9 +81,21 @@ export function App() {
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)]">
+      {/* The header carries the brand, the lens switch and three actions; the
+          table is below all of it. One keypress should be able to skip that. */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[60] focus:rounded-sm focus:border focus:border-accent/60 focus:bg-raised focus:px-3 focus:py-2 focus:text-sm focus:text-ink focus:outline-none"
+      >
+        Skip to content
+      </a>
       <AppHeader onNewEvent={openCreate} onOpenShortcuts={() => setShortcutsOpen(true)} />
 
-      <main className="mx-auto flex min-h-0 w-full max-w-[1600px] flex-1 flex-col px-3 py-4 sm:px-4">
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className="mx-auto flex min-h-0 w-full max-w-[1600px] flex-1 flex-col px-3 py-4 focus:outline-none sm:px-4"
+      >
         <Suspense fallback={<RouteFallback />}>
           <Routes>
             <Route

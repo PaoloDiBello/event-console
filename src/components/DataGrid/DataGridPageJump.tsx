@@ -34,7 +34,7 @@ export function DataGridPageJump({
 
   return (
     <label className="mr-1 flex shrink-0 items-center gap-1.5 font-mono text-[11px] whitespace-nowrap text-faint">
-      <span className="hidden min-[380px]:inline">Page</span>
+      <span className="hidden sm:inline">Page</span>
       <input
         type="text"
         inputMode="numeric"
@@ -71,7 +71,7 @@ export function DataGridPageJump({
             event.currentTarget.blur()
           }
         }}
-        className="tnum h-7 w-14 rounded-xs border border-line bg-canvas px-1.5 text-center text-[11px] text-ink transition-colors focus:border-accent/60 focus:outline-none disabled:opacity-50"
+        className="tnum h-7 w-12 rounded-xs border border-line bg-canvas px-1.5 text-center text-[11px] text-ink transition-colors focus:border-accent/60 focus:outline-none disabled:opacity-50 sm:w-14"
       />
       <span className="tnum whitespace-nowrap">/ {formatCount(safePageCount)}</span>
     </label>

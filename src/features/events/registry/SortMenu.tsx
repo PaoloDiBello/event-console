@@ -21,6 +21,7 @@ const OPTIONS = [
   { value: 'when:desc', label: 'Newest first' },
   { value: 'when:asc', label: 'Oldest first' },
   { value: 'title:asc', label: 'Title A–Z' },
+  { value: 'priority:asc', label: 'Priority', hint: 'Critical first' },
 ] as const
 
 type SortValue = (typeof OPTIONS)[number]['value']
@@ -63,13 +64,13 @@ export function SortMenu({ value, onValueChange }: SortMenuProps) {
           title={current ? `Sorted by ${current.label}` : 'Choose a sort order'}
           className={buttonClass({
             size: 'md',
-            className: 'w-9 justify-center gap-2 px-0 sm:w-auto sm:px-3',
+            className: 'justify-center gap-2 px-2.5',
           })}
         >
           <ArrowUpDown aria-hidden="true" className="size-3.5" />
-          {/* Icon-only on a phone: the label is in the accessible name, and the
-              toolbar has to fit five controls on one row there. */}
-          <span className="hidden sm:inline">Sort</span>
+          {/* The label is the point: a phone has no tooltips, so four bare
+              icons in a row asked the reader to guess. */}
+          <span>Sort</span>
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent

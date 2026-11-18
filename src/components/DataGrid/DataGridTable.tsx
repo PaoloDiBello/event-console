@@ -25,6 +25,12 @@ interface DataGridTableProps<TData> {
   activeRowIndex: number
   /** Enables `x` to toggle the focused row, where the page has a selection. */
   selectableRows: boolean
+  /**
+   * True when the table is the narrow layout: utility columns keep their pixel
+   * width and the content column takes whatever is left, so the table can never
+   * be a couple of pixels wider than the phone.
+   */
+  narrow?: boolean
   onRowFocus: (index: number) => void
   onRowActivate?: (row: TData) => void
   onSort: (column: Column<TData, unknown>, event: unknown) => void
@@ -54,6 +60,7 @@ export function DataGridTable<TData>({
   getRowClassName,
   activeRowIndex,
   selectableRows,
+  narrow = false,
   onRowFocus,
   onRowActivate,
   onSort,
@@ -75,7 +82,7 @@ export function DataGridTable<TData>({
   return (
     <table
       aria-rowcount={bodyRowCount + headerRowCount}
-      className="w-full min-w-[640px] table-fixed border-separate border-spacing-0 text-sm sm:min-w-[1040px]"
+      className="w-full table-fixed border-separate border-spacing-0 text-sm md:min-w-[1040px]"
     >
       <caption className="sr-only">
         {caption}. {formatCount(filteredCount)} rows, sorted {sortDescription}.
@@ -84,7 +91,10 @@ export function DataGridTable<TData>({
         {visibleColumns.map((column) => (
           <col
             key={column.id}
-            style={{ width: column.getSize() }}
+            style={{
+              width:
+                narrow && !column.columnDef.meta?.compact ? 'auto' : column.getSize(),
+            }}
           />
         ))}
       </colgroup>
