@@ -1,9 +1,15 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { formatDayShort } from '@/shared/lib/dates'
 import { formatCount, pluralize } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/cn'
 import type { ReactNode } from 'react'
 import type { TimelineItemRowData } from './timelineModel'
 import type { TimelineGroup } from './types'
+
+/** Day keys are ISO; anything else (a synthetic group) keeps its own label. */
+function shortGroupLabel(key: string, fallback: string) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(key) ? formatDayShort(key) : fallback
+}
 
 interface TimelineGroupRowProps<TItem> {
   group: TimelineGroup<TItem>
@@ -23,9 +29,15 @@ export function TimelineGroupRow<TItem>({
   return (
     <div style={{ height }} className="flex items-end pb-2">
       <div className="flex w-full items-center justify-between border-b border-line/80 pb-2">
-        <h3 className="flex items-baseline gap-2.5">
-          <span className="text-sm font-semibold text-ink">{group.label}</span>
-          <span className="font-mono text-[10px] tracking-wide text-faint">
+        <h3 className="flex min-w-0 items-baseline gap-2.5">
+          {/* A phone gets the short day (`Today`, `Thu 29 Oct`):
+              "Today, Wednesday 18 November" wrapped to two lines and squeezed
+              the chevrons on every group heading. */}
+          <span className="truncate text-sm font-semibold text-ink md:hidden">
+            {shortGroupLabel(group.key, group.label)}
+          </span>
+          <span className="hidden text-sm font-semibold text-ink md:inline">{group.label}</span>
+          <span className="shrink-0 font-mono text-[10px] whitespace-nowrap text-faint">
             {formatCount(group.items.length)} {pluralize(group.items.length, 'event')}
           </span>
         </h3>

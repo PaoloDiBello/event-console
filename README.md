@@ -199,8 +199,13 @@ phone has no hover tooltips and four bare icons asked the reader to guess;
 **Density** is a desktop preference and leaves below `sm`, and **Columns** leaves
 below `md`, where the table no longer renders the columns that menu toggles.
 Reload and the overflow menu wrap as one right-aligned pair instead of
-stranding the “…” on its own line; the agenda keeps its previous/next day
-buttons — full-size 40 px targets — and drops the date picker's “Jump” label.
+stranding the “…” on its own line. The agenda's toolbar splits into two rows
+below `sm`: the window switcher becomes three equal full-width segments, and
+previous day / date picker / next day share the row beneath at one 40 px height,
+with the picker stretching between the chevrons and centring its icon, day and
+chevron so it reads as one control rather than three items pinned to opposite
+edges. It drops the date picker's “Jump” label; the arrow buttons stay full-size
+40 px targets.
 An applied filter is a dot on the Filters button rather than a number, because a
 badge pushed the row onto a second line at 320 px. The chip strip drops its
 “Filters” prefix at that width so the first chip and “Clear all” stay on one
@@ -289,6 +294,9 @@ Every focus move updates a polite live region with the day and position:
 
 Day headings lead with `Today` or `Tomorrow` before the date, so a jump, a
 window change or a fresh search landing mid-list still tells you where you are.
+On a phone the heading uses the short form (`Today`, `Thu 29 Oct`); the full
+“Today, Wednesday 18 November” wrapped to two lines and squeezed the day arrows
+against the count on every group.
 Changing the window or the query resets the list to the top; adding an event to
 a day you are already reading does not. Once you have jumped to another day the
 toolbar offers a one-click **Today** action to come back.
@@ -296,7 +304,10 @@ toolbar offers a one-click **Today** action to come back.
 The jump calendar marks today separately from the selected day, dims and
 disables days outside the current window, dims its month arrows at the edges of
 that window, and shows a **Today** action only when today is not already
-selected.
+selected. It shows the neighbouring months' days dimmed, so a month that starts
+on a Sunday does not open with a row of blank cells; the same calendar, and the
+grid's date filter, are 40 px cells with tabular figures, centred under their
+trigger and capped at the viewport width.
 
 ### Form
 

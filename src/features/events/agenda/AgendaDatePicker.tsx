@@ -33,7 +33,11 @@ export function AgendaDatePicker({ value, min, max, onChange }: AgendaDatePicker
           title={formatDayFull(value)}
           className={buttonClass({
             size: 'md',
-            className: 'min-w-0 justify-start gap-2 px-2.5 font-normal sm:min-w-[10.5rem]',
+            className:
+              // Centred while the button stretches across a phone row: the
+              // icon, day and chevron read as one control instead of three
+              // items pinned to the opposite edges.
+              'h-10 min-w-0 flex-1 justify-center gap-2 px-2.5 font-normal sm:h-9 sm:flex-none sm:justify-start sm:min-w-[10.5rem]',
           })}
         >
           <CalendarDays aria-hidden="true" className="size-3.5 shrink-0 text-faint" />
@@ -43,18 +47,20 @@ export function AgendaDatePicker({ value, min, max, onChange }: AgendaDatePicker
             </span>
             <span className="tnum font-mono text-[11px] text-ink">{formatDayShort(value)}</span>
           </span>
-          <ChevronDown aria-hidden="true" className="ml-auto size-3.5 shrink-0 text-faint" />
+          <ChevronDown
+            aria-hidden="true"
+            className="size-3.5 shrink-0 text-faint sm:ml-auto"
+          />
         </button>
       </Popover.Trigger>
 
       <Popover.Portal>
         <Popover.Content
-          align="start"
+                    align="center"
           sideOffset={8}
-          collisionPadding={8}
+          collisionPadding={10}
           aria-label="Choose a date to jump to"
-          className="z-50 rounded-lg border border-line-strong bg-surface p-3 shadow-2xl shadow-black/50 outline-none data-[state=open]:animate-[content-in_150ms_ease-out]"
-        >
+          className="z-50 w-[19.5rem] max-w-[calc(100vw-1.25rem)] rounded-lg border border-line-strong bg-surface p-3 shadow-2xl shadow-black/60 outline-none data-[state=open]:animate-[content-in_150ms_ease-out]">
           <DayPicker
             mode="single"
             required
@@ -64,7 +70,9 @@ export function AgendaDatePicker({ value, min, max, onChange }: AgendaDatePicker
             endMonth={parseIsoDay(max)}
             weekStartsOn={1}
             fixedWeeks
-            showOutsideDays={false}
+            // Outside days keep every row the same shape; hiding them left a
+            // half-empty first row and a lonely 30 at the bottom.
+            showOutsideDays
             navLayout="around"
             autoFocus
             disabled={(date) => {

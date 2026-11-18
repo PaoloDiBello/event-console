@@ -51,15 +51,26 @@ export function AgendaToolbar({
         wrapperClassName="w-full sm:w-auto sm:max-w-sm sm:flex-1"
       />
 
-      <div className="ml-auto flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto">
-        <div className="flex items-center gap-2">
+      {/*
+        Phone: the window gets its own full-width row and the jump controls the
+        row below, all 40px tall. They used to share one 340px row at three
+        different heights (32 / 36 / 40), which read as controls dropped next to
+        each other rather than a toolbar. From `sm` up it is the single row it
+        always was.
+      */}
+      <div className="flex w-full flex-col gap-2 sm:ml-auto sm:w-auto sm:flex-row sm:items-center">
+        <div className="flex w-full items-center gap-2 sm:w-auto">
           <span
             aria-hidden="true"
             className="hidden font-mono text-[9px] tracking-[0.18em] text-faint uppercase lg:inline"
           >
             Window
           </span>
-          <div role="group" aria-label="Timeline window" className={segmentTrackClass}>
+          <div
+            role="group"
+            aria-label="Timeline window"
+            className={cn(segmentTrackClass, 'h-10 w-full p-1 sm:h-8 sm:w-auto sm:p-0.5')}
+          >
             {TIMELINE_SCOPES.map((days) => (
               <button
                 key={days}
@@ -68,7 +79,9 @@ export function AgendaToolbar({
                 onClick={() => onScopeChange(days)}
                 className={cn(
                   segmentClass,
-                  'font-mono text-[11px]',
+                  // Equal thirds on a phone: each segment is a full thumb target
+                  // instead of a 33px chip hugging the left edge of the row.
+                  'h-full flex-1 font-mono text-[11px] sm:h-7 sm:flex-none sm:px-2.5',
                   scope === days ? selectedSegmentClass : 'text-muted hover:text-ink',
                 )}
               >
@@ -78,7 +91,7 @@ export function AgendaToolbar({
           </div>
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex w-full items-center gap-1.5 sm:w-auto sm:gap-1">
           <button
             type="button"
             disabled={jumpDate <= jumpMin}
@@ -117,23 +130,26 @@ export function AgendaToolbar({
           >
             <ChevronRight aria-hidden="true" className="size-4" />
           </button>
-        </div>
 
-        {jumpDate !== today ? (
-          <button
-            type="button"
-            onClick={() => onJumpDateChange(today)}
-            title="Back to today"
-            className={buttonClass({
-              variant: 'ghost',
-              size: 'md',
-              className: 'gap-1.5 px-2.5 font-normal',
-            })}
-          >
-            <CalendarCheck aria-hidden="true" className="size-3.5 text-accent" />
-            <span className="text-accent">Today</span>
-          </button>
-        ) : null}
+          {/* The way back sits in the jump row, where the day it returns to is
+              already on screen, instead of dropping onto a row of its own. */}
+          {jumpDate !== today ? (
+            <button
+              type="button"
+              onClick={() => onJumpDateChange(today)}
+              title="Back to today"
+              aria-label="Back to today"
+              className={buttonClass({
+                variant: 'ghost',
+                size: 'md',
+                className: 'h-10 shrink-0 gap-1.5 px-2.5 font-normal sm:h-9',
+              })}
+            >
+              <CalendarCheck aria-hidden="true" className="size-3.5 text-accent" />
+              <span className="text-accent">Today</span>
+            </button>
+          ) : null}
+        </div>
       </div>
     </div>
   )

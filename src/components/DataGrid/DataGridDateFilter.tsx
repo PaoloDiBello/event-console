@@ -74,19 +74,19 @@ export function DataGridDateFilter({
 
       <Popover.Portal>
         <Popover.Content
-          align="start"
+                    align="center"
           sideOffset={6}
-          collisionPadding={8}
+          collisionPadding={10}
           aria-label={`Filter ${label} by date`}
-          className="z-50 rounded-lg border border-line-strong bg-surface p-3 shadow-2xl shadow-black/50 outline-none data-[state=open]:animate-[content-in_150ms_ease-out]"
-        >
+          className="z-50 w-[19.5rem] max-w-[calc(100vw-1.25rem)] rounded-lg border border-line-strong bg-surface p-3 shadow-2xl shadow-black/60 outline-none data-[state=open]:animate-[content-in_150ms_ease-out]">
           <DayPicker
             mode="single"
             selected={selected}
             defaultMonth={selected}
             weekStartsOn={1}
             fixedWeeks
-            showOutsideDays={false}
+            // Completes the grid, so the month does not end in a ragged row.
+            showOutsideDays
             navLayout="around"
             autoFocus
             onSelect={apply}

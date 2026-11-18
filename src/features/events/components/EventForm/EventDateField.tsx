@@ -67,19 +67,19 @@ export function EventDateField({ field, hasError }: EventDateFieldProps) {
 
         <Popover.Portal>
           <Popover.Content
-            align="end"
+                        align="center"
             sideOffset={6}
-            collisionPadding={8}
+            collisionPadding={10}
             aria-label="Choose event date"
-            className="z-50 rounded-lg border border-line-strong bg-surface p-3 shadow-2xl shadow-black/50 outline-none data-[state=open]:animate-[content-in_150ms_ease-out]"
-          >
+            className="z-50 w-[19.5rem] max-w-[calc(100vw-1.25rem)] rounded-lg border border-line-strong bg-surface p-3 shadow-2xl shadow-black/60 outline-none data-[state=open]:animate-[content-in_150ms_ease-out]">
             <DayPicker
               mode="single"
               selected={parsedDate}
               defaultMonth={parsedDate}
               weekStartsOn={1}
               fixedWeeks
-              showOutsideDays={false}
+              // Completes the grid, so the month does not end in a ragged row.
+              showOutsideDays
               navLayout="around"
               autoFocus
               onSelect={apply}
