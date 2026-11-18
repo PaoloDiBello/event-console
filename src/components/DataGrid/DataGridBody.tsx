@@ -1,6 +1,6 @@
 import { flexRender, type Column, type Row } from '@tanstack/react-table'
 import type { VirtualItem } from '@tanstack/react-virtual'
-import type { KeyboardEvent, ReactNode } from 'react'
+import { useRef, type KeyboardEvent, type MouseEvent, type ReactNode } from 'react'
 import { cn } from '@/shared/lib/cn'
 import { pinnedColumnClass } from './pinnedColumn'
 import { DataGridSkeleton } from './DataGridSkeleton'
@@ -22,6 +22,8 @@ interface DataGridBodyProps<TData> {
   activeRowIndex: number
   /** Whether `x` may toggle the focused row's selection. */
   selectableRows?: boolean
+  /** Rows between the anchor and a shift-click / Shift+Arrow target. */
+  onSelectRange?: (ids: string[]) => void
   onRowFocus: (index: number) => void
   onRowActivate?: (row: TData) => void
 }
@@ -41,12 +43,40 @@ export function DataGridBody<TData>({
   getRowClassName,
   activeRowIndex,
   selectableRows = false,
+  onSelectRange,
   onRowFocus,
   onRowActivate,
 }: DataGridBodyProps<TData>) {
   const columnCount = Math.max(visibleColumns.length, 1)
   const activatable = Boolean(onRowActivate)
   const visibleIds = new Set(visibleColumns.map((column) => column.id))
+
+  /**
+   * Range selection: `anchor` is the row the user last stood on, `edge` is
+   * where a run of Shift+Arrow keys has reached. Keeping them apart is what
+   * lets the range grow key by key instead of restarting from the new row.
+   */
+  const anchorRef = useRef(0)
+  const edgeRef = useRef(0)
+  /** The next focus came from extending a range, so it must not move the anchor. */
+  const keepAnchorRef = useRef(false)
+  const rangeEnabled = selectableRows && Boolean(onSelectRange)
+
+  const focusRow = (index: number) => {
+    if (keepAnchorRef.current) keepAnchorRef.current = false
+    else {
+      anchorRef.current = index
+      edgeRef.current = index
+    }
+    onRowFocus(index)
+  }
+
+  const selectRange = () => {
+    if (!onSelectRange) return
+    const from = Math.min(anchorRef.current, edgeRef.current)
+    const to = Math.max(anchorRef.current, edgeRef.current)
+    onSelectRange(rows.slice(from, to + 1).map((row) => row.id))
+  }
 
   /**
    * Roving focus: only the active row is in the tab order, and the arrows move
@@ -59,13 +89,23 @@ export function DataGridBody<TData>({
 
     switch (event.key) {
       case 'ArrowDown':
+      case 'ArrowUp': {
         event.preventDefault()
-        onRowFocus(Math.min(rows.length - 1, virtualRowIndexOf(event) + 1))
+        const step = event.key === 'ArrowDown' ? 1 : -1
+        const from = virtualRowIndexOf(event)
+        const next = Math.max(0, Math.min(rows.length - 1, from + step))
+        if (event.shiftKey && rangeEnabled) {
+          // Extend from the anchor the run started at, so holding Shift with
+          // the arrows paints a contiguous block.
+          edgeRef.current = next
+          selectRange()
+          keepAnchorRef.current = true
+        }
+        // Through `focusRow`, not `onRowFocus`: a plain step has to move the
+        // anchor, and the row it lands on will not report its focus again.
+        focusRow(next)
         break
-      case 'ArrowUp':
-        event.preventDefault()
-        onRowFocus(Math.max(0, virtualRowIndexOf(event) - 1))
-        break
+      }
       case 'x':
       case 'X':
         // Keyboard parity with the checkbox: tick the row you are on instead of
@@ -76,11 +116,11 @@ export function DataGridBody<TData>({
         break
       case 'Home':
         event.preventDefault()
-        onRowFocus(0)
+        focusRow(0)
         break
       case 'End':
         event.preventDefault()
-        onRowFocus(rows.length - 1)
+        focusRow(rows.length - 1)
         break
       case 'Enter':
       case ' ':
@@ -119,15 +159,28 @@ export function DataGridBody<TData>({
                 data-row-index={virtualRow.index}
                 data-selected={isSelected ? '' : undefined}
                 aria-rowindex={rowNumber + headerRowCount}
-                aria-keyshortcuts={activatable ? 'Enter Space' : undefined}
+                        aria-keyshortcuts={
+                  activatable
+                    ? `${rangeEnabled ? 'Shift+ArrowUp Shift+ArrowDown ' : ''}Enter Space`
+                    : undefined
+                }
                 tabIndex={activatable ? (isActive ? 0 : -1) : undefined}
                 style={{ height: rowHeight }}
-                onClick={activatable ? () => onRowActivate?.(row.original) : undefined}
+                onClick={(event: MouseEvent<HTMLTableRowElement>) => {
+                  if (event.shiftKey && rangeEnabled) {
+                    edgeRef.current = virtualRow.index
+                    selectRange()
+                    keepAnchorRef.current = true
+                    focusRow(virtualRow.index)
+                    return
+                  }
+                  if (activatable) onRowActivate?.(row.original)
+                }}
                 onFocus={
                   activatable
                     ? (event) => {
                         if (event.target === event.currentTarget && !isActive) {
-                          onRowFocus(virtualRow.index)
+                          focusRow(virtualRow.index)
                         }
                       }
                     : undefined

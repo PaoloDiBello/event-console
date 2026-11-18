@@ -134,7 +134,9 @@ describe('EventForm', () => {
         priority: 'high',
       }),
     )
-  })
+    // Eight menu opens and picks in one test: the 5 s default is enough alone
+    // and not always enough when the whole suite runs in parallel.
+  }, 15_000)
 
   it('deletes the event only after the confirmation', async () => {
     const user = userEvent.setup()

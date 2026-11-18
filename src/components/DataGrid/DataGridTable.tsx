@@ -25,6 +25,8 @@ interface DataGridTableProps<TData> {
   activeRowIndex: number
   /** Enables `x` to toggle the focused row, where the page has a selection. */
   selectableRows: boolean
+  /** Shift-click and Shift+Arrow: the rows between two positions. */
+  onSelectRange?: (ids: string[]) => void
   /**
    * True when the table is the narrow layout: utility columns keep their pixel
    * width and the content column takes whatever is left, so the table can never
@@ -60,6 +62,7 @@ export function DataGridTable<TData>({
   getRowClassName,
   activeRowIndex,
   selectableRows,
+  onSelectRange,
   narrow = false,
   onRowFocus,
   onRowActivate,
@@ -123,6 +126,7 @@ export function DataGridTable<TData>({
         getRowClassName={getRowClassName}
         activeRowIndex={activeRowIndex}
         selectableRows={selectableRows}
+        onSelectRange={onSelectRange}
         onRowFocus={onRowFocus}
         onRowActivate={onRowActivate}
       />

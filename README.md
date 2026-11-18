@@ -343,6 +343,11 @@ calendar date, time `HH:mm`, duration bounds).
   and resumes with the time that was left rather than restarting. A countdown
   that cannot be held takes **Undo** away in the second it takes to reach it;
   restarting it instead would let a hover keep the message on screen forever.
+- The editor's confirmation owns the toast. A page notice (an export, say) that
+  arrived while a delete confirmation — and its Undo — was still up used to
+  replace it, silently removing the only way back. A notice now fills the gap
+  when nothing was just changed, so the action that altered the data keeps
+  both its message and its undo.
 
 ## Measured performance
 
@@ -442,6 +447,11 @@ mutations only pay for the sort/filter pass.
   action bar above the footer instead of adding a strip that shifts the table.
   The row itself is the keyboard surface, so `x` toggles the row you are on: fill
   a selection with `↓` and `x` instead of tabbing into and out of every checkbox.
+  `Shift`+`↓`/`↑` extends a contiguous run from the row the run started on, and
+  `Shift`-click does the same with the pointer; the run is merged into whatever
+  was already selected, including rows picked on other pages. A plain arrow
+  press starts the next run from where the reader then stands, so the anchor is
+  never a surprise.
   After a delete, focus returns to the row the user was on, because the bar's
   Delete button unmounts with the selection and Radix then had nowhere to send
   it — which dropped keyboard users on `<body>` and cost them their place.

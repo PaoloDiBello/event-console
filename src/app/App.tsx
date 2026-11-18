@@ -142,7 +142,10 @@ export function App() {
       <ShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
 
       <AppToast
-        message={notice ?? success}
+        // The editor's confirmation owns the toast: it may carry Undo, and a
+        // page notice that pushed it aside would take that action with it.
+        // Notices fill the gap when nothing was just changed.
+        message={success ?? notice}
         action={undoAction}
         onPausedChange={setToastPaused}
         onDismiss={() => {

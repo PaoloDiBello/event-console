@@ -314,6 +314,11 @@ export function RegistryPage({ onEdit, onBulkDelete, highlightedId, onNotify }: 
           onExport={handleExport}
           selectedRowIds={selectedIds}
           onSelectionChange={setSelectedIds}
+          // Shift-click and Shift+Arrow add a run of rows to what is already
+          // selected, including rows picked on other pages.
+          onSelectRange={(ids) =>
+            setSelectedIds((current) => [...new Set([...current, ...ids])])
+          }
           onSelectionSummaryChange={setSelection}
           filteredRowsRef={filteredRowsRef}
           selectionBar={

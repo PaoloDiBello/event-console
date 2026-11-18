@@ -31,6 +31,7 @@ const GROUPS: { title: string; shortcuts: Shortcut[] }[] = [
       { keys: ['↑', '↓'], label: 'Move between rows' },
       { keys: ['Home', 'End'], label: 'First or last row on the page' },
       { keys: ['X'], label: 'Select or deselect the focused row' },
+      { keys: ['Shift', '↑↓'], label: 'Extend the selection from the row you started on' },
       { keys: ['Esc'], label: 'Clear the selection, when rows are selected' },
       { keys: ['↵'], label: 'Edit the focused event' },
     ],

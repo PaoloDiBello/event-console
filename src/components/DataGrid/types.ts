@@ -137,6 +137,12 @@ export interface DataGridProps<TData> {
   selectedRowIds?: string[]
   onSelectionChange?: (ids: string[]) => void
   /**
+   * Shift-click and Shift+Arrow extend a selection from the row you last stood
+   * on. The page merges the ids, because the grid holds a page and the
+   * selection may already cover rows from other pages.
+   */
+  onSelectRange?: (ids: string[]) => void
+  /**
    * Reports the selected total and how many of those are visible under the
    * current search and filters, so a bulk action can say what it will touch.
    */

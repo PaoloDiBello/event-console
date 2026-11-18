@@ -43,6 +43,7 @@ export function DataGrid<TData>({
   initialColumnVisibility,
   selectedRowIds,
   onSelectionChange,
+  onSelectRange,
   onSelectionSummaryChange,
   filteredRowsRef,
   pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS,
@@ -227,6 +228,7 @@ export function DataGrid<TData>({
                     getRowClassName={getRowClassName}
                     activeRowIndex={activeRowIndex}
                     selectableRows={selectableRows}
+                    onSelectRange={onSelectRange}
                     narrow={!wideLayout}
                     onRowFocus={focusRowAt}
                     onRowActivate={onRowActivate}

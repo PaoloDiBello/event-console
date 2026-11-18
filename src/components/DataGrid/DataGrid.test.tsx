@@ -861,6 +861,37 @@ describe('DataGrid', () => {
     expect(screen.getByText('Row 00').closest('tr')).not.toHaveAttribute('data-selected')
   })
 
+  it('extends the selection with Shift+Arrow from the row it started on', async () => {
+    const user = userEvent.setup()
+    const onSelectRange = vi.fn()
+    renderSelectionGrid({
+      selectedRowIds: [],
+      onSelectionChange: vi.fn(),
+      onSelectRange,
+      // Rows are only focusable in a grid that activates them.
+      onRowActivate: vi.fn(),
+    })
+
+    act(() => screen.getByText('Row 00').closest('tr')!.focus())
+
+    await user.keyboard('{Shift>}{ArrowDown}{/Shift}')
+    expect(onSelectRange).toHaveBeenLastCalledWith(['r0', 'r1'])
+
+    // A second press grows the same run instead of starting again at r1.
+    await user.keyboard('{Shift>}{ArrowDown}{/Shift}')
+    expect(onSelectRange).toHaveBeenLastCalledWith(['r0', 'r1', 'r2'])
+
+    // Back up: the range shrinks to what is between the anchor and the edge.
+    await user.keyboard('{Shift>}{ArrowUp}{/Shift}')
+    expect(onSelectRange).toHaveBeenLastCalledWith(['r0', 'r1'])
+
+    // Without Shift, the next run starts from where the reader now stands:
+    // one step down to Row 02, then a fresh run covers just the two rows.
+    await user.keyboard('{ArrowDown}')
+    await user.keyboard('{Shift>}{ArrowDown}{/Shift}')
+    expect(onSelectRange).toHaveBeenLastCalledWith(['r2', 'r3'])
+  })
+
   it('selects the whole page from the header checkbox', async () => {
     const user = userEvent.setup()
     const onSelectionChange = vi.fn()
